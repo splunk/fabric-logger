@@ -1,0 +1,16 @@
+{
+  "name": "fabric-logger",
+  "version": "1.0.0",
+  "description": "Hyperledger Fabric Splunk integration",
+  "author": "Jeff Wu <jeffreywu@splunk.com>",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "dotenv": "^6.2.0",
+    "express": "^4.16.4",
+    "fabric-client": "^1.4.0",
+    "splunk-logging": "^0.10.1"
+  }
+}
