@@ -21,6 +21,8 @@ fabric-logger requires some configuration to connect to your blockchain.  You wi
         SPLUNK_HEC_TOKEN=12345678-1234-1234-1234-123456789012
         SPLUNK_HOST=192.168.0.101
         SPLUNK_PORT=8088
+        SPLUNK_INDEX=
+        LOGGING_LOCATION= (splunk|stdout)
 
 You will also need to update the network.yaml with appropriate values for you system.
 

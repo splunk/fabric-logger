@@ -8,8 +8,10 @@ const app = express();
 // Constants
 const SPLUNK_HEC_URL = process.env.SPLUNK_HEC_URL;
 const SPLUNK_HEC_TOKEN = process.env.SPLUNK_HEC_TOKEN;
+const SPLUNK_INDEX = process.env.SPLUNK_INDEX || "hyperledger_logs"
 const FABRIC_PEER = process.env.FABRIC_PEER;
 const FABRIC_MSP = process.env.FABRIC_MSP;
+const LOGGING_LOCATION = process.env.LOGGING_LOCATION || "splunk";
 
 var client = hfc.loadFromConfig('network.yaml');
 
@@ -32,14 +34,21 @@ Logger.eventFormatter = function(message, severity) {
 	return event;
 }
 
-function postToSplunk(event, sourcetype) {
-	Logger.send(
-		{
-			"index": "hyperledger_logs",
-			"sourcetype": sourcetype,
-			"event": event
-		});
-	console.log("Posted " + sourcetype + " to splunk.")
+function logEvent(event, sourcetype) {
+	switch (LOGGING_LOCATION) {
+		case 'splunk':
+			Logger.send(
+				{
+				"index": SPLUNK_INDEX,
+				"sourcetype": sourcetype,
+				"event": event
+			});
+			console.log("Posted " + sourcetype + " to splunk.")
+			break;
+		case 'stdout':
+			console.log(event)
+			break;
+	}
 }
 
 async function asyncEHWrapper(eh) {
@@ -56,7 +65,7 @@ app.get('/channels/:channel', (req, res) => {
 			// https://github.com/hyperledger/fabric-sdk-node/blob/release-1.4/fabric-client/lib/protos/common/common.proto
 			for (let index = 0; index < block.data.data.length; index++) {
 				let msg = block.data.data[index];
-				postToSplunk(msg, msg.payload.header.channel_header.typeString)
+				logEvent(msg, msg.payload.header.channel_header.typeString)
 			} 
 		},
 		(error) => { console.log('Failed to receive the tx event ::' + error); },
