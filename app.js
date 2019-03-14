@@ -4,6 +4,7 @@ const fs = require('fs');
 const express = require('express');
 const hfc = require('fabric-client');
 const app = express();
+const SplunkLogger = require('splunk-logging').Logger;
 
 // Constants
 const SPLUNK_HEC_URL = process.env.SPLUNK_HEC_URL;
