@@ -35,8 +35,10 @@ switch(LOGGING_LOCATION) {
 			var event = message;
 			return event;
 		}
+		console.log(`Using Splunk HEC at ${splunkConfig.url}`);
 		break;
 	case 'stdout':
+		var Logger = {};
 		Logger.send = (event) => {
 			console.log(JSON.stringify(event));
 		}
@@ -94,4 +96,4 @@ app.get('/healthcheck', (req, res) => {
 const HOST = "0.0.0.0";
 const PORT = 8080;
 app.listen(PORT, HOST);
-Logger.error(`Running on http://${HOST}:${PORT}`);
+console.log(`Running on http://${HOST}:${PORT}`);
