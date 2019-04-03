@@ -7,14 +7,15 @@ const app = express();
 const SplunkLogger = require('splunk-logging').Logger;
 
 // Constants
-const SPLUNK_HEC_URL = process.env.SPLUNK_HEC_URL;
+const SPLUNK_HOST = process.env.SPLUNK_HOST;
+const SPLUNK_PORT = process.env.SPLUNK_PORT;
 const SPLUNK_HEC_TOKEN = process.env.SPLUNK_HEC_TOKEN;
 const SPLUNK_INDEX = process.env.SPLUNK_INDEX || "hyperledger_logs"
 const FABRIC_PEER = process.env.FABRIC_PEER;
 const FABRIC_MSP = process.env.FABRIC_MSP;
 const LOGGING_LOCATION = process.env.LOGGING_LOCATION || "splunk";
 
-var client = hfc.loadFromConfig('network.yaml');
+var client = hfc.loadFromConfig('network.yaml'); // TODO: this has to be specified in the env.
 
 client.setAdminSigningIdentity(
 	fs.readFileSync(process.env.FABRIC_KEYFILE, 'utf8'),
@@ -24,7 +25,7 @@ client.setAdminSigningIdentity(
 
 var splunkConfig = {
 	token: SPLUNK_HEC_TOKEN,
-	url: SPLUNK_HEC_URL,
+	url: 'https://' + SPLUNK_HOST + ':' + SPLUNK_PORT
 };
 var Logger = new SplunkLogger(splunkConfig);
 Logger.error = function(err, context) {
@@ -38,16 +39,18 @@ Logger.eventFormatter = function(message, severity) {
 function logEvent(event, sourcetype) {
 	switch (LOGGING_LOCATION) {
 		case 'splunk':
-			Logger.send(
-				{
-				"index": SPLUNK_INDEX,
-				"sourcetype": sourcetype,
-				"event": event
+			Logger.send({
+				message: event,
+				metadata: {
+					source: FABRIC_PEER,
+					sourcetype: sourcetype,
+					index: SPLUNK_INDEX
+				}
 			});
-			console.log("Posted " + sourcetype + " to splunk.")
+			console.log(`Posted sourcetype=${sourcetype} to Splunk index=${SPLUNK_INDEX} from peer=${FABRIC_PEER}.`);
 			break;
 		case 'stdout':
-			console.log(event)
+			console.log(event);
 			break;
 	}
 }
@@ -60,7 +63,7 @@ app.get('/channels/:channel', (req, res) => {
 	let eh = client.getChannel(req.params["channel"]).newChannelEventHub(FABRIC_PEER);
 	eh.registerBlockEvent(
 		(block) => {
-			postToSplunk(block, "ledger-block");
+			logEvent(block, "ledger-block");
 
 			// Message types are defined here:
 			// https://github.com/hyperledger/fabric-sdk-node/blob/release-1.4/fabric-client/lib/protos/common/common.proto
@@ -70,15 +73,15 @@ app.get('/channels/:channel', (req, res) => {
 			} 
 		},
 		(error) => { console.log('Failed to receive the tx event ::' + error); },
-		{ 'startBlock': 1 }
+		{ 'startBlock': 1 } // TODO: have some sort of last block file that we can tap.
 	)
 	asyncEHWrapper(eh);
 
-	res.send("Connecting to " + req.params["channel"] + " on "  + FABRIC_PEER)
+	res.send(`Connecting to ${req.params["channel"]} on ${FABRIC_PEER}\n`);
 });
 
 app.get('/healthcheck', (req, res) => {
-	res.send('ok!')
+	res.send('ok!');
 });
 
 const HOST = "0.0.0.0";
