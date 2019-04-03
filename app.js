@@ -14,8 +14,9 @@ const SPLUNK_INDEX = process.env.SPLUNK_INDEX || "hyperledger_logs"
 const FABRIC_PEER = process.env.FABRIC_PEER;
 const FABRIC_MSP = process.env.FABRIC_MSP;
 const LOGGING_LOCATION = process.env.LOGGING_LOCATION || "splunk";
+const NETWORK_CONFIG = process.env.NETWORK_CONFIG;
 
-var client = hfc.loadFromConfig('network.yaml'); // TODO: this has to be specified in the env.
+var client = hfc.loadFromConfig(NETWORK_CONFIG);
 
 client.setAdminSigningIdentity(
 	fs.readFileSync(process.env.FABRIC_KEYFILE, 'utf8'),
@@ -23,35 +24,41 @@ client.setAdminSigningIdentity(
 	FABRIC_MSP
 );
 
-var splunkConfig = {
-	token: SPLUNK_HEC_TOKEN,
-	url: 'https://' + SPLUNK_HOST + ':' + SPLUNK_PORT
-};
-var Logger = new SplunkLogger(splunkConfig);
+switch(LOGGING_LOCATION) {
+	case 'splunk':
+		var splunkConfig = {
+			token: SPLUNK_HEC_TOKEN,
+			url: 'https://' + SPLUNK_HOST + ':' + SPLUNK_PORT
+		};
+		var Logger = new SplunkLogger(splunkConfig);
+		Logger.eventFormatter = function(message, severity) {
+			var event = message;
+			return event;
+		}
+		break;
+	case 'stdout':
+		Logger.send = (event) => {
+			console.log(JSON.stringify(event));
+		}
+		break;
+}
+
 Logger.error = function(err, context) {
 	console.log('error', err, 'context', context);
 };
-Logger.eventFormatter = function(message, severity) {
-	var event = message;
-	return event;
-}
 
 function logEvent(event, sourcetype) {
-	switch (LOGGING_LOCATION) {
-		case 'splunk':
-			Logger.send({
-				message: event,
-				metadata: {
-					source: FABRIC_PEER,
-					sourcetype: sourcetype,
-					index: SPLUNK_INDEX
-				}
-			});
-			console.log(`Posted sourcetype=${sourcetype} to Splunk index=${SPLUNK_INDEX} from peer=${FABRIC_PEER}.`);
-			break;
-		case 'stdout':
-			console.log(event);
-			break;
+	Logger.send({
+		message: event,
+		metadata: {
+			source: FABRIC_PEER,
+			sourcetype: sourcetype,
+			index: SPLUNK_INDEX
+		}
+	});
+
+	if (LOGGING_LOCATION == 'splunk') {
+		console.log(`Posted sourcetype=${sourcetype} to Splunk index=${SPLUNK_INDEX} from peer=${FABRIC_PEER}.`);
 	}
 }
 
@@ -72,7 +79,7 @@ app.get('/channels/:channel', (req, res) => {
 				logEvent(msg, msg.payload.header.channel_header.typeString)
 			} 
 		},
-		(error) => { console.log('Failed to receive the tx event ::' + error); },
+		(error) => { Logger.error('Failed to receive the tx event ::' + error); },
 		{ 'startBlock': 1 } // TODO: have some sort of last block file that we can tap.
 	)
 	asyncEHWrapper(eh);
@@ -87,4 +94,4 @@ app.get('/healthcheck', (req, res) => {
 const HOST = "0.0.0.0";
 const PORT = 8080;
 app.listen(PORT, HOST);
-console.log(`Running on http://${HOST}:${PORT}`);
+Logger.error(`Running on http://${HOST}:${PORT}`);
