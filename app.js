@@ -9,7 +9,7 @@ const SplunkLogger = require('splunk-logging').Logger;
 
 // Constants
 const SPLUNK_HOST = process.env.SPLUNK_HOST;
-const SPLUNK_PORT = process.env.SPLUNK_PORT;
+const SPLUNK_PORT = process.env.SPLUNK_PORT || 8088;
 const SPLUNK_HEC_TOKEN = process.env.SPLUNK_HEC_TOKEN;
 const SPLUNK_INDEX = process.env.SPLUNK_INDEX || "hyperledger_logs"
 const FABRIC_PEER = process.env.FABRIC_PEER;
@@ -19,12 +19,15 @@ const NETWORK_CONFIG = process.env.NETWORK_CONFIG;
 const CHECKPOINTS_FILE = process.env.CHECKPOINTS_FILE || ".checkpoints";
 
 var client = hfc.loadFromConfig(NETWORK_CONFIG);
-
-client.setAdminSigningIdentity(
-	fs.readFileSync(process.env.FABRIC_KEYFILE, 'utf8'),
-	fs.readFileSync(process.env.FABRIC_CERTFILE, 'utf8'),
-	FABRIC_MSP
-);
+client.createUser({
+	username: 'fabric-logger',
+	mspid: FABRIC_MSP,
+	cryptoContent: {
+		privateKey: process.env.FABRIC_KEYFILE,
+		signedCert: process.env.FABRIC_CERTFILE,
+	},
+	skipPersistence: true
+});
 
 switch(LOGGING_LOCATION) {
 	case 'splunk':
@@ -133,5 +136,5 @@ var eventHubs = {};
 const HOST = "0.0.0.0";
 const PORT = 8080;
 app.listen(PORT, HOST, () => {
-console.log(`Running on http://${HOST}:${PORT}`);
+	console.log(`Running on http://${HOST}:${PORT}`);
 });
