@@ -3,6 +3,7 @@ require('dotenv').config();
 const fs = require('fs');
 const express = require('express');
 const hfc = require('fabric-client');
+const ini = require('ini');
 const app = express();
 const SplunkLogger = require('splunk-logging').Logger;
 
@@ -15,6 +16,7 @@ const FABRIC_PEER = process.env.FABRIC_PEER;
 const FABRIC_MSP = process.env.FABRIC_MSP;
 const LOGGING_LOCATION = process.env.LOGGING_LOCATION || "splunk";
 const NETWORK_CONFIG = process.env.NETWORK_CONFIG;
+const CHECKPOINTS_FILE = process.env.CHECKPOINTS_FILE || ".checkpoints";
 
 var client = hfc.loadFromConfig(NETWORK_CONFIG);
 
@@ -37,6 +39,7 @@ switch(LOGGING_LOCATION) {
 		}
 		console.log(`Using Splunk HEC at ${splunkConfig.url}`);
 		break;
+
 	case 'stdout':
 		var Logger = {};
 		Logger.send = (event) => {
@@ -48,6 +51,7 @@ switch(LOGGING_LOCATION) {
 Logger.error = function(err, context) {
 	console.log('error', err, 'context', context);
 };
+
 
 function logEvent(event, sourcetype) {
 	Logger.send({
@@ -62,6 +66,18 @@ function logEvent(event, sourcetype) {
 	if (LOGGING_LOCATION == 'splunk') {
 		console.log(`Posted sourcetype=${sourcetype} to Splunk index=${SPLUNK_INDEX} from peer=${FABRIC_PEER}.`);
 	}
+}
+
+function loadCheckpoints (filename) {
+	let checkpoints = '';
+  if (fs.existsSync(filename)) {
+    checkpoints = fs.readFileSync(filename, 'utf-8');
+  }
+  return ini.parse(checkpoints);
+}
+
+function writeCheckpoints(filename, checkpoints) {
+	fs.writeFileSync(filename, ini.stringify(checkpoints));
 }
 
 async function asyncEHWrapper(eh) {
@@ -92,9 +108,16 @@ app.get('/channels/:channel', (req, res) => {
 				let msg = block.data.data[index];
 				logEvent(msg, msg.payload.header.channel_header.typeString)
 			} 
+
+			// TODO: Log chaincode events here.
+
+			// TODO: Ensure that every block only contains txns for one channel.
+			let channel_id = block.data.data[0].payload.header.channel_header.channel_id
+			checkpoints[channel_id] = block.header.number;
+			writeCheckpoints(CHECKPOINTS_FILE, checkpoints);
 		},
 		(error) => { Logger.error('Failed to receive the tx event ::' + error); },
-		{ 'startBlock': 1 } // TODO: have some sort of last block file that we can tap.
+		{ 'startBlock': checkpoints[channel] }
 	)
 	asyncEHWrapper(eventHubs[channel]);
 
@@ -105,6 +128,7 @@ app.get('/healthcheck', (req, res) => {
 	res.send('ok!');
 });
 
+var checkpoints = loadCheckpoints(CHECKPOINTS_FILE);
 var eventHubs = {};
 const HOST = "0.0.0.0";
 const PORT = 8080;
