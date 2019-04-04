@@ -69,8 +69,20 @@ async function asyncEHWrapper(eh) {
 }
 
 app.get('/channels/:channel', (req, res) => {
-	let eh = client.getChannel(req.params["channel"]).newChannelEventHub(FABRIC_PEER);
-	eh.registerBlockEvent(
+	let channel = req.params["channel"];
+
+	// Only one listener required per channel per peer.
+	if (eventHubs[channel] != undefined && eventHubs[channel].isconnected()) {
+		res.send(`Fabric logger already started on ${channel} on peer ${FABRIC_PEER}.\n`)
+		return;
+	}
+
+	eventHubs[channel] = client.getChannel(channel).newChannelEventHub(FABRIC_PEER);
+	if (checkpoints[channel] == undefined) {
+		checkpoints[channel] = 1;
+	}
+
+	eventHubs[channel].registerBlockEvent(
 		(block) => {
 			logEvent(block, "ledger-block");
 
@@ -84,7 +96,7 @@ app.get('/channels/:channel', (req, res) => {
 		(error) => { Logger.error('Failed to receive the tx event ::' + error); },
 		{ 'startBlock': 1 } // TODO: have some sort of last block file that we can tap.
 	)
-	asyncEHWrapper(eh);
+	asyncEHWrapper(eventHubs[channel]);
 
 	res.send(`Connecting to ${req.params["channel"]} on ${FABRIC_PEER}\n`);
 });
@@ -93,7 +105,9 @@ app.get('/healthcheck', (req, res) => {
 	res.send('ok!');
 });
 
+var eventHubs = {};
 const HOST = "0.0.0.0";
 const PORT = 8080;
-app.listen(PORT, HOST);
+app.listen(PORT, HOST, () => {
 console.log(`Running on http://${HOST}:${PORT}`);
+});
