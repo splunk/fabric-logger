@@ -16,6 +16,7 @@ Running the Fabric Logger in Docker is recommended. A sample docker-compose entr
                                 - FABRIC_KEYFILE=
                                 - FABRIC_CERTFILE=
                                 - FABRIC_MSP=
+                                - FABRIC_LOGGER_USERNAME=
                                 - FABRIC_PEER=peer0.example.com
                                 - SPLUNK_HEC_TOKEN=12345678-ABCD-EFGH-IJKL-123456789012
                                 - SPLUNK_HOST=splunk.example.com
@@ -59,6 +60,7 @@ Environment Variables
 | FABRIC_KEYFILE       | The private key file used to authenticate with the Fabric peer. | None (Required) |
 | FABRIC_CERTFILE      | The signed certificate returned from the Fabric CA. | None (Required) |
 | FABRIC_MSP           | The name of the MSP that the logging user is enrolled in. | None (Required) |
+| FABRIC_LOGGER_USERNAME | The username the that the `FABRIC_KEYFILE` is enrolled under. | None (Required) |
 | FABRIC_PEER          | The hostname of the peer to connect to. | None (Required) |
 | LOGGING_LOCATION     | The logging location, valid values are `splunk` or `stdout`. | `splunk` |
 | SPLUNK_HEC_TOKEN     | If using `splunk` as the logging location, the HEC token value. | None |
@@ -67,3 +69,4 @@ Environment Variables
 | SPLUNK_INDEX         | Splunk index to log to. | `hyperledger_logs` |
 | NETWORK_CONFIG       | A network configuration object, an example can be found [here](https://fabric-sdk-node.github.io/release-1.4/tutorial-network-config.html) | None (Required) |
 | CHECKPOINTS_FILE     | A file used to hold checkpoints for each channel watched. If running in docker, be sure to mount a volume so that the file is not lost between restarts. | `.checkpoints` |
+| SOURCETYPE_PREFIX    | A prefix used for the sourcetype when writing to Splunk. | `fabric_logger:` |
