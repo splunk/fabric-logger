@@ -99,7 +99,18 @@ async function asyncEHWrapper(eh) {
 }
 
 function registerListener(client, hubs, channel) {
-	hubs[channel] = client.getChannel(channel).newChannelEventHub(FABRIC_PEER);
+	try {
+		hubs[channel] = client.getChannel(channel).newChannelEventHub(FABRIC_PEER);
+	} catch (err) {
+		// NOTE: seems to be an error with certain network.yaml
+		// See JIRA ticket here: https://jira.hyperledger.org/browse/FABN-1222
+		if (err.message == `Peer with name "${FABRIC_PEER}" not assigned to this channel`) {
+			client.getChannel(channel).addPeer(client.getPeer(FABRIC_PEER));
+			hubs[channel] = client.getChannel(channel).newChannelEventHub(FABRIC_PEER);
+		} else {
+			throw err;
+		}
+	}
 	if (checkpoints[channel] == undefined) {
 		checkpoints[channel] = 1;
 	}
