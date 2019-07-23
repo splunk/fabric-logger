@@ -35,8 +35,7 @@ splunk:
   index: hyperledger_logs
 
 network:
-  configPath: network/network.yaml
-  networkConfigMap: hlf-network-config
+  configMap: hlf-network-config
 
 ingress:
   enabled: false

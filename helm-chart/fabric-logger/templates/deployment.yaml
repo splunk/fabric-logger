@@ -70,11 +70,11 @@ spec:
           - name: LOGGING_LOCATION
             value: {{ .Values.loggingLocation | quote }}
           - name: NETWORK_CONFIG
-            value: {{ .Values.network.configPath | quote }}
+            value: network/network.yaml
       volumes:
       - name: network 
         configMap:
-          name: {{ .Values.network.networkConfigMap }}
+          name: {{ .Values.network.configMap }}
       {{- if .Values.secrets.peer.cert }}
       - name: id-cert
         secret:
