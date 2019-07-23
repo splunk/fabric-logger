@@ -11,7 +11,7 @@
 
 Listen to your data.
 
-Splunk Hyperledger Fabric Logger Technical Add-on is spinning up in your cluster.
+SSplunk Connect for Hyperledger Fabric is spinning up in your cluster.
 It is configured to connect to the peer: {{ .Values.peer.peerName }}
 
 To start collecting data on a channel run:
