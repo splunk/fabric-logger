@@ -1,0 +1,61 @@
+{{- $token := or .Values.splunk.hec.token }}
+{{- $host := or .Values.splunk.hec.host }}
+{{- if and $token $host }}
+
+███████╗██████╗ ██╗     ██╗   ██╗███╗   ██╗██╗  ██╗██╗    
+██╔════╝██╔══██╗██║     ██║   ██║████╗  ██║██║ ██╔╝╚██╗   
+███████╗██████╔╝██║     ██║   ██║██╔██╗ ██║█████╔╝  ╚██╗  
+╚════██║██╔═══╝ ██║     ██║   ██║██║╚██╗██║██╔═██╗  ██╔╝  
+███████║██║     ███████╗╚██████╔╝██║ ╚████║██║  ██╗██╔╝
+╚══════╝╚═╝     ╚══════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═╝╚═╝
+
+Listen to your data.
+
+Splunk Hyperledger Fabric Logger Technical Add-on is spinning up in your cluster.
+It is configured to connect to the peer: {{ .Values.peer.peerName }}
+
+To start collecting data on a channel run:
+
+{{- if .Values.ingress.hostname }}
+
+  curl http://{{- .Values.ingress.hostname }}:{{ .Values.service.port }}/channels/${CHANNEL_NAME}
+
+{{- else if contains "LoadBalancer" .Values.service.type }}
+
+  NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+        Watch the status with: 'kubectl get svc --namespace {{ .Release.Namespace }} -w fabric-logger-{{ .Values.peer.peerName }}'
+
+  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} fabric-logger-{{ .Values.peer.peerName }} --template "{{"{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}"}}")
+
+{{- $port:=.Values.service.port | toString }}
+  curl http://$SERVICE_IP{{- if ne $port "80" }}:{{ .Values.service.port }}{{ end }}/channels/${CHANNEL_NAME}
+
+{{- else if contains "ClusterIP"  .Values.service.type }}
+
+  kubectl port-forward --namespace {{ .Release.Namespace }} svc/fabric-logger-{{ .Values.peer.peerName }} 8080:{{ .Values.service.port }} &
+  curl http://127.0.0.1:{{ .Values.service.port }}/channels/${CHANNEL_NAME}
+
+{{- end }}
+
+{{- if contains "NodePort" .Values.service.type }}
+
+  Or running:
+
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services fabric-logger-{{ .Values.peer.peerName }})
+  export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+  http://$NODE_IP:$NODE_PORT/channels/${CHANNEL_NAME}
+
+{{- end }}
+
+If you get stuck, we're here to help.
+Look for answers here: http://www.github.com/splunk/fabric-logger
+{{- else }}
+#########################################################
+####   ERROR: You did not set splunk.hec correctly   ####
+#########################################################
+
+This deployment will be incomplete until you correctly configure Splunk
+HEC connection. You must set splunk.hec.host and splunk.hec.token. Follow
+http://docs.splunk.com/Documentation/Splunk/latest/Data/AboutHEC
+to set up HTTP Event Collector on your Splunk.
+{{- end }}

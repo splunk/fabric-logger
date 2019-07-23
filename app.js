@@ -23,8 +23,8 @@ const FABRIC_LOGGER_USERNAME = process.env.FABRIC_LOGGER_USERNAME;
 var client;
 
 function initClient() {
-	if (NETWORK_CONFIG == 'mock') { 
-		return; 
+	if (NETWORK_CONFIG == 'mock') {
+		return;
 	}
 
 	client = hfc.loadFromConfig(NETWORK_CONFIG);
@@ -120,7 +120,7 @@ function registerListener(client, hubs, channel) {
 			// Message types are defined here:
 			// https://github.com/hyperledger/fabric-sdk-node/blob/release-1.4/fabric-client/lib/protos/common/common.proto
 			for (let index = 0; index < block.data.data.length; index++) {
-	 			// TODO: Log chaincode events here.
+        // TODO: Log chaincode events here.
 				// payload.data.actions{}.payload.action.proposal_response_payload.extension.events.payload.data{}
 
 				let msg = block.data.data[index];
