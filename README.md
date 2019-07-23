@@ -1,7 +1,7 @@
-Hyperledger Fabric Logger Technical Add-on
-==================================================
+Splunk Connect for Hyperledger Fabric
+=====================================
 
-They Hyperledger Fabric Technical Add-on sends blocks and transactions from a Hyperledger Fabric distributed ledger to Splunk for analytics. It's recommended (but not required) that this is used with Splunk App for Hyperledger Fabric. This app can also send blocks and transactions to stdout with use for any other system.
+They Splunk Connect for Hyperledger Fabric sends blocks and transactions from a Hyperledger Fabric distributed ledger to Splunk for analytics. It's recommended (but not required) that this is used with Splunk App for Hyperledger Fabric. This app can also send blocks and transactions to stdout with use for any other system.
 
 Currently the fabric-logger only supports connecting to 1 peer at a time, so you will have to deploy multiple instances of the fabric-logger for each peer that you want to connect to. Each fabric-logger instance can monitor multiple channels for the peer its connected to.
 
