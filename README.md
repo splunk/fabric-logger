@@ -1,39 +1,88 @@
-fabric-logger
+Hyperledger Fabric Logger Technical Add-on
 ==================================================
 
-This Node.js application logs blocks and transactions on a Hyperledger Fabric network to Splunk.
+They Hyperledger Fabric Technical Add-on sends blocks and transactions from a Hyperledger Fabric distributed ledger to Splunk for analytics. It's recommended (but not required) that this is used with Splunk App for Hyperledger Fabric. This app can also send blocks and transactions to stdout with use for any other system.
+
+Currently the fabric-logger only supports connecting to 1 peer at a time, so you will have to deploy multiple instances of the fabric-logger for each peer that you want to connect to. Each fabric-logger instance can monitor multiple channels for the peer its connected to.
+
+Activating Fabric Logger
+------------------------
+Once the fabric logger starts up, it will attempt to connect to its configured peer. If you want to have it start listening on a channel, you can use the following HTTP endpoint:
+
+    curl http://fabric-logger:8080/channels/${CHANNEL_NAME}
 
 Running in Docker
 -----------------
-
 Running the Fabric Logger in Docker is recommended. A sample docker-compose entry looks as follows:
 
-        services:
-                febric-logger.example.com:
-                        container_name: fabric-logger.example.com
-                        image: splunkdlt/fabric-logger:latest
-                        environment:
-                                - FABRIC_KEYFILE=
-                                - FABRIC_CERTFILE=
-                                - FABRIC_MSP=
-                                - FABRIC_LOGGER_USERNAME=
-                                - FABRIC_PEER=peer0.example.com
-                                - SPLUNK_HEC_TOKEN=12345678-ABCD-EFGH-IJKL-123456789012
-                                - SPLUNK_HOST=splunk.example.com
-                                - SPLUNK_PORT=8088
-                                - SPLUNK_INDEX=hyperledger_logs
-                                - LOGGING_LOCATION=splunk
-                                - NETWORK_CONFIG=network.yaml
-                        volumes:
-                                - ./crypto:/usr/src/app/crypto/
-                                - ./network.yaml:/usr/src/app/network.yaml
-                                - ./.checkpoints:/usr/src/app/.checkpoints
-                        depends_on:
-                                - orderer.example.com
-                                - peer0.example.com
-                                - peer1.example.com
-                        networks:
-                                - hlf_network
+    services:
+        fabric-logger.example.com:
+            container_name: fabric-logger.example.com
+            image: splunkdlt/fabric-logger:latest
+            environment:
+                - FABRIC_KEYFILE=
+                - FABRIC_CERTFILE=
+                - FABRIC_MSP=
+                - FABRIC_PEER=peer0.example.com
+                - SPLUNK_HEC_TOKEN=12345678-ABCD-EFGH-IJKL-123456789012
+                - SPLUNK_HOST=splunk.example.com
+                - SPLUNK_PORT=8088
+                - SPLUNK_INDEX=hyperledger_logs
+                - LOGGING_LOCATION=splunk
+                - NETWORK_CONFIG=network.yaml
+            volumes:
+                - ./crypto:/usr/src/app/crypto/
+                - ./network.yaml:/usr/src/app/network.yaml
+                - ./.checkpoints:/usr/src/app/.checkpoints
+            depends_on:
+                - orderer.example.com
+                - peer0.example.com
+                - peer1.example.com
+            ports:
+                8080:8080
+            networks:
+                - hlf_network
+
+Running in Kubernetes
+---------------------
+We also include a helm chart for Kubernetes deployments. First set your `values.yaml` file. Here is an example configuration (although this will be specific to your environment):
+
+    peer:
+        mspName: PeerMSP
+        peerName: peer0
+        username: admin
+
+    splunk:
+        hec:
+            token: 12345678-ABCD-EFGH-IJKL-123456789012
+            port: 8088
+            host: splunk-splunk-kube.splunk.svc.cluster.local
+        index: hyperledger_logs
+
+Make sure that the peer credentials are stored in the appropriately named secrets in the same namespace. It's not required to use the admin credential for connecting, just make sure to select the appropriate user for your use case.
+
+    ADMIN_MSP_DIR=./crypto-config/peerOrganizations/peer0.example.com/users/Admin@peer0.example.com/msp
+
+    # Admin Certs
+    ORG_CERT=$(find ${ADMIN_MSP_DIR}/admincerts/*.pem -type f)
+    kubectl create secret generic -n ${NS} hlf--peer-admincert --from-file=cert.pem=$ORG_CERT
+
+    ORG_KEY=$(find ${ADMIN_MSP_DIR}/keystore/*_sk -type f)
+    kubectl create secret generic -n ${NS} hlf--peer-adminkey --from-file=key.pem=$ORG_KEY 
+
+Finally, this also requires a `network.yaml` file to be located at the `network.networkConfigMap` value.
+
+    kubectl create configmap -n ${NS} hlf-network-config --from-file=network.yaml=<your network.yaml file>
+
+Once that's done, you can deploy via helm:
+
+    helm install -n fabric-logger-${PEER_NAME}-${NS} --namespace ${NS} \
+                 -f values.yaml \
+                 https://github.com/splunk/fabric-logger/releases/download/v1.1.0/fabric-logger-helm-v1.1.0.tgz
+
+To remove, you can simply:
+
+    helm delete --purge fabric-logger-${PEER_NAME}-${NS}
 
 Running Locally
 ---------------
