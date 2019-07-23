@@ -6,7 +6,7 @@ replicaCount: 1
 
 image:
   repository: splunkdlt/fabric-logger
-  tag: latest
+  tag: release-1.0.0
   pullPolicy: IfNotPresent
 
 nameOverride: ""
@@ -16,13 +16,35 @@ service:
   type: ClusterIP
   port: 8080
 
+secrets:
+  peer:
+    cert: hlf--peer-admincert
+    key: hlf--peer-adminkey
+
+peer:
+  mspName: PeerMSP
+  peerName: peer
+  username: admin
+
+loggingLocation: splunk
+splunk:
+  hec:
+    token: 00000000-0000-0000-0000-000000000000
+    port: 8088
+    host: splunk.example.com
+  index: hyperledger_logs
+
+network:
+  configPath: network/network.yaml
+  networkConfigMap: hlf-network-config
+
 ingress:
   enabled: false
   annotations: {}
     # kubernetes.io/ingress.class: nginx
     # kubernetes.io/tls-acme: "true"
   hosts:
-    - host: chart-example.local
+    - host: fabric-logger.local
       paths: []
 
   tls: []
@@ -47,15 +69,3 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
-
-environment: 
-  FABRIC_KEYFILE:
-  FABRIC_CERTFILE:
-  FABRIC_MSP:
-  FABRIC_PEER: peer0.example.com
-  SPLUNK_HEC_TOKEN: 12345678-ABCD-EFGH-IJKL-123456789012
-  SPLUNK_HOST: splunk.example.com
-  SPLUNK_PORT: 8088
-  SPLUNK_INDEX: hyperledger_logs
-  LOGGING_LOCATION: splunk
-  NETWORK_CONFIG: network.yaml

@@ -25,27 +25,66 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           volumeMounts:
             - name: network
-              mountPath: /usr/src/app
+              mountPath: /usr/src/app/network
+            {{- if .Values.secrets.peer.cert }}
+            - mountPath: /var/hyperledger/msp/signcerts
+              name: id-cert
+            {{- end }}
+            {{- if .Values.secrets.peer.key }}
+            - mountPath: /var/hyperledger/msp/keystore
+              name: id-key
+            {{- end }}
           ports:
             - name: http
               containerPort: 8080
               protocol: TCP
           livenessProbe:
             httpGet:
-              path: /
+              path: /healthcheck
               port: http
           readinessProbe:
             httpGet:
-              path: /
+              path: /healthcheck
               port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          environment:
-            {{- toYaml .Values.environment | nindent 12 }}
+          env:
+          - name: FABRIC_KEYFILE
+            value: "/var/hyperledger/msp/keystore/key.pem"
+          - name: FABRIC_CERTFILE
+            value: "/var/hyperledger/msp/signcerts/cert.pem"
+          - name: FABRIC_MSP
+            value: {{ .Values.peer.mspName | quote }}
+          - name: FABRIC_PEER
+            value: {{ .Values.peer.peerName | quote }}
+          - name: FABRIC_LOGGER_USERNAME
+            value: {{ .Values.peer.username | quote }}
+          - name: SPLUNK_HEC_TOKEN
+            value: {{ .Values.splunk.hec.token | quote }}
+          - name: SPLUNK_HOST
+            value: {{ .Values.splunk.hec.host | quote }}
+          - name: SPLUNK_PORT
+            value: {{ .Values.splunk.hec.port | quote }}
+          - name: SPLUNK_INDEX
+            value: {{ .Values.splunk.index | quote }}
+          - name: LOGGING_LOCATION
+            value: {{ .Values.loggingLocation | quote }}
+          - name: NETWORK_CONFIG
+            value: {{ .Values.network.configPath | quote }}
       volumes:
       - name: network 
         configMap:
-          name: {{ include "fabric-logger.fullname" . }}-network-config
+          name: {{ .Values.network.networkConfigMap }}
+      {{- if .Values.secrets.peer.cert }}
+      - name: id-cert
+        secret:
+          secretName: {{ .Values.secrets.peer.cert }}
+      {{- end }}
+      {{- if .Values.secrets.peer.key }}
+      - name: id-key
+        secret:
+          secretName: {{ .Values.secrets.peer.key }}
+      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
