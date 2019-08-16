@@ -51,6 +51,9 @@ We also include a helm chart for Kubernetes deployments. First set your `values.
         mspName: PeerMSP
         peerName: peer0
         username: admin
+        peerAddress: peer0.example.com
+        channels:
+            - mychannel
 
     splunk:
         hec:
@@ -58,6 +61,11 @@ We also include a helm chart for Kubernetes deployments. First set your `values.
             port: 8088
             host: splunk-splunk-kube.splunk.svc.cluster.local
         index: hyperledger_logs
+    
+    secrets:
+        peer:
+            cert: hlf-peer--peer0-cert
+            key: hlf-peer--peer0-key
 
 Make sure that the peer credentials are stored in the appropriately named secrets in the same namespace. It's not required to use the admin credential for connecting, just make sure to select the appropriate user for your use case.
 
@@ -70,15 +78,11 @@ Make sure that the peer credentials are stored in the appropriately named secret
     ORG_KEY=$(find ${ADMIN_MSP_DIR}/keystore/*_sk -type f)
     kubectl create secret generic -n ${NS} hlf--peer-adminkey --from-file=key.pem=$ORG_KEY 
 
-Finally, this also requires a `network.yaml` file to be located at the `network.networkConfigMap` value.
-
-    kubectl create configmap -n ${NS} hlf-network-config --from-file=network.yaml=<your network.yaml file>
-
-Once that's done, you can deploy via helm:
+A `network.yaml` will automatically be generated using the secrets and channel details set above. You can deploy via helm:
 
     helm install -n fabric-logger-${PEER_NAME}-${NS} --namespace ${NS} \
                  -f values.yaml \
-                 https://github.com/splunk/fabric-logger/releases/download/v1.1.0/fabric-logger-helm-v1.1.0.tgz
+                 https://github.com/splunk/fabric-logger/releases/download/v1.1.0/fabric-logger-helm-v1.2.0.tgz
 
 To remove, you can simply:
 
