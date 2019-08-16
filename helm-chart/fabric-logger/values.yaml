@@ -19,12 +19,22 @@ service:
 secrets:
   peer:
     cert: hlf--peer-admincert
+      # itemKey can be defined if there is a secret with multiple items stored inside.
+      # itemKey: cert.pem 
     key: hlf--peer-adminkey
+      # itemKey: key.pem
 
 peer:
   mspName: PeerMSP
   peerName: peer
   username: admin
+  peerScheme: grpc  # grpc or grpcs
+  peerAddress: peer.default.svc
+  peerPort: 7051
+  channels:
+    # A list of channel names that this peer connects to:
+    - channel1
+    - channel2
 
 loggingLocation: splunk
 splunk:
@@ -33,9 +43,6 @@ splunk:
     port: 8088
     host: splunk.example.com
   index: hyperledger_logs
-
-network:
-  configMap: hlf-network-config
 
 ingress:
   enabled: false

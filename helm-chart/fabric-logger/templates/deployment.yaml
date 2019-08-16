@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "fabric-logger.fullname" . }}
+  name: {{ include "fabric-logger.name" . }}-{{ .Values.peer.peerName }}
   labels:
     app.kubernetes.io/name: {{ include "fabric-logger.name" . }}
     helm.sh/chart: {{ include "fabric-logger.chart" . }}
@@ -33,6 +33,10 @@ spec:
             {{- if .Values.secrets.peer.key }}
             - mountPath: /var/hyperledger/msp/keystore
               name: id-key
+            {{- end }}
+            {{- if .Values.secrets.peer.tls }}
+            - mountPath: /var/hyperledger/msp/keystore
+              name: tls-cert
             {{- end }}
           ports:
             - name: http
@@ -74,16 +78,36 @@ spec:
       volumes:
       - name: network 
         configMap:
-          name: {{ .Values.network.configMap }}
+          name: {{ include "fabric-logger.name" . }}-{{ .Values.peer.peerName }}-network-config
       {{- if .Values.secrets.peer.cert }}
       - name: id-cert
         secret:
           secretName: {{ .Values.secrets.peer.cert }}
+          {{- if .Values.secrets.peer.certItem }}
+          items:
+            - key: {{ .Values.secrets.peer.certItem }}
+              path: cert.pem
+          {{- end }}
       {{- end }}
       {{- if .Values.secrets.peer.key }}
       - name: id-key
         secret:
           secretName: {{ .Values.secrets.peer.key }}
+          {{- if .Values.secrets.peer.keyItem }}
+          items:
+            - key: {{ .Values.secrets.peer.keyItem }}
+              path: key.pem
+          {{- end }}
+      {{- end }}
+      {{- if .Values.secrets.peer.tls }}
+      - name: tls-cert
+        secret:
+          secretName: {{ .Values.secrets.peer.tls }}
+          {{- if .Values.secrets.peer.tlsItem }}
+          items:
+            - key: {{ .Values.secrets.peer.tlsItem }}
+              path: tlscacert.pem
+          {{- end }}
       {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
