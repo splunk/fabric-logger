@@ -18,16 +18,22 @@ service:
 
 secrets:
   peer:
-    cert: hlf--peer-admincert
-      # itemKey can be defined if there is a secret with multiple items stored inside.
-      # itemKey: cert.pem 
-    key: hlf--peer-adminkey
-      # itemKey: key.pem
+    # If create: is set to true, then secrets will be auto created based on a cryptogen MSP directory structure.
+    create: false
+    # Secrets can be specified here to overwrite the secret creation setting above.
+    # cert: hlf--peer-admincert
+    # itemKey can be defined if there is a secret with multiple items stored inside.
+    # certItem: cert.pem
+    # key: hlf--peer-adminkey
+    # keyItem: key.pem
+    # tls: hlf--peer-tlscert
+    # tlsItem: tlscacert.pem
 
 peer:
   mspName: PeerMSP
   peerName: peer
-  username: admin
+  username: Admin   # If secrets.peer.create = true, this is the user that will be used in the crytpgen directory.
+  orgDomain: example.com
   peerScheme: grpc  # grpc or grpcs
   peerAddress: peer.default.svc
   peerPort: 7051
