@@ -1,0 +1,8 @@
+/build
+/dist
+/network
+/temp
+/.env
+/.checkpoints
+.git
+node_modules

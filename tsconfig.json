@@ -1,0 +1,9 @@
+{
+    "compilerOptions": {
+        "target": "es5",
+        "strict": true,
+        "moduleResolution": "node",
+        "module": "commonjs",
+        "lib": ["esnext", "dom", "esnext.asynciterable"]
+    }
+}

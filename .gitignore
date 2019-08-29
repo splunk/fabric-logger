@@ -62,3 +62,9 @@ typings/
 
 # Helm charts
 build/
+
+/temp
+/network
+/dist
+.checkpoints
+.vscode
