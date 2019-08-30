@@ -1,11 +1,11 @@
 import { createModuleDebug } from './debug';
 import { initializeEnvironment } from './env';
-import { loadCheckpoints } from './checkpoint';
-import { initClient as initFabricClient } from './fabric';
+import { loadCheckpoints, getAllChannelsWithCheckpoints } from './checkpoint';
+import { initClient as initFabricClient, registerListener } from './fabric';
 import { startServer } from './server';
 import { initializeLogOutput } from './output';
 
-const { debug, error } = createModuleDebug('main');
+const { debug, info, error } = createModuleDebug('main');
 
 async function main() {
     debug('Starting fabric logger...');
@@ -14,6 +14,12 @@ async function main() {
     await loadCheckpoints();
     initFabricClient();
     await startServer('0.0.0.0', 8080);
+
+    await new Promise(r => setTimeout(r, 1000));
+    for (const channel of getAllChannelsWithCheckpoints()) {
+        info('Resuming listener for channel=%s', channel);
+        await registerListener(channel);
+    }
 }
 
 main().catch(e => {

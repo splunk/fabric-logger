@@ -6,7 +6,9 @@ export const createModuleDebug = (name: string) => {
     const debug = createDebug(name);
     const error = debug.extend('error');
     error.enabled = true;
+    const warn = debug.extend('warn');
+    warn.enabled = true;
     const info = debug.extend('info');
     info.enabled = true;
-    return { debug, info, error };
+    return { debug, info, warn, error };
 };

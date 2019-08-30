@@ -13,6 +13,7 @@ const writeFile = promisify(fs.writeFile);
 export type Checkpoints = { [key: string]: any };
 
 let globalCheckpoints: Checkpoints | null = null;
+let lastSerialized: string | null = null;
 
 export async function loadCheckpoints(checkpointFile: string = CHECKPOINTS_FILE): Promise<Checkpoints> {
     if (await exists(checkpointFile)) {
@@ -33,10 +34,12 @@ export async function writeCheckpoints(
     checkpoints: Checkpoints | null = globalCheckpoints
 ) {
     const contents = stringify(checkpoints);
-    debug('Serialized checkpoint contents: %o', contents);
-    await new Promise(r => setTimeout(r, 2000)); // TODO remove this
-    await writeFile(checkpointFile, contents, { encoding: 'utf-8' });
-    info('Checkpoints file updated');
+    if (contents !== lastSerialized) {
+        debug('Serialized checkpoint contents: %o', contents);
+        await writeFile(checkpointFile, contents, { encoding: 'utf-8' });
+        info('Checkpoints file updated');
+        lastSerialized = contents;
+    }
 }
 
 let latestWritePromise: Promise<void> = Promise.resolve();
@@ -66,4 +69,11 @@ export function storeChannelCheckpoint(channel: string, value: number) {
     }
     globalCheckpoints[channel] = value;
     scheduleWriteCheckpoints();
+}
+
+export function getAllChannelsWithCheckpoints(): string[] {
+    if (globalCheckpoints == null) {
+        throw new Error('Checkpoints not loaded');
+    }
+    return Object.keys(globalCheckpoints);
 }

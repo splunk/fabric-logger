@@ -16,7 +16,8 @@ function parseNumber(val: string | undefined): number | undefined {
 }
 
 /** The logging location, valid values are `splunk` or `stdout` (defaults to `splunk`) */
-export const LOGGING_LOCATION: 'splunk' | 'stdout' = process.env.LOGGING_LOCATION === 'stdout' ? 'stdout' : 'splunk';
+export const LOGGING_LOCATION: 'splunk' | 'stdout' | 'file' =
+    process.env.LOGGING_LOCATION === 'stdout' ? 'stdout' : process.env.LOGGING_LOCATION === 'file' ? 'file' : 'splunk';
 /** A file used to hold checkpoints for each channel watched. If running in docker, be sure to mount a volume so that the file is not lost between restarts */
 export const CHECKPOINTS_FILE: string = process.env.CHECKPOINTS_FILE || '.checkpoints';
 /** Splunk hostname */

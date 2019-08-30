@@ -12,5 +12,6 @@ module.exports = {
         '@typescript-eslint/no-inferrable-types': 'off',
         '@typescript-eslint/no-non-null-assertion': 'off',
         '@typescript-eslint/ban-types': 'off',
+        '@typescript-eslint/camelcase': 'off',
     },
 };

@@ -1,2 +1,3 @@
 package.json
 helm-chart/
+src/generated

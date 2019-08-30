@@ -11,6 +11,14 @@ import {
     NETWORK_CONFIG,
 } from './env';
 import { logEvent } from './output';
+import {
+    decodeChainCodeAction,
+    decodeChaincodeDeploymentSpec,
+    decodeSignaturePolicyEnvolope,
+    isSignaturePolicyEnvolope,
+} from './protobuf';
+import { isLikelyText, toText } from './convert';
+import { get } from 'lodash';
 
 const { debug, info, error } = createModuleDebug('fabric');
 
@@ -57,19 +65,100 @@ export function processFilteredBlock(block: FabricClient.FilteredBlock) {
     error('Received unexpected filtered block', block);
 }
 
-export const processBlock = (channelName: string) => (block: FabricClient.Block | FabricClient.FilteredBlock) => {
+export function parseMessageHeaderExtension(msg: FabricClient.BlockData): void {
+    const { header } = msg.payload;
+    const { type, extension } = header.channel_header || { type: undefined, extension: undefined };
+    if (extension instanceof Buffer) {
+        if (type === 3) {
+            try {
+                const chainCodeAction = decodeChainCodeAction(extension);
+                header.channel_header.extension = chainCodeAction;
+            } catch (e) {
+                debug('Failed to decode chain code action from ENDORSER_TRANSACTION header extension', e);
+            }
+        } else if (isLikelyText(extension)) {
+            header.channel_header.extension = toText(extension);
+        }
+    }
+}
+
+export function parseChaincodeSpecInput(msg: FabricClient.BlockData): void {
+    const actions = msg.payload.data.actions;
+    if (Array.isArray(actions)) {
+        for (const action of actions) {
+            const chaincodeInput = get(action, 'payload.chaincode_proposal_payload.input.chaincode_spec.input');
+            if (chaincodeInput && Array.isArray(chaincodeInput.args)) {
+                const inputArgs: Buffer[] = chaincodeInput.args;
+                const firstArg = toText(inputArgs[0]);
+                if (firstArg === 'deploy') {
+                    const [, second, cds, spe, ...rest] = inputArgs;
+                    const args: any[] = [firstArg, toText(second)];
+                    try {
+                        args[2] = decodeChaincodeDeploymentSpec(cds);
+                    } catch (e) {
+                        if (isSignaturePolicyEnvolope(cds)) {
+                            args[2] = decodeSignaturePolicyEnvolope(cds);
+                        } else {
+                            args[2] = isLikelyText(cds) ? toText(cds) : cds;
+                        }
+                    }
+                    try {
+                        args[3] = decodeSignaturePolicyEnvolope(spe);
+                    } catch (e) {
+                        args[3] = isLikelyText(spe) ? toText(spe) : spe;
+                    }
+                    chaincodeInput.args = [...args, rest.map((buf: Buffer) => (isLikelyText(buf) ? toText(buf) : buf))];
+                } else {
+                    chaincodeInput.args = chaincodeInput.args.map((buf: Buffer) =>
+                        isLikelyText(buf) ? toText(buf) : buf
+                    );
+                }
+            }
+        }
+    }
+}
+
+export function getMessageTimetamp(msg: FabricClient.BlockData): string | undefined {
+    return get(msg, 'payload.header.channel_header.timestamp');
+}
+
+export const processBlock = (channelName: string, initCheckpoint: number) => (
+    block: FabricClient.Block | FabricClient.FilteredBlock
+) => {
     if (isFilteredBlock(block)) {
         return processFilteredBlock(block);
     }
 
+    const blockNumber = +block.header.number;
+    if (blockNumber <= initCheckpoint) {
+        debug(`Ignoring block number=%d on channel=%d since we already processed it`, blockNumber, channelName);
+        return;
+    }
+    info('Processing block number=%d on channel=%s', blockNumber, channelName);
+
     for (const msg of block.data.data) {
         if ('payload' in msg) {
-            logEvent(msg, getChannelType(msg));
+            parseMessageHeaderExtension(msg);
+            parseChaincodeSpecInput(msg);
+            logEvent(
+                {
+                    block_number: blockNumber,
+                    ...msg,
+                },
+                getChannelType(msg),
+                getMessageTimetamp(msg)
+            );
+        } else {
+            debug(`Ignoring message without payload: %O`, msg);
         }
     }
 
+    debug('Processed all transactions for block number=%d on channel=%s', blockNumber, channelName);
+
     logEvent(block, 'block');
     storeChannelCheckpoint(channelName, +block.header.number);
+
+    info('Completed processing block number=%d on channel=%s', blockNumber, channelName);
 };
 
 export async function registerListener(channelName: string): Promise<void> {
@@ -97,13 +186,13 @@ export async function registerListener(channelName: string): Promise<void> {
 
     eventHubs[channelName] = channelEventHub;
 
-    const latestCheckpoint = getChannelCheckpoint(channelName, 1);
-    channelEventHub.registerBlockEvent(processBlock(channelName), handleBlockError(channelName), {
-        startBlock: latestCheckpoint,
+    const latestCheckpoint = getChannelCheckpoint(channelName, 0);
+    info('Subscribing to block evnets on channel=%s from block number=%d', channelName, latestCheckpoint);
+    channelEventHub.registerBlockEvent(processBlock(channelName, latestCheckpoint), handleBlockError(channelName), {
+        startBlock: latestCheckpoint || 1,
     });
 
     return new Promise((resolve, reject) => {
-        // eslint-disable-next-line @typescript-eslint/camelcase
         channelEventHub.connect({ full_block: true }, err => {
             if (err != null) {
                 error('Failed to connect channel event hub', err);

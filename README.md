@@ -91,7 +91,7 @@ To remove, you can simply:
 
 1.  Install dependencies:
 
-        $ npm install
+        $ yarn install
 
 2.  Configuration:
 
@@ -101,7 +101,7 @@ You will also need to update the `network.yaml` with appropriate values for you 
 
 3.  Start the application:
 
-        $ node app.js
+        $ yarn start
 
 ## Environment Variables
 

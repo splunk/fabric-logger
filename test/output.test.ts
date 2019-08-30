@@ -1,55 +1,29 @@
-import { convertBuffersToHex } from '../src/output';
+import { normalizeTime } from '../src/output';
 
-describe('convertBuffersToHex', () => {
-    it('should return an object without buffers as-is', () => {
-        expect(
-            convertBuffersToHex({
-                foo: 'bar',
-                some: 'thing',
-                anumber: 3,
-                so: true,
-            })
-        ).toMatchInlineSnapshot(`
-            Object {
-              "anumber": 3,
-              "foo": "bar",
-              "so": true,
-              "some": "thing",
-            }
-        `);
+describe('normalizeTime', () => {
+    const fakeNow = () => 1567161300000;
+    const fakeNowEpoc = 1567161300;
+
+    it('return value as is if given a number', () => {
+        expect(normalizeTime(1567161373419, fakeNow)).toBe(1567161373.419);
+        expect(normalizeTime(0, fakeNow)).toBe(0);
     });
 
-    it('should modify an object property containing a buffer', () => {
-        expect(
-            convertBuffersToHex({
-                some: Buffer.from('foobar'),
-            })
-        ).toMatchInlineSnapshot(`
-            Object {
-              "some_hex": "666f6f626172",
-            }
-        `);
+    it('parses the given iso date string', () => {
+        expect(normalizeTime('2019-08-30T10:38:47.665Z', fakeNow)).toBe(1567161527.665);
+        expect(normalizeTime('2019-08-29T21:31:56.816Z', fakeNow)).toBe(1567114316.816);
     });
 
-    it('should convert an array of buffers to inline objects with the hex values', () => {
-        expect(
-            convertBuffersToHex({
-                args: [Buffer.from('foobar'), Buffer.from('hello'), Buffer.from('world')],
-            })
-        ).toMatchInlineSnapshot(`
-            Object {
-              "args": Array [
-                Object {
-                  "hex": "666f6f626172",
-                },
-                Object {
-                  "hex": "68656c6c6f",
-                },
-                Object {
-                  "hex": "776f726c64",
-                },
-              ],
-            }
-        `);
+    it('return sthe current time if given an invalid date string', () => {
+        expect(normalizeTime('foobar', fakeNow, false)).toBe(fakeNowEpoc);
+        expect(normalizeTime('1', fakeNow, false)).toBe(fakeNowEpoc);
+        expect(normalizeTime('2019-10-15', fakeNow, false)).toBe(fakeNowEpoc);
+        expect(normalizeTime('2019-10', fakeNow, false)).toBe(fakeNowEpoc);
+        expect(normalizeTime('', fakeNow, false)).toBe(fakeNowEpoc);
+    });
+
+    it('returns the current time if given null-ish value', () => {
+        expect(normalizeTime(null, fakeNow)).toBe(fakeNowEpoc);
+        expect(normalizeTime(undefined, fakeNow)).toBe(fakeNowEpoc);
     });
 });
