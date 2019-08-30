@@ -4,6 +4,15 @@ They Splunk Connect for Hyperledger Fabric sends blocks and transactions from a 
 
 Currently the fabric-logger only supports connecting to 1 peer at a time, so you will have to deploy multiple instances of the fabric-logger for each peer that you want to connect to. Each fabric-logger instance can monitor multiple channels for the peer its connected to.
 
+## Fabric ACLs Required for Splunk Connect for Hyperledger Fabric
+
+User authentication in Hyperledger Fabric depends on a private key and a signed certificate. If using the `cryptogen` tool, these files will be found in the the following directories (see also `helm-chart/fabric-logger/templates/secret.yaml`):
+
+-   Signed Certificate: `crypto-config/peerOrganizations/<org-domain>/users/<username>@<org-domain>/msp/signcerts/<username>@<org-domain>-cert.pem`
+-   Private Key: `crypto-config/peerOrganizations/<org-domain>/users/<username>@<org-domain>/msp/keystore/*_sk`
+
+Additionally, Hyperledger Fabric users depend on ACLs defined in the `configtx.yaml` file in order to listen for events on peers. You can see all the ACLs documented [here](https://github.com/hyperledger/fabric/blob/309194182870aebc1e5faf153ea9e4aabda25b8e/sampleconfig/configtx.yaml#L144). The only required ACL policy for using this app is `event/Block`, by default this is mapped to the policy `/Channel/Application/Readers`. Any user defined under this policy in the organization can be used for the fabric-logger. User membership into policies are defined at the organization level, an example can be seen [here](https://github.com/hyperledger/fabric/blob/309194182870aebc1e5faf153ea9e4aabda25b8e/sampleconfig/configtx.yaml#L38).
+
 ## Activating Fabric Logger
 
 Once the fabric logger starts up, it will attempt to connect to its configured peer. If you want to have it start listening on a channel, you can use the following HTTP endpoint:
@@ -19,9 +28,9 @@ Running the Fabric Logger in Docker is recommended. A sample docker-compose entr
             container_name: fabric-logger.example.com
             image: splunkdlt/fabric-logger:latest
             environment:
-                - FABRIC_KEYFILE=
-                - FABRIC_CERTFILE=
-                - FABRIC_MSP=
+                - FABRIC_KEYFILE=<path to private key file>
+                - FABRIC_CERTFILE=<path to signed certificate>
+                - FABRIC_MSP=<msp name>
                 - FABRIC_PEER=peer0.example.com
                 - SPLUNK_HEC_TOKEN=12345678-ABCD-EFGH-IJKL-123456789012
                 - SPLUNK_HOST=splunk.example.com
@@ -66,24 +75,45 @@ We also include a helm chart for Kubernetes deployments. First set your `values.
             cert: hlf-peer--peer0-cert
             key: hlf-peer--peer0-key
 
+### Autogenerating Secrets
+
+Alternatively, if you are using `cryptogen` to generate identities, the helm chart can auto-populate secrets for you. You will need to download the helm file and untar it locally so you can copy your `crypto-config` into the director.
+
+    wget https://github.com/splunk/fabric-logger/releases/download/v1.2.0/fabric-logger-helm-v1.2.0.tgz
+    tar -xf fabric-logger-helm-v1.2.0.tgz
+    cp -R crypto-config fabric-logger/crypto-config
+
+Set the secrets section of `values.yaml` to:
+
+    secrets:
+        peer:
+            create: true
+
+You can now deploy using:
+
+    helm install -n fabric-logger-${PEER_NAME}-${NS} --namespace ${NS} \
+                 -f values.yaml ./fabric-logger
+
+### Manually Populating Secrets
+
 Make sure that the peer credentials are stored in the appropriately named secrets in the same namespace. It's not required to use the admin credential for connecting, just make sure to select the appropriate user for your use case.
 
+    NS=default
     ADMIN_MSP_DIR=./crypto-config/peerOrganizations/peer0.example.com/users/Admin@peer0.example.com/msp
 
-    # Admin Certs
-    ORG_CERT=$(find ${ADMIN_MSP_DIR}/admincerts/*.pem -type f)
-    kubectl create secret generic -n ${NS} hlf--peer-admincert --from-file=cert.pem=$ORG_CERT
+    CERT=$(find ${ADMIN_MSP_DIR}/signcerts/*.pem -type f)
+    kubectl create secret generic -n ${NS} hlf-peer--peer0-cert --from-file=cert.pem=$CERT
 
-    ORG_KEY=$(find ${ADMIN_MSP_DIR}/keystore/*_sk -type f)
-    kubectl create secret generic -n ${NS} hlf--peer-adminkey --from-file=key.pem=$ORG_KEY
+    KEY=$(find ${ADMIN_MSP_DIR}/keystore/*_sk -type f)
+    kubectl create secret generic -n ${NS} hlf-peer--peer0-key --from-file=key.pem=$KEY
 
 A `network.yaml` will automatically be generated using the secrets and channel details set above. You can deploy via helm:
 
     helm install -n fabric-logger-${PEER_NAME}-${NS} --namespace ${NS} \
                  -f values.yaml \
-                 https://github.com/splunk/fabric-logger/releases/download/v1.1.0/fabric-logger-helm-v1.2.0.tgz
+                 https://github.com/splunk/fabric-logger/releases/download/v1.2.0/fabric-logger-helm-v1.2.0.tgz
 
-To remove, you can simply:
+### Deleting Helm Chart
 
     helm delete --purge fabric-logger-${PEER_NAME}-${NS}
 
