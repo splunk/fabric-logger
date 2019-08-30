@@ -6,3 +6,4 @@
 /.checkpoints
 .git
 node_modules
+/generated

@@ -11,10 +11,10 @@
     "start": "yarn generate && tsnd src/main.ts",
     "lint": "eslint src --ext .ts",
     "test": "jest --config jest.config.json",
-    "generate": "yarn generate:cleanup && mkdir -p src/generated && yarn generate:pbjs && yarn generate:pbts",
-    "generate:cleanup": "rm -rf src/generated",
-    "generate:pbjs": "pbjs -t static-module -w commonjs -o src/generated/protos.js node_modules/fabric-client/lib/protos/common/policies.proto node_modules/fabric-client/lib/protos/peer/chaincode.proto node_modules/fabric-client/lib/protos/peer/proposal.proto",
-    "generate:pbts": "pbts -o src/generated/protos.d.ts src/generated/protos.js"
+    "generate": "yarn generate:cleanup && mkdir -p generated && yarn generate:pbjs && yarn generate:pbts",
+    "generate:cleanup": "rm -rf generated",
+    "generate:pbjs": "pbjs -t static-module -w commonjs -o generated/protos.js node_modules/fabric-client/lib/protos/common/policies.proto node_modules/fabric-client/lib/protos/peer/chaincode.proto node_modules/fabric-client/lib/protos/peer/proposal.proto",
+    "generate:pbts": "pbts -o generated/protos.d.ts generated/protos.js"
   },
   "dependencies": {
     "@types/debug": "^4.1.5",

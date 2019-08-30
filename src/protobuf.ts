@@ -1,6 +1,6 @@
 import { IConversionOptions } from 'protobufjs';
 import { createModuleDebug } from './debug';
-import { common, protos } from './generated/protos';
+import { common, protos } from '../generated/protos';
 
 const { debug, warn } = createModuleDebug('protobuf');
 
