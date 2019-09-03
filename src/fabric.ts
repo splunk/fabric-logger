@@ -169,17 +169,15 @@ export async function registerListener(channelName: string): Promise<void> {
 
     let channelEventHub: FabricClient.ChannelEventHub;
     try {
-        debug('Creating new event hub for channel', channelName);
+        info('Creating new event hub for channel=%s', channelName);
         channelEventHub = channel.newChannelEventHub(FABRIC_PEER);
     } catch (err) {
-        // NOTE: seems to be an error with certain network.yaml
-        // See JIRA ticket here: https://jira.hyperledger.org/browse/FABN-1222
         if (err.message == `Peer with name "${FABRIC_PEER}" not assigned to this channel`) {
-            debug('Assigning fabric peer %o to channel %o', FABRIC_PEER, channelName);
+            info('Assigning fabric peer=%s to channel=%s', FABRIC_PEER, channelName);
             channel.addPeer(client.getPeer(FABRIC_PEER), FABRIC_MSP);
             channelEventHub = channel.newChannelEventHub(FABRIC_PEER);
         } else {
-            error('Failed to connect create channel event hub for channel %s', channelName, err);
+            error('Failed to create channel event hub for channel=%s', channelName, err);
             throw err;
         }
     }
