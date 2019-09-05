@@ -134,7 +134,7 @@ export const processBlock = (channelName: string, initCheckpoint: number) => (
         debug(`Ignoring block number=%d on channel=%d since we already processed it`, blockNumber, channelName);
         return;
     }
-    info('Processing block number=%d on channel=%s', blockNumber, channelName);
+    debug('Processing block number=%d on channel=%s', blockNumber, channelName);
 
     for (const msg of block.data.data) {
         if ('payload' in msg) {

@@ -1,6 +1,6 @@
 FROM node:8
 
-WORKDIR /app
+WORKDIR /usr/src/app
 ENV NODE_ENV production
 
 COPY package.json yarn.lock ./

@@ -8,7 +8,11 @@ const { debug, info, error } = createModuleDebug('server');
 const app = express();
 
 app.use((req, res, next) => {
-    info(`Incoming request %s %s`, req.method, req.url);
+    if (req.url == '/healthcheck') {
+        debug(`Incoming request %s %s`, req.method, req.url);
+    } else {
+        info(`Incoming request %s %s`, req.method, req.url);
+    }
     next();
 });
 
