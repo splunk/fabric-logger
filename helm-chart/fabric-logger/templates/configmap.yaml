@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "fabric-logger.name" . }}-{{ .Values.peer.peerName }}-network-config
+data:
+  network.yaml: |-
+    name: Fabric
+    version: "1.0"
+    
+    channels:
+      {{- range .Values.peer.channels }}
+      {{ . }}:
+        peers:
+          {{ $.Values.peer.peerName }}:
+            eventSource: true
+      {{- end }}
+    
+    organizations:
+      org:
+        mspid: {{ .Values.peer.mspName }}
+        peers:
+        - {{ .Values.peer.peerName }}
+        adminPrivateKey:
+          path: /var/hyperledger/msp/keystore/key.pem
+        signedCert:
+          path: /var/hyperledger/msp/signcerts/cert.pem
+    
+    peers:
+      {{ .Values.peer.peerName }}:
+        url: {{ .Values.peer.peerScheme }}://{{ .Values.peer.peerAddress }}:{{ .Values.peer.peerPort }}
+        grpcOptions:
+          ssl-target-name-override: {{ .Values.peer.peerName }}
+          grpc.keepalive_time_ms: 600000
+        {{- if eq .Values.peer.peerScheme "grpcs"}}
+        tlsCACerts:
+          path: /var/hyperledger/msp/tlscacert/tlscacert.pem
+        {{- end }}

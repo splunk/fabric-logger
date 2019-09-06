@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "fabric-logger.fullname" . }}
+  name: {{ include "fabric-logger.name" . }}-{{ .Values.peer.peerName }}
   labels:
     app.kubernetes.io/name: {{ include "fabric-logger.name" . }}
     helm.sh/chart: {{ include "fabric-logger.chart" . }}
@@ -26,13 +26,17 @@ spec:
           volumeMounts:
             - name: network
               mountPath: /usr/src/app/network
-            {{- if .Values.secrets.peer.cert }}
+            {{- if or .Values.secrets.peer.cert .Values.secrets.peer.create }}
             - mountPath: /var/hyperledger/msp/signcerts
               name: id-cert
             {{- end }}
-            {{- if .Values.secrets.peer.key }}
+            {{- if or .Values.secrets.peer.key .Values.secrets.peer.create }}
             - mountPath: /var/hyperledger/msp/keystore
               name: id-key
+            {{- end }}
+            {{- if or .Values.secrets.peer.tls .Values.secrets.peer.create }}
+            - mountPath: /var/hyperledger/msp/tlscacerts
+              name: tls-cert
             {{- end }}
           ports:
             - name: http
@@ -74,17 +78,62 @@ spec:
       volumes:
       - name: network 
         configMap:
-          name: {{ .Values.network.configMap }}
+          name: {{ include "fabric-logger.name" . }}-{{ .Values.peer.peerName }}-network-config
+
       {{- if .Values.secrets.peer.cert }}
       - name: id-cert
         secret:
           secretName: {{ .Values.secrets.peer.cert }}
+          {{- if .Values.secrets.peer.certItem }}
+          items:
+            - key: {{ .Values.secrets.peer.certItem }}
+              path: cert.pem
+          {{- end }}
+      {{- else if .Values.secrets.peer.create }}
+      - name: id-cert
+        secret:
+          secretName: fabric-logger--{{ .Values.peer.orgDomain | lower }}--{{ .Values.peer.peerName  | lower }}-msp
+          items:
+            - key: cert.pem
+              path: cert.pem
       {{- end }}
+
       {{- if .Values.secrets.peer.key }}
       - name: id-key
         secret:
           secretName: {{ .Values.secrets.peer.key }}
+          {{- if .Values.secrets.peer.keyItem }}
+          items:
+            - key: {{ .Values.secrets.peer.keyItem }}
+              path: key.pem
+          {{- end }}
+      {{- else if .Values.secrets.peer.create }}
+      - name: id-key
+        secret:
+          secretName: fabric-logger--{{ .Values.peer.orgDomain | lower }}--{{ .Values.peer.peerName  | lower }}-msp
+          items:
+            - key: key.pem
+              path: key.pem
       {{- end }}
+
+      {{- if .Values.secrets.peer.tls }}
+      - name: tls-cert
+        secret:
+          secretName: {{ .Values.secrets.peer.tls }}
+          {{- if .Values.secrets.peer.tlsItem }}
+          items:
+            - key: {{ .Values.secrets.peer.tlsItem }}
+              path: tlscacert.pem
+          {{- end }}
+      {{- else if .Values.secrets.peer.create }}
+      - name: tls-cert
+        secret:
+          secretName: fabric-logger--{{ .Values.peer.orgDomain | lower }}--{{ .Values.peer.peerName  | lower }}-msp
+          items:
+            - key: tlscacert.pem
+              path: tlscacert.pem
+      {{- end }}
+
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
