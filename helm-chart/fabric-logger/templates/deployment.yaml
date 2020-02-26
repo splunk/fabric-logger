@@ -35,7 +35,7 @@ spec:
               name: id-key
             {{- end }}
             {{- if or .Values.secrets.peer.tls .Values.secrets.peer.create }}
-            - mountPath: /var/hyperledger/msp/tlscacerts
+            - mountPath: /var/hyperledger/msp/tlscacert
               name: tls-cert
             {{- end }}
           ports:
