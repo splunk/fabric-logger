@@ -139,6 +139,8 @@ You will also need to update the `network.yaml` with appropriate values for you 
 | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
 | FABRIC_KEYFILE         | The private key file used to authenticate with the Fabric peer.                                                                                          | None (Required)    |
 | FABRIC_CERTFILE        | The signed certificate returned from the Fabric CA.                                                                                                      | None (Required)    |
+| FABRIC_CLIENT_KEYFILE  | The client private key file used in mutual TLS to authenticate with the Fabric peer.                                                                     | None               |
+| FABRIC_CLIENT_CERTFILE | The client signed certificate used in mutual TLS.                                                                                                        | None               |
 | FABRIC_MSP             | The name of the MSP that the logging user is enrolled in.                                                                                                | None (Required)    |
 | FABRIC_LOGGER_USERNAME | The username the that the `FABRIC_KEYFILE` is enrolled under.                                                                                            | None (Required)    |
 | FABRIC_PEER            | The hostname of the peer to connect to.                                                                                                                  | None (Required)    |

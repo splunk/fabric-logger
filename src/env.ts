@@ -42,6 +42,10 @@ export const FABRIC_LOGGER_USERNAME: string = process.env.FABRIC_LOGGER_USERNAME
 export const FABRIC_KEYFILE: string | undefined = process.env.FABRIC_KEYFILE;
 /** The signed certificate returned from the Fabric CA */
 export const FABRIC_CERTFILE: string | undefined = process.env.FABRIC_CERTFILE;
+/** The client private key file used in mutual TLS to authenticate with the Fabric peer */
+export const FABRIC_CLIENT_KEYFILE: string | undefined = process.env.FABRIC_CLIENT_KEYFILE;
+/** The client certificate file used in mutual TLS to authenticate with the Fabric peer */
+export const FABRIC_CLIENT_CERTFILE: string | undefined = process.env.FABRIC_CLIENT_CERTFILE;
 
 export function checkRequiredEnvVar(val: string | undefined, variable: string): string {
     if (val == null) {
@@ -78,4 +82,6 @@ export function initializeEnvironment() {
     debug('Variable %o = %o', 'FABRIC_LOGGER_USERNAME', FABRIC_LOGGER_USERNAME);
     debug('Variable %o = %o', 'FABRIC_KEYFILE', FABRIC_KEYFILE);
     debug('Variable %o = %o', 'FABRIC_CERTFILE', FABRIC_CERTFILE);
+    debug('Variable %o = %o', 'FABRIC_CLIENT_KEYFILE', FABRIC_CLIENT_KEYFILE);
+    debug('Variable %o = %o', 'FABRIC_CLIENT_CERTFILE', FABRIC_CLIENT_CERTFILE);
 }

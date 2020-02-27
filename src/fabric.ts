@@ -5,6 +5,8 @@ import {
     checkRequiredEnvVar,
     FABRIC_CERTFILE,
     FABRIC_KEYFILE,
+    FABRIC_CLIENT_CERTFILE,
+    FABRIC_CLIENT_KEYFILE,
     FABRIC_LOGGER_USERNAME,
     FABRIC_MSP,
     FABRIC_PEER,
@@ -19,13 +21,16 @@ import {
 } from './protobuf';
 import { isLikelyText, toText } from './convert';
 import { get } from 'lodash';
+import { promisify } from 'util';
+import * as fs from 'fs';
 
 const { debug, info, error } = createModuleDebug('fabric');
+const readFile = promisify(fs.readFile);
 
 let client: FabricClient;
 const eventHubs: { [channelName: string]: FabricClient.ChannelEventHub } = {};
 
-export function initClient(): void {
+export async function initClient(): Promise<void> {
     if (NETWORK_CONFIG === 'mock') {
         debug('Skipping fabric client initializtion for mock mode');
         return;
@@ -33,6 +38,12 @@ export function initClient(): void {
 
     info('Creating fabric client from network config', NETWORK_CONFIG);
     client = FabricClient.loadFromConfig(NETWORK_CONFIG);
+
+    if (FABRIC_CLIENT_CERTFILE && FABRIC_CLIENT_KEYFILE) {
+        const clientkey =  await readFile(FABRIC_CLIENT_KEYFILE, { encoding: 'utf-8' });
+        const clientcert =  await readFile(FABRIC_CLIENT_CERTFILE, { encoding: 'utf-8' });
+        client.setTlsClientCertAndKey(clientcert, clientkey);
+    }
 
     info('Creating fabric user %o', FABRIC_LOGGER_USERNAME);
     client.createUser({
