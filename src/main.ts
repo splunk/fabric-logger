@@ -12,7 +12,7 @@ async function main() {
     initializeEnvironment();
     initializeLogOutput();
     await loadCheckpoints();
-    initFabricClient();
+    await initFabricClient();
     await startServer('0.0.0.0', 8080);
 
     await new Promise(r => setTimeout(r, 1000));
