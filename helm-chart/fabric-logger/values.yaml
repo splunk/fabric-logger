@@ -28,6 +28,10 @@ secrets:
     # keyItem: key.pem
     # tls: hlf--peer-tlscert
     # tlsItem: tlscacert.pem
+    # clientCert: hlf--peer-clientcert
+    # clientCertItem: clientCert.pem
+    # clientKey: hlf--peer-clientkey
+    # clientKeyItem: clientKey.pem
 
 peer:
   mspName: PeerMSP

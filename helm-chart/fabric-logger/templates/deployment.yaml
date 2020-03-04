@@ -38,6 +38,14 @@ spec:
             - mountPath: /var/hyperledger/msp/tlscacert
               name: tls-cert
             {{- end }}
+            {{- if .Values.secrets.peer.clientCert }}
+            - mountPath: "/var/hyperledger/msp/signcerts/clientCert.pem"
+              name: id-clientCert
+            {{- end }}
+            {{- if .Values.secrets.peer.clientKey }}
+            - mountPath: "/var/hyperledger/msp/keystore/clientKey.pem"
+              name: id-clientKey
+            {{- end }}
           ports:
             - name: http
               containerPort: 8080
@@ -57,6 +65,14 @@ spec:
             value: "/var/hyperledger/msp/keystore/key.pem"
           - name: FABRIC_CERTFILE
             value: "/var/hyperledger/msp/signcerts/cert.pem"
+          {{- if .Values.secrets.peer.clientCert }}
+          - name: FABRIC_CLIENT_CERTFILE
+            value: "/var/hyperledger/msp/signcerts/clientCert.pem"
+          {{- end }}
+          {{- if .Values.secrets.peer.clientKey }}
+          - name: FABIC_CLIENT_KEYFILE
+            value: "/var/hyperledger/msp/keystore/clientKey.pem"
+          {{- end }}
           - name: FABRIC_MSP
             value: {{ .Values.peer.mspName | quote }}
           - name: FABRIC_PEER
@@ -132,6 +148,27 @@ spec:
           items:
             - key: tlscacert.pem
               path: tlscacert.pem
+      {{- end }}
+
+      {{- if .Values.secrets.peer.clientKey }}
+      - name: id-clientKey
+        secret:
+          secretName: {{ .Values.secrets.peer.clientKey }}
+          {{- if .Values.secrets.peer.clientKeyItem }}
+          items:
+            - key: {{ .Values.secrets.peer.clientKeyItem }}
+              path: clientKey.pem
+          {{- end }}
+      {{- end}}
+      {{- if .Values.secrets.peer.clientCert }}
+      - name: id-clientCert
+        secret:
+          secretName: {{ .Values.secrets.peer.clientCert }}
+          {{- if .Values.secrets.peer.clientCertItem }}
+          items:
+            - key: {{ .Values.secrets.peer.clientCertItem }}
+              path: clientCert.pem
+          {{- end }}
       {{- end }}
 
       {{- with .Values.nodeSelector }}
