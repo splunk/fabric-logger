@@ -38,12 +38,12 @@ spec:
             - mountPath: /var/hyperledger/msp/tlscacert
               name: tls-cert
             {{- end }}
-            {{- if .Values.secrets.peer.clientCert }}
-            - mountPath: "/var/hyperledger/msp/signcerts/clientCert.pem"
+            {{- if or .Values.secrets.peer.clientCert .Values.secrets.peer.create }}
+            - mountPath: "/var/hyperledger/tls/clientCert.pem"
               name: id-clientCert
             {{- end }}
-            {{- if .Values.secrets.peer.clientKey }}
-            - mountPath: "/var/hyperledger/msp/keystore/clientKey.pem"
+            {{- if or .Values.secrets.peer.clientKey .Values.secrets.peer.create }}
+            - mountPath: "/var/hyperledger/tls/clientKey.pem"
               name: id-clientKey
             {{- end }}
           ports:
@@ -67,11 +67,11 @@ spec:
             value: "/var/hyperledger/msp/signcerts/cert.pem"
           {{- if .Values.secrets.peer.clientCert }}
           - name: FABRIC_CLIENT_CERTFILE
-            value: "/var/hyperledger/msp/signcerts/clientCert.pem"
+            value: "/var/hyperledger/tls/clientCert.pem"
           {{- end }}
           {{- if .Values.secrets.peer.clientKey }}
           - name: FABIC_CLIENT_KEYFILE
-            value: "/var/hyperledger/msp/keystore/clientKey.pem"
+            value: "/var/hyperledger/tls/clientKey.pem"
           {{- end }}
           - name: FABRIC_MSP
             value: {{ .Values.peer.mspName | quote }}
@@ -159,7 +159,15 @@ spec:
             - key: {{ .Values.secrets.peer.clientKeyItem }}
               path: clientKey.pem
           {{- end }}
+      {{- else if .Values.secrets.peer.create }}
+      - name: id-clientKey
+        secret:
+          secretName: fabric-logger--{{ .Values.peer.orgDomain | lower }}--{{ .Values.peer.peerName  | lower }}-tls
+          items:
+            - key: clientKey.pem
+              path: clientKey.pem
       {{- end}}
+
       {{- if .Values.secrets.peer.clientCert }}
       - name: id-clientCert
         secret:
@@ -169,6 +177,13 @@ spec:
             - key: {{ .Values.secrets.peer.clientCertItem }}
               path: clientCert.pem
           {{- end }}
+      {{- else if .Values.secrets.peer.create }}
+      - name: id-clientCert
+        secret:
+          secretName: fabric-logger--{{ .Values.peer.orgDomain | lower }}--{{ .Values.peer.peerName  | lower }}-tls
+          items:
+            - key: clientCert.pem
+              path: clientCert.pem
       {{- end }}
 
       {{- with .Values.nodeSelector }}
