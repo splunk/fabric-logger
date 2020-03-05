@@ -40,11 +40,11 @@ spec:
             {{- end }}
             {{- if or .Values.secrets.peer.clientCert .Values.secrets.peer.create }}
             - mountPath: "/var/hyperledger/tls/clientCert.pem"
-              name: id-clientCert
+              name: id-clientcert
             {{- end }}
             {{- if or .Values.secrets.peer.clientKey .Values.secrets.peer.create }}
             - mountPath: "/var/hyperledger/tls/clientKey.pem"
-              name: id-clientKey
+              name: id-clientkey
             {{- end }}
           ports:
             - name: http
@@ -151,7 +151,7 @@ spec:
       {{- end }}
 
       {{- if .Values.secrets.peer.clientKey }}
-      - name: id-clientKey
+      - name: id-clientkey
         secret:
           secretName: {{ .Values.secrets.peer.clientKey }}
           {{- if .Values.secrets.peer.clientKeyItem }}
@@ -160,7 +160,7 @@ spec:
               path: clientKey.pem
           {{- end }}
       {{- else if .Values.secrets.peer.create }}
-      - name: id-clientKey
+      - name: id-clientkey
         secret:
           secretName: fabric-logger--{{ .Values.peer.orgDomain | lower }}--{{ .Values.peer.peerName  | lower }}-tls
           items:
@@ -169,7 +169,7 @@ spec:
       {{- end}}
 
       {{- if .Values.secrets.peer.clientCert }}
-      - name: id-clientCert
+      - name: id-clientcert
         secret:
           secretName: {{ .Values.secrets.peer.clientCert }}
           {{- if .Values.secrets.peer.clientCertItem }}
@@ -178,7 +178,7 @@ spec:
               path: clientCert.pem
           {{- end }}
       {{- else if .Values.secrets.peer.create }}
-      - name: id-clientCert
+      - name: id-clientcert
         secret:
           secretName: fabric-logger--{{ .Values.peer.orgDomain | lower }}--{{ .Values.peer.peerName  | lower }}-tls
           items:
