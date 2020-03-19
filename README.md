@@ -15,9 +15,15 @@ Additionally, Hyperledger Fabric users depend on ACLs defined in the `configtx.y
 
 ## Activating Fabric Logger
 
-Once the fabric logger starts up, it will attempt to connect to its configured peer. If you want to have it start listening on a channel, you can use the following HTTP endpoint:
+Once the fabric logger starts up, it will attempt to connect to its configured peer. If you want to have it start listening on a channel, you can use the following HTTP endpoints:
 
-    curl http://fabric-logger:8080/channels/${CHANNEL_NAME}
+### Ledger Blocks and Transactions
+
+    curl -X PUT http://fabric-logger:8080/channels/${CHANNEL_NAME}
+
+### Chaincode events
+
+    curl -X PUT -H "Content-Type: application/json" -d '{"filter":"${EVENT_REGULAR_EXPRESSION}"}' http://fabric-logger:8080/channels/${CHANNEL_NAME}/events/${CHAINCODE_ID}
 
 ## Running in Docker
 

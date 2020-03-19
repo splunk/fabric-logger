@@ -40,8 +40,8 @@ export async function initClient(): Promise<void> {
     client = FabricClient.loadFromConfig(NETWORK_CONFIG);
 
     if (FABRIC_CLIENT_CERTFILE && FABRIC_CLIENT_KEYFILE) {
-        const clientkey =  await readFile(FABRIC_CLIENT_KEYFILE, { encoding: 'utf-8' });
-        const clientcert =  await readFile(FABRIC_CLIENT_CERTFILE, { encoding: 'utf-8' });
+        const clientkey = await readFile(FABRIC_CLIENT_KEYFILE, { encoding: 'utf-8' });
+        const clientcert = await readFile(FABRIC_CLIENT_CERTFILE, { encoding: 'utf-8' });
         client.setTlsClientCertAndKey(clientcert, clientkey);
     }
 
@@ -67,6 +67,10 @@ export function getChannelId(data: FabricClient.BlockData): string {
 
 export const handleBlockError = (channelName: string) => (e: Error) => {
     error('Failed to receive the tx event for channel=%s ::', channelName, e);
+};
+
+export const handleChaincodeEventError = (channelName: string) => (e: Error) => {
+    error('Failed to receive the chaincode event for channel=%s ::', channelName, e);
 };
 
 const isFilteredBlock = (block: FabricClient.Block | FabricClient.FilteredBlock): block is FabricClient.FilteredBlock =>
@@ -129,7 +133,7 @@ export function parseChaincodeSpecInput(msg: FabricClient.BlockData): void {
     }
 }
 
-export function getMessageTimetamp(msg: FabricClient.BlockData): string | undefined {
+export function getMessageTimestamp(msg: FabricClient.BlockData): string | undefined {
     return get(msg, 'payload.header.channel_header.timestamp');
 }
 
@@ -157,7 +161,7 @@ export const processBlock = (channelName: string, initCheckpoint: number) => (
                     ...msg,
                 },
                 getChannelType(msg),
-                getMessageTimetamp(msg)
+                getMessageTimestamp(msg)
             );
         } else {
             debug(`Ignoring message without payload: %O`, msg);
@@ -196,7 +200,7 @@ export async function registerListener(channelName: string): Promise<void> {
     eventHubs[channelName] = channelEventHub;
 
     const latestCheckpoint = getChannelCheckpoint(channelName, 0);
-    info('Subscribing to block evnets on channel=%s from block number=%d', channelName, latestCheckpoint);
+    info('Subscribing to block events on channel=%s from block number=%d', channelName, latestCheckpoint);
     channelEventHub.registerBlockEvent(processBlock(channelName, latestCheckpoint), handleBlockError(channelName), {
         startBlock: latestCheckpoint || 1,
     });
@@ -207,6 +211,79 @@ export async function registerListener(channelName: string): Promise<void> {
                 error('Failed to connect channel event hub', err);
                 reject(err);
             } else {
+                resolve();
+            }
+        });
+    });
+}
+
+export const processChaincodeEvent = (channelName: string) => (
+    event: FabricClient.ChaincodeEvent,
+    blockNumber: number | undefined,
+    txid: string | undefined,
+    txstatus: string | undefined
+) => {
+    info('Proccessing chaincode event');
+    logEvent(
+        {
+            block_number: blockNumber,
+            channel: channelName,
+            transaction_id: txid,
+            transaction_status: txstatus,
+            event: event,
+            payload_message: event.payload.toString(),
+        },
+        'ccevent'
+    );
+    info(
+        'Completed processing chaincode event on block=%s transaction_id=%s transaction_status=%s',
+        blockNumber,
+        txid,
+        txstatus
+    );
+};
+
+export async function registerChaincodeEvent(
+    channelName: string,
+    chaincodeId: string,
+    filter: string
+): Promise<void> {
+    if (client == null) {
+        throw new Error('Fabric client not initialized');
+    }
+    const channel: FabricClient.Channel = client.getChannel(channelName);
+    let channelEventHub: FabricClient.ChannelEventHub;
+    try {
+        info('Creating new event hub for channel=%s', channelName);
+        channelEventHub = channel.newChannelEventHub(FABRIC_PEER);
+    } catch (err) {
+        if (err.message == `Peer with name "${FABRIC_PEER}" not assigned to this channel`) {
+            info('Assigning fabric peer=%s to channel=%s', FABRIC_PEER, channelName);
+            channel.addPeer(client.getPeer(FABRIC_PEER), FABRIC_MSP);
+            channelEventHub = channel.newChannelEventHub(FABRIC_PEER);
+        } else {
+            error('Failed to create channel event hub for channel=%s', channelName, err);
+            throw err;
+        }
+    }
+    const name = `${channelName}_${chaincodeId}_${filter}`;
+    eventHubs[name] = channelEventHub;
+
+    channelEventHub.registerChaincodeEvent(
+        chaincodeId,
+        filter,
+        processChaincodeEvent(channelName),
+        handleChaincodeEventError(channelName)
+    );
+
+    return new Promise((resolve, reject) => {
+        info('Connecting to eventhub');
+        channelEventHub.connect(true, err => {
+            if (err != null) {
+                error('Failed to connect channel event hub', err);
+                reject(err);
+            } else {
+                info('Connected to eventhub');
                 resolve();
             }
         });
