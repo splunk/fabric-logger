@@ -38,6 +38,14 @@ spec:
             - mountPath: /var/hyperledger/msp/tlscacert
               name: tls-cert
             {{- end }}
+            {{- if or .Values.secrets.peer.clientCert .Values.secrets.peer.create }}
+            - mountPath: "/var/hyperledger/tls/signcerts"
+              name: id-clientcert
+            {{- end }}
+            {{- if or .Values.secrets.peer.clientKey .Values.secrets.peer.create }}
+            - mountPath: "/var/hyperledger/tls/keystore"
+              name: id-clientkey
+            {{- end }}
           ports:
             - name: http
               containerPort: 8080
@@ -57,6 +65,14 @@ spec:
             value: "/var/hyperledger/msp/keystore/key.pem"
           - name: FABRIC_CERTFILE
             value: "/var/hyperledger/msp/signcerts/cert.pem"
+          {{- if or .Values.secrets.peer.clientCert .Values.secrets.peer.create }}
+          - name: FABRIC_CLIENT_CERTFILE
+            value: "/var/hyperledger/tls/signcerts/clientCert.pem"
+          {{- end }}
+          {{- if or .Values.secrets.peer.clientKey .Values.secrets.peer.create }}
+          - name: FABRIC_CLIENT_KEYFILE
+            value: "/var/hyperledger/tls/keystore/clientKey.pem"
+          {{- end }}
           - name: FABRIC_MSP
             value: {{ .Values.peer.mspName | quote }}
           - name: FABRIC_PEER
@@ -132,6 +148,42 @@ spec:
           items:
             - key: tlscacert.pem
               path: tlscacert.pem
+      {{- end }}
+
+      {{- if .Values.secrets.peer.clientKey }}
+      - name: id-clientkey
+        secret:
+          secretName: {{ .Values.secrets.peer.clientKey }}
+          {{- if .Values.secrets.peer.clientKeyItem }}
+          items:
+            - key: {{ .Values.secrets.peer.clientKeyItem }}
+              path: clientKey.pem
+          {{- end }}
+      {{- else if .Values.secrets.peer.create }}
+      - name: id-clientkey
+        secret:
+          secretName: fabric-logger--{{ .Values.peer.orgDomain | lower }}--{{ .Values.peer.peerName  | lower }}-msp
+          items:
+            - key: clientKey.pem
+              path: clientKey.pem
+      {{- end}}
+
+      {{- if .Values.secrets.peer.clientCert }}
+      - name: id-clientcert
+        secret:
+          secretName: {{ .Values.secrets.peer.clientCert }}
+          {{- if .Values.secrets.peer.clientCertItem }}
+          items:
+            - key: {{ .Values.secrets.peer.clientCertItem }}
+              path: clientCert.pem
+          {{- end }}
+      {{- else if .Values.secrets.peer.create }}
+      - name: id-clientcert
+        secret:
+          secretName: fabric-logger--{{ .Values.peer.orgDomain | lower }}--{{ .Values.peer.peerName  | lower }}-msp
+          items:
+            - key: clientCert.pem
+              path: clientCert.pem
       {{- end }}
 
       {{- with .Values.nodeSelector }}
