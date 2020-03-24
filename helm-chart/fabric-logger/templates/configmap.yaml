@@ -29,7 +29,7 @@ data:
       {{ .Values.peer.peerName }}:
         url: {{ .Values.peer.peerScheme }}://{{ .Values.peer.peerAddress }}:{{ .Values.peer.peerPort }}
         grpcOptions:
-          ssl-target-name-override: {{ .Values.peer.peerName }}
+          ssl-target-name-override: {{ .Values.peer.peerAddress }}
           grpc.keepalive_time_ms: 600000
         {{- if eq .Values.peer.peerScheme "grpcs"}}
         tlsCACerts:
