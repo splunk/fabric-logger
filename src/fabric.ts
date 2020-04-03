@@ -223,7 +223,7 @@ export const processChaincodeEvent = (channelName: string) => (
     txid: string | undefined,
     txstatus: string | undefined
 ) => {
-    info('Proccessing chaincode event');
+    info('Processing chaincode event');
     logEvent(
         {
             block_number: blockNumber,
