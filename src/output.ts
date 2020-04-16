@@ -4,6 +4,7 @@ import {
     SPLUNK_HEC_TOKEN,
     SPLUNK_HOST,
     SPLUNK_PORT,
+    SPLUNK_HEC_URL,
     FABRIC_PEER,
     SOURCETYPE_PREFIX,
     SPLUNK_INDEX,
@@ -65,7 +66,9 @@ export async function writeEventToFile(event: SendContext) {
 export function initializeLogOutput() {
     switch (LOGGING_LOCATION) {
         case 'splunk':
-            const url = 'https://' + SPLUNK_HOST + ':' + SPLUNK_PORT;
+            // Maintain Backwards compatibility with previous versions of fabric logger that used SPLUNK_HOST and PORT without specifying SSL
+            // See https://github.com/splunk/fabric-logger/issues/32
+            const url = SPLUNK_HEC_URL != null ? SPLUNK_HEC_URL : `https://${SPLUNK_HOST}:${SPLUNK_PORT}`;
             currentLogger = new SplunkLogger({ token: SPLUNK_HEC_TOKEN, url });
             (currentLogger as any).eventFormatter = (event: any): any => event;
             info(`Using Splunk HEC at ${url}`);

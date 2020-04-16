@@ -81,6 +81,8 @@ spec:
             value: {{ .Values.peer.username | quote }}
           - name: SPLUNK_HEC_TOKEN
             value: {{ .Values.splunk.hec.token | quote }}
+          - name: SPLUNK_HEC_URL
+            value: {{ .Values.splunk.hec.url | quote }}
           - name: SPLUNK_HOST
             value: {{ .Values.splunk.hec.host | quote }}
           - name: SPLUNK_PORT

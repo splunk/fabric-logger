@@ -60,9 +60,9 @@ app.put('/channels/:channel', async (req, res) => {
 app.put('/channels/:channel/events/:ccid', async (req, res) => {
     const channel = req.params['channel'];
     const ccid = req.params['ccid'];
-    if (!req.body.filter){
-        res.status(400)
-        res.send('Failed to register Chaincode event listener.  Request requires filter parameter in body')
+    if (!req.body.filter) {
+        res.status(400);
+        res.send('Failed to register Chaincode event listener.  Request requires filter parameter in body');
     }
     const filter = req.body.filter.toString();
     const name = `${channel}_${ccid}_${filter}`;

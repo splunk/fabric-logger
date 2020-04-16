@@ -39,8 +39,7 @@ Running the Fabric Logger in Docker is recommended. A sample docker-compose entr
                 - FABRIC_MSP=<msp name>
                 - FABRIC_PEER=peer0.example.com
                 - SPLUNK_HEC_TOKEN=12345678-ABCD-EFGH-IJKL-123456789012
-                - SPLUNK_HOST=splunk.example.com
-                - SPLUNK_PORT=8088
+                - SPLUNK_HEC_URL=https://splunk.example.com:8088
                 - SPLUNK_INDEX=hyperledger_logs
                 - LOGGING_LOCATION=splunk
                 - NETWORK_CONFIG=network.yaml
@@ -72,8 +71,7 @@ We also include a helm chart for Kubernetes deployments. First set your `values.
     splunk:
         hec:
             token: 12345678-ABCD-EFGH-IJKL-123456789012
-            port: 8088
-            host: splunk-splunk-kube.splunk.svc.cluster.local
+            url: https://splunk-splunk-kube.splunk.svc.cluster.local:8088
         index: hyperledger_logs
 
     secrets:
@@ -152,8 +150,9 @@ You will also need to update the `network.yaml` with appropriate values for you 
 | FABRIC_PEER            | The hostname of the peer to connect to.                                                                                                                  | None (Required)    |
 | LOGGING_LOCATION       | The logging location, valid values are `splunk` or `stdout`.                                                                                             | `splunk`           |
 | SPLUNK_HEC_TOKEN       | If using `splunk` as the logging location, the HEC token value.                                                                                          | None               |
-| SPLUNK_HOST            | Splunk hostname.                                                                                                                                         | None               |
-| SPLUNK_PORT            | Splunk HEC port.                                                                                                                                         | `8088`             |
+| SPLUNK_HEC_URL         | If using `splunk` as the logging location, the url to the splunk instance event collector.                                                               | None               |
+| SPLUNK_HOST  DEPRECATED| Splunk hostname. DEPRECATED Please use SPLUNK_HEC_URL.                                                                                                   | None               |
+| SPLUNK_PORT  DEPRECATED| Splunk HEC port. DEPRECATED Please use SPLUNK_HEC_URL.                                                                                                   | `8088`             |
 | SPLUNK_INDEX           | Splunk index to log to.                                                                                                                                  | `hyperledger_logs` |
 | NETWORK_CONFIG         | A network configuration object, an example can be found [here](https://fabric-sdk-node.github.io/release-1.4/tutorial-network-config.html)               | None (Required)    |
 | CHECKPOINTS_FILE       | A file used to hold checkpoints for each channel watched. If running in docker, be sure to mount a volume so that the file is not lost between restarts. | `.checkpoints`     |
