@@ -62,11 +62,11 @@ export function initializeEnvironment() {
             checkRequiredEnvVar(SPLUNK_HEC_URL, 'SPLUNK_HEC_URL');
         } else {
             checkRequiredEnvVar(SPLUNK_HOST, 'SPLUNK_HOST');
-            checkRequiredEnvVar(SPLUNK_HEC_TOKEN, 'SPLUNK_HEC_TOKEN');
             if (SPLUNK_PORT % 1 !== 0 || SPLUNK_PORT < 1 || SPLUNK_PORT > 65535) {
                 throw new Error(`Invalid SPLUNK_PORT value specified - needs to be a valid port number`);
             }
         }
+        checkRequiredEnvVar(SPLUNK_HEC_TOKEN, 'SPLUNK_HEC_TOKEN');
     }
     checkRequiredEnvVar(FABRIC_PEER, 'FABRIC_PEER');
     checkRequiredEnvVar(FABRIC_MSP, 'FABRIC_MSP');
