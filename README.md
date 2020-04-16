@@ -155,6 +155,6 @@ You will also need to update the `network.yaml` with appropriate values for you 
 | SPLUNK_HOST            | Splunk hostname.                                                                                                                                         | None               |
 | SPLUNK_PORT            | Splunk HEC port.                                                                                                                                         | `8088`             |
 | SPLUNK_INDEX           | Splunk index to log to.                                                                                                                                  | `hyperledger_logs` |
-| NETWORK_CONFIG         | A network configuration object, an example can be found [here](https://fabric-sdk-node.github.io/release-1.4/tutorial-network-config.html)               | None (Required)    |
+| NETWORK_CONFIG         | A network configuration object, an example can be found [here](https://hyperledger.github.io/fabric-sdk-node/release-1.4/tutorial-network-config.html)   | None (Required)    |
 | CHECKPOINTS_FILE       | A file used to hold checkpoints for each channel watched. If running in docker, be sure to mount a volume so that the file is not lost between restarts. | `.checkpoints`     |
 | SOURCETYPE_PREFIX      | A prefix used for the sourcetype when writing to Splunk.                                                                                                 | `fabric_logger:`   |
