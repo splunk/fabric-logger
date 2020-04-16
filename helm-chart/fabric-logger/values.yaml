@@ -6,7 +6,7 @@ replicaCount: 1
 
 image:
   repository: splunkdlt/fabric-logger
-  tag: release-1.1.1
+  tag: latest
   pullPolicy: IfNotPresent
 
 nameOverride: ""
@@ -50,8 +50,7 @@ loggingLocation: splunk
 splunk:
   hec:
     token: 00000000-0000-0000-0000-000000000000
-    port: 8088
-    host: splunk.example.com
+    url: https://splunk.example.com:8088
   index: hyperledger_logs
 
 ingress:

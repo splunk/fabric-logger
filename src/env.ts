@@ -20,10 +20,12 @@ export const LOGGING_LOCATION: 'splunk' | 'stdout' | 'file' =
     process.env.LOGGING_LOCATION === 'stdout' ? 'stdout' : process.env.LOGGING_LOCATION === 'file' ? 'file' : 'splunk';
 /** A file used to hold checkpoints for each channel watched. If running in docker, be sure to mount a volume so that the file is not lost between restarts */
 export const CHECKPOINTS_FILE: string = process.env.CHECKPOINTS_FILE || '.checkpoints';
-/** Splunk hostname */
+/** DEPRECATED Splunk hostname */
 export const SPLUNK_HOST: string = process.env.SPLUNK_HOST!;
-/** Splunk HEC port */
+/** DEPRECATED Splunk HEC port */
 export const SPLUNK_PORT: number = parseNumber(process.env.SPLUNK_PORT) || 8088;
+/** If using `splunk` as the logging location, the URL to splunk instance event collector */
+export const SPLUNK_HEC_URL: string = process.env.SPLUNK_HEC_URL!;
 /** If using `splunk` as the logging location, the HEC token value */
 export const SPLUNK_HEC_TOKEN: string = process.env.SPLUNK_HEC_TOKEN!;
 /** Splunk index to log to */
@@ -56,11 +58,15 @@ export function checkRequiredEnvVar(val: string | undefined, variable: string): 
 
 export function initializeEnvironment() {
     if (LOGGING_LOCATION === 'splunk') {
-        checkRequiredEnvVar(SPLUNK_HOST, 'SPLUNK_HOST');
-        checkRequiredEnvVar(SPLUNK_HEC_TOKEN, 'SPLUNK_HEC_TOKEN');
-        if (SPLUNK_PORT % 1 !== 0 || SPLUNK_PORT < 1 || SPLUNK_PORT > 65535) {
-            throw new Error(`Invalid SPLUNK_PORT value specified - needs to be a valid port number`);
+        if (SPLUNK_HEC_URL != null) {
+            checkRequiredEnvVar(SPLUNK_HEC_URL, 'SPLUNK_HEC_URL');
+        } else {
+            checkRequiredEnvVar(SPLUNK_HOST, 'SPLUNK_HOST');
+            if (SPLUNK_PORT % 1 !== 0 || SPLUNK_PORT < 1 || SPLUNK_PORT > 65535) {
+                throw new Error(`Invalid SPLUNK_PORT value specified - needs to be a valid port number`);
+            }
         }
+        checkRequiredEnvVar(SPLUNK_HEC_TOKEN, 'SPLUNK_HEC_TOKEN');
     }
     checkRequiredEnvVar(FABRIC_PEER, 'FABRIC_PEER');
     checkRequiredEnvVar(FABRIC_MSP, 'FABRIC_MSP');

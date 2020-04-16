@@ -243,11 +243,7 @@ export const processChaincodeEvent = (channelName: string) => (
     );
 };
 
-export async function registerChaincodeEvent(
-    channelName: string,
-    chaincodeId: string,
-    filter: string
-): Promise<void> {
+export async function registerChaincodeEvent(channelName: string, chaincodeId: string, filter: string): Promise<void> {
     if (client == null) {
         throw new Error('Fabric client not initialized');
     }
