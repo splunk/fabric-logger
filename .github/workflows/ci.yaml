@@ -16,8 +16,7 @@ jobs:
     docker-image:
         runs-on: ubuntu-latest
         container:
-            image: node:12-alpine
-            volumes: ['/var/run/docker.sock:/var/run/docker.sock']
+            image: docker:stable
         steps:
             - uses: actions/checkout@v2
             - name: Build docker image
