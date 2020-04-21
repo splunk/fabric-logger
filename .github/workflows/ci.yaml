@@ -6,7 +6,7 @@ jobs:
     build:
         runs-on: ubuntu-latest
         container:
-            image: splunkdlt/scfe-ci@sha256:f3af6d7d65d2c5d67bfbba4d0029b7a9a6cdd15a2170a442aec765a6cffdaa49
+            image: node:12-alpine
         steps:
             - uses: actions/checkout@v2
             - name: Build fabric-logger CLI
@@ -16,7 +16,7 @@ jobs:
     docker-image:
         runs-on: ubuntu-latest
         container:
-            image: splunkdlt/scfe-ci@sha256:f3af6d7d65d2c5d67bfbba4d0029b7a9a6cdd15a2170a442aec765a6cffdaa49
+            image: node:12-alpine
             volumes: ['/var/run/docker.sock:/var/run/docker.sock']
         steps:
             - uses: actions/checkout@v2
@@ -33,7 +33,7 @@ jobs:
     unit-tests:
         runs-on: ubuntu-latest
         container:
-            image: splunkdlt/scfe-ci@sha256:f3af6d7d65d2c5d67bfbba4d0029b7a9a6cdd15a2170a442aec765a6cffdaa49
+            image: node:12-alpine
         steps:
             - uses: actions/checkout@v2
             - name: Run unit tests and linter
@@ -46,7 +46,7 @@ jobs:
     check-format:
         runs-on: ubuntu-latest
         container:
-            image: splunkdlt/scfe-ci@sha256:f3af6d7d65d2c5d67bfbba4d0029b7a9a6cdd15a2170a442aec765a6cffdaa49
+            image: node:12-alpine
         steps:
             - uses: actions/checkout@v2
             - name: Check code format
