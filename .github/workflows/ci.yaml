@@ -1,0 +1,56 @@
+name: CI
+
+on: [push]
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        container:
+            image: node:12-alpine
+        steps:
+            - uses: actions/checkout@v2
+            - name: Build fabric-logger CLI
+              run: |
+                  yarn install --frozen-lockfile
+                  yarn build
+    docker-image:
+        runs-on: ubuntu-latest
+        container:
+            image: docker:stable
+        steps:
+            - uses: actions/checkout@v2
+            - name: Build docker image
+              run: docker build -t fabric-logger .
+            - name: Login to docker registry
+              run: docker login docker.pkg.github.com -u $GITHUB_ACTOR -p $GITHUB_TOKEN
+              env:
+                  GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+            - name: Publish docker image
+              run: |
+                  docker tag fabric-logger docker.pkg.github.com/$GITHUB_REPOSITORY/fabric-logger:$GITHUB_SHA
+                  docker push docker.pkg.github.com/$GITHUB_REPOSITORY/fabric-logger:$GITHUB_SHA
+    unit-tests:
+        runs-on: ubuntu-latest
+        container:
+            image: node:12-alpine
+        steps:
+            - uses: actions/checkout@v2
+            - name: Run unit tests and linter
+              run: |
+                  yarn install --frozen-lockfile
+                  yarn build
+                  yarn test --verbose
+              env:
+                  CI: true
+    check-format:
+        runs-on: ubuntu-latest
+        container:
+            image: node:12-alpine
+        steps:
+            - uses: actions/checkout@v2
+            - name: Check code format
+              run: |
+                  yarn install --frozen-lockfile
+                  yarn lint
+              env:
+                  CI: true
