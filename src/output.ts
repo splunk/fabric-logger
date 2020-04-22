@@ -118,7 +118,7 @@ export function normalizeTime(timeValue: string | number | null | undefined, now
 export function logEvent(event: any, sourcetype: string, timeField: string | number | null | undefined = null) {
     const message = convertBuffersToHex(event);
     currentLogger.send({
-        message,
+        message: JSON.stringify(message),
         metadata: {
             source: FABRIC_PEER,
             sourcetype: SOURCETYPE_PREFIX + sourcetype,
