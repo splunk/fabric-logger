@@ -41,7 +41,7 @@ class Fabriclogger extends Command {
         } catch (e) {
             error(e.message, { exit: 1 });
         } finally {
-            await shutdownAll(this.resources, 10_000).catch(e => {
+            await shutdownAll(this.resources, 10_000).catch((e) => {
                 error('Failed to shut down resources', e);
             });
         }

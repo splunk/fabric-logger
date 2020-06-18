@@ -13,7 +13,7 @@ export function convertBuffersToHex(obj: any, path: string[] = []): any {
         return obj.map((v, i) => convertBuffersToHex(v, [...path, String(i)]));
     } else if (isPlainObject(obj)) {
         const result: { [k: string]: any } = {};
-        Object.keys(obj).forEach(k => {
+        Object.keys(obj).forEach((k) => {
             const v = obj[k];
             if (v instanceof Buffer) {
                 // debug('Converting buffer property to hex at path %o.%o', path.join('.'), k);

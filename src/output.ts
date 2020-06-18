@@ -11,22 +11,21 @@ const exists = promisify(fs.exists);
 const writeFile = promisify(fs.writeFile);
 const mkdir = promisify(fs.mkdir);
 
-const { debug, info, error } = createModuleDebug('output');
-
+const { debug } = createModuleDebug('output');
 
 export interface Output extends ManagedResource {
-    logEvent(event: any, sourcetype: string, timeField: any, source: string): void;
+    logEvent(event: any, sourcetype: string, timeField: Date | undefined, source: string): void;
     waitUntilAvailable?(maxTime: number): Promise<void>;
 }
 
 export class HecOutput implements Output, ManagedResource {
-    constructor(private eventsHec: HecClient, private metricsHec: HecClient, private prefix: string) { }
-    public logEvent(message: any, sourcetype: string, timeField: any, source: string): void {
+    constructor(private eventsHec: HecClient, private metricsHec: HecClient, private prefix: string) {}
+    public logEvent(message: any, sourcetype: string, timeField: Date | undefined, source: string): void {
         const event = convertBuffersToHex(message);
         this.eventsHec.pushEvent({
             time: timeField ? timeField : new Date(),
             body: {
-                ...event
+                ...event,
             },
             metadata: {
                 source: source,
@@ -45,7 +44,7 @@ export class HecOutput implements Output, ManagedResource {
         ]).then(() => Promise.resolve());
     }
 
-    public shutdown() {
+    public async shutdown() {
         return Promise.all([this.eventsHec.shutdown(), this.metricsHec.shutdown()]).then(() => {
             /* noop */
         });
@@ -55,7 +54,7 @@ export class HecOutput implements Output, ManagedResource {
 export class FileOutput implements Output {
     private filenameSafe = (name: string): string => name.replace(/[^\w]+/g, '_');
 
-    constructor(private outputDir: string) { }
+    constructor(private outputDir: string) {}
 
     public async createOutputDirectory(): Promise<string> {
         const tempDir = path.join(process.cwd(), 'temp');
@@ -80,14 +79,15 @@ export class FileOutput implements Output {
         debug(`Writing event to file`, fileName);
         writeFile(path.join(this.outputDir, fileName), JSON.stringify(event, null, 2), { encoding: 'utf-8' });
     }
+
     public async shutdown() {
         // noop
     }
-
 }
 
 export class ConsoleOutput implements Output {
     logEvent(message: any): void {
+        // eslint-disable-next-line no-console
         console.log(JSON.stringify(message));
     }
     public async shutdown() {
@@ -99,7 +99,11 @@ export async function createOutput(config: FabricloggerConfig, baseHecClient: He
     if (config.output.type === 'hec') {
         const eventsHec = config.hec.default ? baseHecClient.clone(config.hec.default) : baseHecClient;
         const metricsHec = config.hec.default ? baseHecClient.clone(config.hec.default) : baseHecClient;
-        const hecOutput = new HecOutput(eventsHec, metricsHec, config.output.sourceTypePrefix ? config.output.sourceTypePrefix : '');
+        const hecOutput = new HecOutput(
+            eventsHec,
+            metricsHec,
+            config.output.sourceTypePrefix ? config.output.sourceTypePrefix : ''
+        );
         return hecOutput;
     } else if (config.output.type === 'console') {
         return new ConsoleOutput();

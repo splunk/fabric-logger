@@ -31,5 +31,5 @@ export function deepMerge<T extends { [k: string]: any }>(a: T, b: T): T {
 }
 
 export function isEmpty(obj: object): boolean {
-    return obj == null || Object.values(obj).filter(v => v != null).length === 0;
+    return obj == null || Object.values(obj).filter((v) => v != null).length === 0;
 }

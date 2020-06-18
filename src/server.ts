@@ -19,7 +19,7 @@ export class FabricLoggerServer implements ManagedResource {
         this.initializeRoutes();
     }
 
-    public async shutdown(maxTime?: number | undefined): Promise<void> {
+    public async shutdown(): Promise<void> {
         this.server.close();
     }
 
@@ -124,7 +124,7 @@ export class FabricLoggerServer implements ManagedResource {
     public async startServer(host: string, port: number): Promise<any> {
         debug('Starting webserver on host=%s and port=%d', host, port);
         new Promise((resolve, reject) => {
-            this.server = this.app.listen(port, host, err => {
+            this.server = this.app.listen(port, host, (err) => {
                 if (err) {
                     reject(err);
                 } else {

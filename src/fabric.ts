@@ -18,7 +18,7 @@ import { ManagedResource } from '@splunkdlt/managed-resource';
 const { debug, info, error } = createModuleDebug('fabric');
 const readFile = promisify(fs.readFile);
 
-export class FabricListener implements ManagedResource{
+export class FabricListener implements ManagedResource {
     private client: FabricClient | undefined;
     private eventHubs: { [channelName: string]: FabricClient.ChannelEventHub } = {};
     private checkpoint: Checkpoint;
@@ -30,9 +30,10 @@ export class FabricListener implements ManagedResource{
         this.config = config;
         this.output = output;
     }
-    public async shutdown(maxTime?: number | undefined) {
+
+    public async shutdown() {
         for (const eventHub in this.eventHubs) {
-            this.eventHubs[eventHub].close()
+            this.eventHubs[eventHub].close();
         }
     }
 
@@ -67,11 +68,11 @@ export class FabricListener implements ManagedResource{
         for (const channel of this.checkpoint.getAllChannelsWithCheckpoints()) {
             info('Resuming listener for channel=%s', channel);
             await this.registerListener(channel);
-        }for (const cceventName of this.checkpoint.getAllChaincodeEventCheckpoints()){
-            info('Resuming listener for chaincode=%s', cceventName);
-            await this.registerChaincodeEvent(cceventName.channelName, cceventName.chaincodeId , cceventName.filter)
         }
-
+        for (const cceventName of this.checkpoint.getAllChaincodeEventCheckpoints()) {
+            info('Resuming listener for chaincode=%s', cceventName);
+            await this.registerChaincodeEvent(cceventName.channelName, cceventName.chaincodeId, cceventName.filter);
+        }
     }
 
     private getChannelType(data: FabricClient.BlockData): string {
@@ -95,7 +96,7 @@ export class FabricListener implements ManagedResource{
     isFilteredBlock = (block: FabricClient.Block | FabricClient.FilteredBlock): block is FabricClient.FilteredBlock =>
         'filtered_transactions' in block;
 
-        private processFilteredBlock(block: FabricClient.FilteredBlock) {
+    private processFilteredBlock(block: FabricClient.FilteredBlock) {
         error('Received unexpected filtered block', block);
     }
 
@@ -233,7 +234,7 @@ export class FabricListener implements ManagedResource{
         );
 
         return new Promise((resolve, reject) => {
-            channelEventHub.connect({ full_block: true }, err => {
+            channelEventHub.connect({ full_block: true }, (err) => {
                 if (err != null) {
                     error('Failed to connect channel event hub', err);
                     reject(err);
@@ -246,9 +247,9 @@ export class FabricListener implements ManagedResource{
 
     private processChaincodeEvent = (channelName: string, name: string, filter: string, chaincodeId: string) => (
         event: FabricClient.ChaincodeEvent,
-        blockNumber: number| undefined,
+        blockNumber: number | undefined,
         txid: string | undefined,
-        txstatus: string | undefined,
+        txstatus: string | undefined
     ) => {
         info('Processing chaincode event');
         this.output.logEvent(
@@ -261,10 +262,10 @@ export class FabricListener implements ManagedResource{
                 payload_message: event.payload.toString(),
             },
             'ccevent',
-            null, // TODO Get timestamp from block transaction
+            undefined, // TODO Get timestamp from block transaction
             this.config.peer
         );
-        if (blockNumber != undefined){
+        if (blockNumber != undefined) {
             this.checkpoint.storeChaincodeEventCheckpoint(name, channelName, filter, chaincodeId, +blockNumber);
         }
         info(
@@ -310,7 +311,7 @@ export class FabricListener implements ManagedResource{
 
         return new Promise((resolve, reject) => {
             info('Connecting to eventhub');
-            channelEventHub.connect(true, err => {
+            channelEventHub.connect(true, (err) => {
                 if (err != null) {
                     error('Failed to connect channel event hub', err);
                     reject(err);

@@ -151,8 +151,8 @@ You will also need to update the `network.yaml` with appropriate values for you 
 | LOGGING_LOCATION       | The logging location, valid values are `splunk` or `stdout`.                                                                                             | `splunk`           |
 | SPLUNK_HEC_TOKEN       | If using `splunk` as the logging location, the HEC token value.                                                                                          | None               |
 | SPLUNK_HEC_URL         | If using `splunk` as the logging location, the url to the splunk instance event collector.                                                               | None               |
-| SPLUNK_HOST  DEPRECATED| Splunk hostname. DEPRECATED Please use SPLUNK_HEC_URL.                                                                                                   | None               |
-| SPLUNK_PORT  DEPRECATED| Splunk HEC port. DEPRECATED Please use SPLUNK_HEC_URL.                                                                                                   | `8088`             |
+| SPLUNK_HOST DEPRECATED | Splunk hostname. DEPRECATED Please use SPLUNK_HEC_URL.                                                                                                   | None               |
+| SPLUNK_PORT DEPRECATED | Splunk HEC port. DEPRECATED Please use SPLUNK_HEC_URL.                                                                                                   | `8088`             |
 | SPLUNK_INDEX           | Splunk index to log to.                                                                                                                                  | `hyperledger_logs` |
 | NETWORK_CONFIG         | A network configuration object, an example can be found [here](https://hyperledger.github.io/fabric-sdk-node/release-1.4/tutorial-network-config.html)   | None (Required)    |
 | CHECKPOINTS_FILE       | A file used to hold checkpoints for each channel watched. If running in docker, be sure to mount a volume so that the file is not lost between restarts. | `.checkpoints`     |

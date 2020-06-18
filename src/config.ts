@@ -5,10 +5,10 @@ import { join } from 'path';
 import { safeLoad } from 'js-yaml';
 import { createModuleDebug } from '@splunkdlt/debug-logging';
 import { durationStringToMs } from './utils/parse';
-import { removeEmtpyValues, deepMerge, isEmpty } from './utils/obj';
+import { deepMerge } from './utils/obj';
 import { exponentialBackoff, linearBackoff, WaitTime } from '@splunkdlt/async-tasks';
 
-const { debug, warn, error } = createModuleDebug('config');
+const { debug, error } = createModuleDebug('config');
 
 export class ConfigError extends Error {}
 
@@ -30,10 +30,10 @@ export interface FabricloggerConfigSchema {
 // Resolved Configuration
 export interface FabricloggerConfig {
     fabric: FabricConfigSchema;
-    checkpoint: CheckpointConfigSchema
+    checkpoint: CheckpointConfigSchema;
     hec: {
         default: HecConfig;
-    }
+    };
     output: OutputConfigSchema;
 }
 
@@ -164,7 +164,6 @@ export interface HecConfigSchema {
      * Splunk and fabriclogger for example in docker-compose, where Splunk takes some time to start.
      */
     waitForAvailability?: DurationConfig;
-
 }
 
 export interface HecConfig extends Omit<HecConfigSchema, 'retryWaitTime'> {
@@ -313,7 +312,6 @@ const parseBooleanEnvVar = (envVar?: string): boolean | undefined => {
     }
 };
 
-
 export async function loadConfigFile(
     fileName: string,
     type?: 'json' | 'yaml'
@@ -373,7 +371,6 @@ export async function loadFabricloggerConfig(flags: CliFlags, dryRun: boolean = 
         return val;
     };
 
-
     const parseOutput = (defaults?: Partial<OutputConfigSchema>): OutputConfigSchema => {
         switch (defaults?.type) {
             case 'hec':
@@ -409,18 +406,21 @@ export async function loadFabricloggerConfig(flags: CliFlags, dryRun: boolean = 
             saveInterval: parseDuration(defaults.checkpoint?.saveInterval) ?? 100,
         },
         fabric: {
-            peer: required('peer',defaults.fabric?.peer),
-            msp: required('msp',defaults.fabric?.msp),
-            networkConfig: required('network',defaults.fabric?.networkConfig),
-            user: required('user',defaults.fabric?.user),
-            keyFile: required('user-key',defaults.fabric?.keyFile),
-            certFile: required('user-cert',defaults.fabric?.certFile),
+            peer: required('peer', defaults.fabric?.peer),
+            msp: required('msp', defaults.fabric?.msp),
+            networkConfig: required('network', defaults.fabric?.networkConfig),
+            user: required('user', defaults.fabric?.user),
+            keyFile: required('user-key', defaults.fabric?.keyFile),
+            certFile: required('user-cert', defaults.fabric?.certFile),
             clientKeyFile: flags['client-key'] ?? '',
             clientCertFile: flags['client-cert'] ?? '',
         },
         hec: {
             default: {
-                url: required('hec-url', defaults.hec?.default?.url ?? `https://${flags['splunk-host']}:${flags['splunk-port']}`),
+                url: required(
+                    'hec-url',
+                    defaults.hec?.default?.url ?? `https://${flags['splunk-host']}:${flags['splunk-port']}`
+                ),
                 token: required('hec-token', defaults.hec?.default?.token),
                 defaultFields: defaults.hec?.default?.defaultFields,
                 defaultMetadata: defaults.hec?.default?.defaultMetadata,
