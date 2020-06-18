@@ -1,5 +1,5 @@
 import { IConversionOptions } from 'protobufjs';
-import { createModuleDebug } from './debug';
+import { createModuleDebug } from '@splunkdlt/debug-logging';
 import { common, protos } from '../generated/protos';
 
 const { debug, warn } = createModuleDebug('protobuf');

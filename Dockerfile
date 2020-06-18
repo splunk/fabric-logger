@@ -8,5 +8,6 @@ RUN yarn install --frozen-lockfile --production
 
 COPY . ./
 RUN yarn build
+RUN yarn link
 
-CMD [ "node", "dist/main.js" ]
+CMD [ "fabriclogger" ]

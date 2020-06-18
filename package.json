@@ -1,14 +1,20 @@
 {
   "name": "fabric-logger",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "description": "Hyperledger Fabric Splunk integration",
-  "author": "Jeff Wu <jeffreywu@splunk.com>",
-  "main": "dist/index.js",
+  "author": "splunk <blockchain@splunk.com>",
+  "main": "lib/index.js",
+  "bin": {
+    "fabriclogger": "./bin/run"
+  },
+  "oclif": {
+    "bin": "fabriclogger"
+  },
   "license": "Apache-2.0",
   "scripts": {
-    "build": "yarn build:clean && yarn generate && yarn tsc --outDir dist",
-    "build:clean": "rm -rf dist",
-    "start": "yarn generate && tsnd src/main.ts",
+    "build": "yarn build:clean && yarn generate && yarn tsc",
+    "build:clean": "rm -rf lib",
+    "start": "yarn generate && tsnd src/index.ts",
     "lint": "eslint src --ext .ts",
     "test": "jest --config jest.config.json",
     "generate": "yarn generate:cleanup && mkdir -p generated && yarn generate:pbjs && yarn generate:pbts",
@@ -16,21 +22,38 @@
     "generate:pbjs": "pbjs -t static-module -w commonjs -o generated/protos.js node_modules/fabric-client/lib/protos/common/policies.proto node_modules/fabric-client/lib/protos/peer/chaincode.proto node_modules/fabric-client/lib/protos/peer/proposal.proto",
     "generate:pbts": "pbts -o generated/protos.d.ts generated/protos.js"
   },
+  "files": [
+    "/bin",
+    "/lib",
+    "/generated"
+  ],
   "dependencies": {
+    "@oclif/command": "^1",
+    "@oclif/config": "^1",
+    "@oclif/plugin-help": "^2.2.2",
+    "@splunkdlt/async-tasks": "^1.0.0",
+    "@splunkdlt/debug-logging": "^1.0.1",
+    "@splunkdlt/hec-client": "^0.1.0-alpha1.0",
+    "@splunkdlt/managed-resource": "^1.0.0-alpha0.0",
     "@types/debug": "^4.1.5",
     "@types/express": "^4.17.1",
+    "@types/fs-extra": "^9.0.0",
     "@types/ini": "^1.3.30",
+    "@types/js-yaml": "^3.12.4",
     "@types/lodash": "^4.14.138",
     "@types/splunk-logging": "^0.9.1",
     "debug": "^4.1.1",
     "dotenv": "^8.1.0",
     "express": "^4.17.1",
     "fabric-client": "^1.4.7",
+    "fs-extra": "^9.0.0",
     "ini": "^1.3.5",
+    "js-yaml": "^3.13.1",
     "lodash": "^4.17.15",
+    "oclif": "^1.15.2",
     "protobufjs": "~6.8.8",
     "splunk-logging": "^0.10.1",
-    "typescript": "~3.5"
+    "typescript": "^3.7.3"
   },
   "devDependencies": {
     "@types/jest": "^24.0.18",
@@ -44,8 +67,10 @@
     "prettier": "^1.18.2",
     "pretty-quick": "^1.11.1",
     "ts-jest": "^24.0.2",
-    "ts-node-dev": "^1.0.0-pre.42"
+    "ts-node": "^8.5.4",
+    "typescript-json-schema": "^0.41.0"
   },
+  "types": "lib/index.d.ts",
   "husky": {
     "hooks": {
       "pre-commit": "pretty-quick --staged --pattern && yarn lint"

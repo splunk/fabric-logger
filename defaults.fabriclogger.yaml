@@ -1,0 +1,40 @@
+fabric:
+    network: network.yaml
+    user: fabric-logger
+output:
+    type: hec
+    sourceTypePrefix: fabric_logger
+checkpoint:
+    filename: checkpoints.json
+    saveInterval: 250
+hec:
+    default:
+        flushTime: 0
+        maxQueueEntries: -1
+        maxQueueSize: 512000
+        gzip: true
+        timeout: 30s
+        requestKeepAlive: true
+        validateCertificate: true
+        maxSockets: 128
+        userAgent: fabric_logger-hec-client/$VERSION
+        multipleMetricFormatEnabled: false
+        waitForAvailability: 2m
+        index: hyperledger_logs
+        retryWaitTime:
+            type: exponential-backoff
+            min: 10ms
+            max: 3m
+        defaultMetadata:
+            host: $HOSTNAME
+            source: fabric_logger
+    internal:
+        flushTime: 5s
+        defaultMetadata:
+            host: $HOSTNAME
+            source: fabric_logger:internal
+            sourcetype: fabric_logger:internal
+        defaultFields:
+            version: $VERSION
+            nodeVersion: $NODE_VERSION
+            pid: $PID
