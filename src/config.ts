@@ -412,8 +412,8 @@ export async function loadFabricloggerConfig(flags: CliFlags, dryRun: boolean = 
             user: required('user', defaults.fabric?.user),
             keyFile: required('user-key', defaults.fabric?.keyFile),
             certFile: required('user-cert', defaults.fabric?.certFile),
-            clientKeyFile: flags['client-key'] ?? '',
-            clientCertFile: flags['client-cert'] ?? '',
+            clientKeyFile: flags['client-key'] ?? defaults.fabric?.clientKeyFile,
+            clientCertFile: flags['client-cert'] ?? defaults.fabric?.clientCertFile,
         },
         hec: {
             default: {
