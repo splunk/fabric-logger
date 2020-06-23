@@ -24,7 +24,7 @@ Once the fabric logger starts up, it will attempt to connect to its configured p
 ### Chaincode events
 
     curl -X PUT -H "Content-Type: application/json" -d '{"filter":"${EVENT_REGULAR_EXPRESSION}"}' http://fabric-logger:8080/channels/${CHANNEL_NAME}/events/${CHAINCODE_ID}
- 
+
 ## Running in Docker
 
 Running the Fabric Logger in Docker is recommended. A sample docker-compose entry looks as follows:
@@ -159,21 +159,3 @@ You will also need to update the `network.yaml` with appropriate values for you 
 | NETWORK_CONFIG         | network          | A network configuration object, an example can be found [here](https://hyperledger.github.io/fabric-sdk-node/release-1.4/tutorial-network-config.html)   | None (Required)    |
 | CHECKPOINTS_FILE       |                  | A file used to hold checkpoints for each channel watched. If running in docker, be sure to mount a volume so that the file is not lost between restarts. | `.checkpoints`     |
 | SOURCETYPE_PREFIX      |                  | A prefix used for the sourcetype when writing to Splunk.                                                                                                 | `fabric_logger:`   |
-
-## Flags
-trace
-hec-url
-hec-token
-hec-events-index
-hec-reject-invalid-certs
-network
-peer
-msp
-user
-user-key
-user-cert
-client-key
-client-cert
-config-file
-splunk-host
-splunk-port
