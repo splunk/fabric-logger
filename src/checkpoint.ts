@@ -63,7 +63,7 @@ export class Checkpoint implements ManagedResource {
     public scheduleWriteCheckpoints() {
         latestWritePromise = latestWritePromise.then(() =>
             this.writeCheckpoints().catch((e) => {
-                error(`Failed to write checkpoint file:`, e);
+                error('Failed to write checkpoint file:', e);
             })
         );
     }

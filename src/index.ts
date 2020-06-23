@@ -34,7 +34,7 @@ class Fabriclogger extends Command {
             await this.startFabriclogger(config);
 
             await Promise.race([waitForSignal('SIGINT'), waitForSignal('SIGTERM')]);
-            info('Recieved signal, proceeding with shutdown sequence');
+            info('Received signal, proceeding with shutdown sequence');
             const cleanShutdown = await shutdownAll(this.resources, 10_000);
             info('Shutdown complete.');
             process.exit(cleanShutdown ? 0 : 2);
