@@ -5,33 +5,59 @@ import * as path from 'path';
 import { convertBuffersToHex } from './convert';
 import { HecClient } from '@splunkdlt/hec-client';
 import { ManagedResource } from '@splunkdlt/managed-resource';
-import { FabricloggerConfig } from './config';
+import { FabricloggerConfig, HecOutputConfig } from './config';
+import { BlockMessage, ConfigMessage, EndorserTransactionMessage, ChaincodeEventMessage, UnKnownMessage } from './msgs';
 
 const exists = promisify(fs.exists);
 const writeFile = promisify(fs.writeFile);
 const mkdir = promisify(fs.mkdir);
 
+export type OutputMessage =
+    | BlockMessage
+    | ConfigMessage
+    | EndorserTransactionMessage
+    | ChaincodeEventMessage
+    | UnKnownMessage;
+
 const { debug } = createModuleDebug('output');
 
 export interface Output extends ManagedResource {
-    logEvent(event: any, sourcetype: string, timeField: Date | undefined, source: string): void;
+    logEvent(event: OutputMessage, timeField: Date | undefined, source: string): void;
     waitUntilAvailable?(maxTime: number): Promise<void>;
 }
 
 export class HecOutput implements Output, ManagedResource {
-    constructor(private eventsHec: HecClient, private metricsHec: HecClient, private prefix: string) {}
-    public logEvent(message: any, sourcetype: string, timeField: Date | undefined, source: string): void {
+    constructor(private eventsHec: HecClient, private metricsHec: HecClient, private config: HecOutputConfig) {}
+    public logEvent(message: OutputMessage, timeField: Date | undefined, source: string): void {
         const event = convertBuffersToHex(message);
-        this.eventsHec.pushEvent({
-            time: timeField ? timeField : new Date(),
-            body: {
-                ...event,
-            },
-            metadata: {
-                source: source,
-                sourcetype: `${this.prefix}:${sourcetype}`,
-            },
-        });
+        switch (message.type) {
+            case 'block':
+            case 'endorserTransaction':
+            case 'config':
+            case 'ccevent':
+                this.eventsHec.pushEvent({
+                    time: timeField ? timeField : new Date(),
+                    body: {
+                        ...event,
+                    },
+                    metadata: {
+                        source: source,
+                        sourcetype: this.config.sourcetypes[message.type],
+                    },
+                });
+                break;
+            default:
+                this.eventsHec.pushEvent({
+                    time: timeField ? timeField : new Date(),
+                    body: {
+                        ...event,
+                    },
+                    metadata: {
+                        source: source,
+                        sourcetype: `${this.config.sourceTypePrefix}:${message.type}`,
+                    },
+                });
+        }
     }
 
     public waitUntilAvailable(maxTime: number): Promise<void> {
@@ -99,11 +125,7 @@ export async function createOutput(config: FabricloggerConfig, baseHecClient: He
     if (config.output.type === 'hec') {
         const eventsHec = config.hec.default ? baseHecClient.clone(config.hec.default) : baseHecClient;
         const metricsHec = config.hec.default ? baseHecClient.clone(config.hec.default) : baseHecClient;
-        const hecOutput = new HecOutput(
-            eventsHec,
-            metricsHec,
-            config.output.sourceTypePrefix ? config.output.sourceTypePrefix : ''
-        );
+        const hecOutput = new HecOutput(eventsHec, metricsHec, config.output);
         return hecOutput;
     } else if (config.output.type === 'console') {
         return new ConsoleOutput();

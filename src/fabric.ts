@@ -76,6 +76,10 @@ export class FabricListener implements ManagedResource {
     }
 
     private getChannelType(data: FabricClient.BlockData): string {
+        switch (data.payload.header.channel_header.typeString.toLowerCase()) {
+            case 'endorser_transaction':
+                return 'endorserTransaction';
+        }
         return data.payload.header.channel_header.typeString.toLowerCase();
     }
 
@@ -180,10 +184,10 @@ export class FabricListener implements ManagedResource {
                 this.parseChaincodeSpecInput(msg);
                 this.output.logEvent(
                     {
+                        type: this.getChannelType(msg),
                         block_number: blockNumber,
                         ...msg,
                     },
-                    this.getChannelType(msg),
                     this.getMessageTimestamp(msg),
                     this.config.peer
                 );
@@ -194,7 +198,11 @@ export class FabricListener implements ManagedResource {
 
         debug('Processed all transactions for block number=%d on channel=%s', blockNumber, channelName);
 
-        this.output.logEvent(block, 'block', this.getMessageTimestamp(block.data.data[0]), this.config.peer);
+        this.output.logEvent(
+            { type: 'block', ...block },
+            this.getMessageTimestamp(block.data.data[0]),
+            this.config.peer
+        );
         this.checkpoint.storeChannelCheckpoint(channelName, +block.header.number);
 
         info('Completed processing block number=%d on channel=%s', blockNumber, channelName);
@@ -254,6 +262,7 @@ export class FabricListener implements ManagedResource {
         info('Processing chaincode event');
         this.output.logEvent(
             {
+                type: 'ccevent',
                 block_number: blockNumber,
                 channel: channelName,
                 transaction_id: txid,
@@ -261,7 +270,6 @@ export class FabricListener implements ManagedResource {
                 event: event,
                 payload_message: event.payload.toString(),
             },
-            'ccevent',
             undefined, // TODO Get timestamp from block transaction
             this.config.peer
         );

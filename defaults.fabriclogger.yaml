@@ -3,7 +3,12 @@ fabric:
     user: fabric-logger
 output:
     type: hec
-    sourceTypePrefix: fabric_logger
+    sourceTypePrefix: 'fabric_logger'
+    sourcetypes:
+        block: 'fabric_logger:block'
+        endorserTransaction: 'fabric_logger:endorser_transaction'
+        config: 'fabric_logger:config'
+        ccevent: 'fabric_logger:ccevent'
 checkpoint:
     filename: checkpoints.json
     saveInterval: 250

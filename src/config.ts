@@ -68,8 +68,10 @@ export interface HecClientsConfigSchema {
 
 export interface HecOutputConfig {
     type: 'hec';
-    /** A common prefix for all events emitted to Splunk */
+    /** A common prefix for all unknown events emitted to Splunk */
     sourceTypePrefix?: string;
+    /** Sourcetypes to use for different kinds of events we send to Splunk */
+    sourcetypes: SourcetypesSchema;
 }
 
 /** Configurable set of `sourcetype` field values emitted by fabriclogger */
@@ -77,9 +79,9 @@ export interface SourcetypesSchema {
     /** @default "fabric_logger:block" */
     block?: string;
     /** @default "fabric_logger:endorser_transaction" */
-    endorser_transaction?: string;
+    endorserTransaction?: string;
     /** @default "fabric_logger:ccevent" */
-    event?: string;
+    ccevent?: string;
     /** @default "fabric_logger:config" */
     config?: string;
 }
@@ -378,6 +380,7 @@ export async function loadFabricloggerConfig(flags: CliFlags, dryRun: boolean = 
                 return {
                     type: 'hec',
                     sourceTypePrefix: def.sourceTypePrefix,
+                    sourcetypes: def.sourcetypes ?? {},
                 };
             case 'console':
                 return {
@@ -395,7 +398,8 @@ export async function loadFabricloggerConfig(flags: CliFlags, dryRun: boolean = 
             default:
                 return {
                     type: 'hec',
-                    sourceTypePrefix: 'fabric_logger',
+                    sourceTypePrefix: '',
+                    sourcetypes: {},
                 };
         }
     };
