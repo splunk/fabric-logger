@@ -1,16 +1,11 @@
 import { createModuleDebug } from '@splunkdlt/debug-logging';
-import { promisify } from 'util';
-import * as fs from 'fs';
-import * as path from 'path';
+import { pathExists, mkdir, writeFile } from 'fs-extra';
+import { join } from 'path';
 import { convertBuffersToHex } from './convert';
 import { HecClient } from '@splunkdlt/hec-client';
 import { ManagedResource } from '@splunkdlt/managed-resource';
 import { FabricloggerConfig, HecOutputConfig } from './config';
 import { BlockMessage, ConfigMessage, EndorserTransactionMessage, ChaincodeEventMessage, UnKnownMessage } from './msgs';
-
-const exists = promisify(fs.exists);
-const writeFile = promisify(fs.writeFile);
-const mkdir = promisify(fs.mkdir);
 
 export type OutputMessage =
     | BlockMessage
@@ -20,6 +15,8 @@ export type OutputMessage =
     | UnKnownMessage;
 
 const { debug } = createModuleDebug('output');
+const filenameSafe = (name: string): string => name.replace(/[^\w]+/g, '_');
+const randSuffix = () => Math.floor(Math.random() * 0xfffffff).toString(36);
 
 export interface Output extends ManagedResource {
     logEvent(event: OutputMessage, timeField: Date | undefined, source: string): void;
@@ -78,32 +75,28 @@ export class HecOutput implements Output, ManagedResource {
 }
 
 export class FileOutput implements Output {
-    private filenameSafe = (name: string): string => name.replace(/[^\w]+/g, '_');
-
     constructor(private outputDir: string) {}
 
     public async createOutputDirectory(): Promise<string> {
-        const tempDir = path.join(process.cwd(), 'temp');
-        if (!(await exists(tempDir))) {
+        const tempDir = join(process.cwd(), 'temp');
+        if (!(await pathExists(tempDir))) {
             debug('Creating temp dir', tempDir);
             await mkdir(tempDir);
         }
-        const outputDir = path.join(tempDir, 'output');
-        if (!(await exists(outputDir))) {
+        const outputDir = join(tempDir, 'output');
+        if (!(await pathExists(outputDir))) {
             debug('Creating output dir', outputDir);
             await mkdir(outputDir);
         }
         return outputDir;
     }
 
-    private randSuffix = () => Math.floor(Math.random() * 0xfffffff).toString(36);
-
-    public logEvent(event: any): void {
+    public async logEvent(event: any) {
         const meta = event.metadata || {};
         const { sourcetype = 'unkown_sourcetype', time = Date.now() } = meta as any;
-        const fileName = `event_${this.filenameSafe(sourcetype)}_${time}_${this.randSuffix()}.json`;
+        const fileName = `event_${filenameSafe(sourcetype)}_${time}_${randSuffix()}.json`;
         debug(`Writing event to file`, fileName);
-        writeFile(path.join(this.outputDir, fileName), JSON.stringify(event, null, 2), { encoding: 'utf-8' });
+        await writeFile(join(this.outputDir, fileName), JSON.stringify(event, null, 2), { encoding: 'utf-8' });
     }
 
     public async shutdown() {

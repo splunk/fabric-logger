@@ -1,17 +1,12 @@
 import { stringify, parse } from 'ini';
 import { createModuleDebug } from '@splunkdlt/debug-logging';
-import { promisify } from 'util';
-import * as fs from 'fs';
+import { readFile, writeFile, pathExists } from 'fs-extra';
 import { ManagedResource } from '@splunkdlt/managed-resource';
 
 const { debug, info, error } = createModuleDebug('checkpoint');
 
-const readFile = promisify(fs.readFile);
-const exists = promisify(fs.exists);
-const writeFile = promisify(fs.writeFile);
-
 export type Checkpoints = { [key: string]: any };
-export type ccEvent = {
+export type CCEvent = {
     channelName: string;
     filter: string;
     chaincodeId: string;
@@ -34,7 +29,7 @@ export class Checkpoint implements ManagedResource {
     }
 
     public async loadCheckpoints(): Promise<Checkpoints> {
-        if (await exists(this.checkpointFile)) {
+        if (await pathExists(this.checkpointFile)) {
             info('Loading checkpoints from file at %s', this.checkpointFile);
             const contents = await readFile(this.checkpointFile, { encoding: 'utf-8' });
             debug('Parsing checkpoint file contents', contents);
@@ -120,7 +115,7 @@ export class Checkpoint implements ManagedResource {
         return Object.keys(channels);
     }
 
-    public getAllChaincodeEventCheckpoints(): ccEvent[] {
+    public getAllChaincodeEventCheckpoints(): CCEvent[] {
         if (globalCheckpoints == null) {
             throw new Error('Checkpoints not loaded');
         }
