@@ -7,6 +7,7 @@ import { createModuleDebug } from '@splunkdlt/debug-logging';
 import { durationStringToMs } from './utils/parse';
 import { deepMerge } from './utils/obj';
 import { exponentialBackoff, linearBackoff, WaitTime } from '@splunkdlt/async-tasks';
+import { CCEvent } from './checkpoint';
 
 const { debug, error } = createModuleDebug('config');
 
@@ -54,6 +55,10 @@ export interface FabricConfigSchema {
     clientCertFile?: string;
     /** The client private key used when mutual TLS is enabled to authenticate with the peer */
     clientKeyFile?: string;
+    /** Channels to listen to */
+    channels: string[];
+    /** Chaincode events to listen to*/
+    ccevents: CCEvent[];
 }
 
 export interface HecClientsConfigSchema {
@@ -186,7 +191,7 @@ export type OptionalHecConfig = Partial<HecConfig>;
 export interface CheckpointConfigSchema {
     /**
      * File path (relative to the current working directory) where the checkpoint file will be stored
-     * @default checkpoints.json
+     * @default .checkpoints
      */
     filename: string;
     /** Maximum duration before saving updated checkpoint information to disk */
@@ -314,6 +319,23 @@ const parseBooleanEnvVar = (envVar?: string): boolean | undefined => {
     }
 };
 
+const parseCCEvents = (value: DeepPartial<CCEvent>[] | undefined): CCEvent[] => {
+    const ccEvents = [];
+    if (value) {
+        for (const ccEvent of value) {
+            if (ccEvent['channelName'] && ccEvent['chaincodeId'] && ccEvent['filter']) {
+                ccEvents.push({
+                    channelName: ccEvent['channelName'],
+                    chaincodeId: ccEvent['chaincodeId'],
+                    filter: ccEvent['filter'],
+                    block: ccEvent['block'] || 0,
+                });
+            }
+        }
+    }
+    return ccEvents;
+};
+
 export async function loadConfigFile(
     fileName: string,
     type?: 'json' | 'yaml'
@@ -406,7 +428,7 @@ export async function loadFabricloggerConfig(flags: CliFlags, dryRun: boolean = 
 
     const config: FabricloggerConfig = {
         checkpoint: {
-            filename: defaults.checkpoint?.filename ?? 'checkpoint.json',
+            filename: defaults.checkpoint?.filename ?? '.checkpoints',
             saveInterval: parseDuration(defaults.checkpoint?.saveInterval) ?? 100,
         },
         fabric: {
@@ -418,6 +440,8 @@ export async function loadFabricloggerConfig(flags: CliFlags, dryRun: boolean = 
             certFile: required('user-cert', defaults.fabric?.certFile),
             clientKeyFile: flags['client-key'] ?? defaults.fabric?.clientKeyFile,
             clientCertFile: flags['client-cert'] ?? defaults.fabric?.clientCertFile,
+            channels: defaults.fabric?.channels ?? [],
+            ccevents: parseCCEvents(defaults.fabric?.ccevents),
         },
         hec: {
             default: {

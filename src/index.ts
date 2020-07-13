@@ -5,7 +5,6 @@ import { CLI_FLAGS } from './cliflags';
 import { FabricloggerConfig, loadFabricloggerConfig } from './config';
 import { Checkpoint } from './checkpoint';
 import { FabricListener } from './fabric';
-import { FabricLoggerServer } from './server';
 import { createOutput } from './output';
 import { waitForSignal } from './utils/signal';
 import { HecClient } from '@splunkdlt/hec-client';
@@ -47,7 +46,7 @@ class Fabriclogger extends Command {
         }
     }
 
-    async startFabriclogger(config: FabricloggerConfig): Promise<any> {
+    async startFabriclogger(config: FabricloggerConfig) {
         const checkpoint = new Checkpoint(config.checkpoint.filename);
         await checkpoint.loadCheckpoints();
         this.resources.push(checkpoint);
@@ -60,11 +59,6 @@ class Fabriclogger extends Command {
         this.resources.push(fabricListener);
         await fabricListener.initClient();
         await fabricListener.listen();
-
-        const fabricServer = new FabricLoggerServer(fabricListener);
-        this.resources.push(fabricServer);
-
-        return Promise.all([fabricServer.startServer('0.0.0.0', 8080)]);
     }
 }
 

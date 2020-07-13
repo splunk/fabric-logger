@@ -1,0 +1,12 @@
+fabric:
+  peer: peer0.example.com
+  channels:
+    - myChannel
+    - mySecondChannel
+  ccevents:
+    - channelName: myChannel
+      filter: myEvent
+      chaincodeId: myChaincodeId
+    - channelName: myChannel
+      filter: myOtherEvent
+      chaincodeIdL myChaincodeId

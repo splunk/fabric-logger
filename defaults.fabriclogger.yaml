@@ -10,7 +10,7 @@ output:
         config: 'fabric_logger:config'
         ccevent: 'fabric_logger:ccevent'
 checkpoint:
-    filename: checkpoints.json
+    filename: '.checkpoints'
     saveInterval: 250
 hec:
     default:

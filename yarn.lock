@@ -507,30 +507,30 @@
   dependencies:
     debug "^4.1.1"
 
-"@splunkdlt/hec-client@^0.1.0-alpha1.0":
-  version "0.1.0-alpha1.0"
-  resolved "https://registry.yarnpkg.com/@splunkdlt/hec-client/-/hec-client-0.1.0-alpha1.0.tgz#d7dc4e68d530e8bd2d9a902edda5492ef0e0575f"
-  integrity sha512-QX1QvuAEKzD2Y/PjT5eAd+a9Rgmyzb0RZPa9t97DfAh+LevmzoqW20k5CheqZ3n6DbYoU1i+bqK3ZrtKxFRQgg==
+"@splunkdlt/hec-client@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@splunkdlt/hec-client/-/hec-client-1.0.0.tgz#41ac6eb25a83e2978aaf320dc29e54493851a359"
+  integrity sha512-k/Jm/zyF3hlfJuPfc0hToKfqFd5RqJikBi8enJWrd1AdQItgsNqwXg7szvLUkut1zRKqVyzPOCR8kvnw6kJoPg==
   dependencies:
     "@splunkdlt/async-tasks" "1.0.0-alpha0"
     "@splunkdlt/debug-logging" "^1.0.1"
-    "@splunkdlt/stats-collector" "^1.0.0-alpha0.0"
+    "@splunkdlt/stats-collector" "^1.0.0"
     abort-controller "^3.0.0"
     agentkeepalive "^4.1.0"
     bl "^4.0.0"
     node-fetch "^2.6.0"
 
-"@splunkdlt/managed-resource@^1.0.0-alpha0.0":
-  version "1.0.0-alpha0.0"
-  resolved "https://registry.yarnpkg.com/@splunkdlt/managed-resource/-/managed-resource-1.0.0-alpha0.0.tgz#0d3545c968d824c32228862a5390c9f6cb202fc3"
-  integrity sha512-ldac0Ct8Bl2LUq9PGTqC2fcNDTlNCzBW2K+yinKIpn54P8FfEB0OA2N6e/gm1Eu6g4xSGWtXwGzzsFK8EdTUJQ==
+"@splunkdlt/managed-resource@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@splunkdlt/managed-resource/-/managed-resource-1.0.0.tgz#e6c37060da449c53b259fc7864a72684f4bee3ce"
+  integrity sha512-+PeCSS+l8CBFklzs4w59r8PAGZ1N0P6nv/XehlmzIet9NNkkKFQjZBTSSHAMt9Iu9i7X79kEJD77DXr2no0/uA==
 
-"@splunkdlt/stats-collector@^1.0.0-alpha0.0":
-  version "1.0.0-alpha0.0"
-  resolved "https://registry.yarnpkg.com/@splunkdlt/stats-collector/-/stats-collector-1.0.0-alpha0.0.tgz#5c5cfae4062f800b46d5ac72a657806f0130be9e"
-  integrity sha512-SeWNiz2m+UaLdOJUQzB5NlZP4l0nM1jRWhFFiXNsDeq7CzxoeMNyfm7TSCAh72Ao+rgD6vTvDsQjdnY8O4tHCA==
+"@splunkdlt/stats-collector@^1.0.0":
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/@splunkdlt/stats-collector/-/stats-collector-1.0.0.tgz#d501a35a69fafae80da38011fc7e06a84d685555"
+  integrity sha512-VI3WXphCFib1iqCDjK2vGc8QBY9S8jW7bxJdSPZclMjuCNyOAmF4GqlsD612qXLN9w4x0pQb2wAvE5FPlvqwJQ==
   dependencies:
-    "@splunkdlt/managed-resource" "^1.0.0-alpha0.0"
+    "@splunkdlt/managed-resource" "^1.0.0"
 
 "@types/babel__core@^7.1.0":
   version "7.1.2"
@@ -2126,11 +2126,6 @@ domexception@^1.0.1:
   integrity sha512-raigMkn7CJNNo6Ihro1fzG7wr3fHuYVytzquZKX5n0yizGsTcYgzdIUwj1X9pK0VvjeihV+XiclP+DjwbsSKug==
   dependencies:
     webidl-conversions "^4.0.2"
-
-dotenv@^8.1.0:
-  version "8.1.0"
-  resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-8.1.0.tgz#d811e178652bfb8a1e593c6dd704ec7e90d85ea2"
-  integrity sha512-GUE3gqcDCaMltj2++g6bRQ5rBJWtkWTmqmD0fo1RnnMuUqHNCt2oTPeDnS9n6fKYvlhn7AeBkb38lymBtWBQdA==
 
 download-stats@^0.3.4:
   version "0.3.4"

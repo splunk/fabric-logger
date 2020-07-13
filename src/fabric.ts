@@ -1,5 +1,5 @@
 import * as FabricClient from 'fabric-client';
-import { Checkpoint } from './checkpoint';
+import { Checkpoint, CCEvent } from './checkpoint';
 import { createModuleDebug } from '@splunkdlt/debug-logging';
 import { Output } from './output';
 import {
@@ -10,13 +10,12 @@ import {
 } from './protobuf';
 import { isLikelyText, toText } from './convert';
 import { get } from 'lodash';
-import { promisify } from 'util';
-import * as fs from 'fs';
 import { FabricConfigSchema } from './config';
 import { ManagedResource } from '@splunkdlt/managed-resource';
+import { retry, exponentialBackoff } from '@splunkdlt/async-tasks';
+import { readFile } from 'fs-extra';
 
 const { debug, info, error } = createModuleDebug('fabric');
-const readFile = promisify(fs.readFile);
 
 export class FabricListener implements ManagedResource {
     private client: FabricClient | undefined;
@@ -67,11 +66,40 @@ export class FabricListener implements ManagedResource {
     public async listen() {
         for (const channel of this.checkpoint.getAllChannelsWithCheckpoints()) {
             info('Resuming listener for channel=%s', channel);
-            await this.registerListener(channel);
+            await retry(() => this.registerListener(channel), {
+                attempts: 30,
+                waitBetween: exponentialBackoff({ min: 10, max: 5000 }),
+            });
         }
-        for (const cceventName of this.checkpoint.getAllChaincodeEventCheckpoints()) {
-            info('Resuming listener for chaincode=%s', cceventName);
-            await this.registerChaincodeEvent(cceventName.channelName, cceventName.chaincodeId, cceventName.filter);
+        for (const ccEvent of this.checkpoint.getAllChaincodeEventCheckpoints()) {
+            info('Resuming listener for chaincode=%s', ccEvent);
+            await retry(() => this.registerChaincodeEvent(ccEvent), {
+                attempts: 30,
+                waitBetween: exponentialBackoff({ min: 10, max: 5000 }),
+            });
+        }
+        if (this.config.channels) {
+            for (const channel of this.config.channels) {
+                if (!this.hasListener(channel)) {
+                    info('Registering listener for channel=%s', channel);
+                    await retry(() => this.registerListener(channel), {
+                        attempts: 30,
+                        waitBetween: exponentialBackoff({ min: 10, max: 5000 }),
+                    });
+                }
+            }
+        }
+        if (this.config.ccevents) {
+            for (const ccEvent of this.config.ccevents) {
+                const name = `${ccEvent.channelName}_${ccEvent.chaincodeId}_${ccEvent.filter}`;
+                if (!this.hasListener(name)) {
+                    info('Registering listener for chaincode event %s', name);
+                    await retry(() => this.registerChaincodeEvent(ccEvent), {
+                        attempts: 30,
+                        waitBetween: exponentialBackoff({ min: 10, max: 5000 }),
+                    });
+                }
+            }
         }
     }
 
@@ -284,34 +312,34 @@ export class FabricListener implements ManagedResource {
         );
     };
 
-    public async registerChaincodeEvent(channelName: string, chaincodeId: string, filter: string): Promise<void> {
+    public async registerChaincodeEvent(ccEvent: CCEvent): Promise<void> {
         if (this.client == null) {
             throw new Error('Fabric client not initialized');
         }
-        const channel: FabricClient.Channel = this.client.getChannel(channelName);
+        const channel: FabricClient.Channel = this.client.getChannel(ccEvent.channelName);
         let channelEventHub: FabricClient.ChannelEventHub;
         try {
-            info('Creating new event hub for channel=%s', channelName);
+            info('Creating new event hub for channel=%s', ccEvent.channelName);
             channelEventHub = channel.newChannelEventHub(this.config.peer);
         } catch (err) {
             if (err.message == `Peer with name "${this.config.peer}" not assigned to this channel`) {
-                info('Assigning fabric peer=%s to channel=%s', this.config.peer, channelName);
+                info('Assigning fabric peer=%s to channel=%s', this.config.peer, ccEvent.channelName);
                 channel.addPeer(this.client.getPeer(this.config.peer), this.config.msp);
                 channelEventHub = channel.newChannelEventHub(this.config.peer);
             } else {
-                error('Failed to create channel event hub for channel=%s', channelName, err);
+                error('Failed to create channel event hub for channel=%s', ccEvent.channelName, err);
                 throw err;
             }
         }
-        const name = `${channelName}_${chaincodeId}_${filter}`;
+        const name = `${ccEvent.channelName}_${ccEvent.chaincodeId}_${ccEvent.filter}`;
         this.eventHubs[name] = channelEventHub;
 
-        const latestCheckpoint = this.checkpoint.getChannelCheckpoint(name);
+        const latestCheckpoint = ccEvent.block || 0;
         channelEventHub.registerChaincodeEvent(
-            chaincodeId,
-            filter,
-            this.processChaincodeEvent(channelName, name, filter, chaincodeId),
-            this.handleChaincodeEventError(channelName),
+            ccEvent.chaincodeId,
+            ccEvent.filter,
+            this.processChaincodeEvent(ccEvent.channelName, name, ccEvent.filter, ccEvent.chaincodeId),
+            this.handleChaincodeEventError(ccEvent.channelName),
             {
                 startBlock: latestCheckpoint,
             }
