@@ -17,7 +17,7 @@ Additionally, Hyperledger Fabric users depend on ACLs defined in the `configtx.y
 ## Configuration
 
 
-NOTE: In previous versions of Fabric Logger there was a web server exposed to configure channels and chaincode events.  The web server has been deprecated in favor of configuration files.
+NOTE: In previous versions of Fabric Logger there was a web server exposed to configure channels and chaincode events.  The web server has been removed in favor of configuration files.
 
 Fabric Logger  uses two files for configuration:
 
