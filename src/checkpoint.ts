@@ -13,50 +13,52 @@ export type CCEvent = {
     block: number;
 };
 
-let globalCheckpoints: Checkpoints | null = null;
-let lastSerialized: string | null = null;
-let latestWritePromise: Promise<void> = Promise.resolve();
-
 export class Checkpoint implements ManagedResource {
     private checkpointFile: string;
+    private globalCheckpoints: Checkpoints | null;
+    private lastSerialized: string | null = null;
+    private latestWritePromise: Promise<void>;
 
     constructor(checkpointFile: string) {
         this.checkpointFile = checkpointFile;
+        this.globalCheckpoints = null;
+        this.lastSerialized = null;
+        this.latestWritePromise = Promise.resolve();
     }
 
     public async shutdown() {
         await this.writeCheckpoints();
     }
 
-    public async loadCheckpoints(): Promise<Checkpoints> {
+    public async loadCheckpoints() {
         if (await pathExists(this.checkpointFile)) {
             info('Loading checkpoints from file at %s', this.checkpointFile);
             const contents = await readFile(this.checkpointFile, { encoding: 'utf-8' });
             debug('Parsing checkpoint file contents', contents);
-            globalCheckpoints = parse(contents);
-            if (globalCheckpoints.ccevents == undefined) {
-                globalCheckpoints.ccevents = {};
+            this.globalCheckpoints = parse(contents);
+            if (this.globalCheckpoints.ccevents == undefined) {
+                this.globalCheckpoints.ccevents = {};
             }
-            debug('Loaded checkpoints: %o', globalCheckpoints);
+            debug('Loaded checkpoints: %o', this.globalCheckpoints);
         } else {
             info('Checkpoints file does not exist, starting with empty checkpoints dictionary');
-            globalCheckpoints = { ccevents: {} };
+            this.globalCheckpoints = { ccevents: {} };
         }
-        return globalCheckpoints;
+        return this.globalCheckpoints;
     }
 
-    public async writeCheckpoints(checkpoints: Checkpoints | null = globalCheckpoints) {
+    public async writeCheckpoints(checkpoints: Checkpoints | null = this.globalCheckpoints) {
         const contents = stringify(checkpoints);
-        if (contents !== lastSerialized) {
+        if (contents !== this.lastSerialized) {
             debug('Serialized checkpoint contents: %o', contents);
             await writeFile(this.checkpointFile, contents, { encoding: 'utf-8' });
             info('Checkpoints file updated');
-            lastSerialized = contents;
+            this.lastSerialized = contents;
         }
     }
 
     public scheduleWriteCheckpoints() {
-        latestWritePromise = latestWritePromise.then(() =>
+        this.latestWritePromise = this.latestWritePromise.then(() =>
             this.writeCheckpoints().catch((e) => {
                 error('Failed to write checkpoint file:', e);
             })
@@ -64,10 +66,10 @@ export class Checkpoint implements ManagedResource {
     }
 
     public getChannelCheckpoint(channel: string, defaultValue: number = 1): number {
-        if (globalCheckpoints == null) {
+        if (this.globalCheckpoints == null) {
             throw new Error('Checkpoints not loaded');
         }
-        const value = globalCheckpoints[channel];
+        const value = this.globalCheckpoints[channel];
         if (value == null) {
             return defaultValue;
         }
@@ -75,10 +77,10 @@ export class Checkpoint implements ManagedResource {
     }
 
     public getChaincodeCheckpoint(name: string, defaultValue: number = 1): number {
-        if (globalCheckpoints == null) {
+        if (this.globalCheckpoints == null) {
             throw new Error('Checkpoints not loaded');
         }
-        const value = globalCheckpoints.ccevents[name];
+        const value = this.globalCheckpoints.ccevents[name];
         if (value == null) {
             return defaultValue;
         }
@@ -86,10 +88,10 @@ export class Checkpoint implements ManagedResource {
     }
 
     public storeChannelCheckpoint(channel: string, value: number) {
-        if (globalCheckpoints == null) {
+        if (this.globalCheckpoints == null) {
             throw new Error('Checkpoints not loaded');
         }
-        globalCheckpoints[channel] = value;
+        this.globalCheckpoints[channel] = value;
         this.scheduleWriteCheckpoints();
     }
 
@@ -100,25 +102,25 @@ export class Checkpoint implements ManagedResource {
         chaincodeId: string,
         block: number
     ) {
-        if (globalCheckpoints == null) {
+        if (this.globalCheckpoints == null) {
             throw new Error('Checkpoints not loaded');
         }
-        globalCheckpoints.ccevents[name] = { channelName, filter, chaincodeId, block };
+        this.globalCheckpoints.ccevents[name] = { channelName, filter, chaincodeId, block };
         this.scheduleWriteCheckpoints();
     }
 
     public getAllChannelsWithCheckpoints(): string[] {
-        if (globalCheckpoints == null) {
+        if (this.globalCheckpoints == null) {
             throw new Error('Checkpoints not loaded');
         }
-        const { ccevents, ...channels } = globalCheckpoints;
+        const { ccevents, ...channels } = this.globalCheckpoints;
         return Object.keys(channels);
     }
 
     public getAllChaincodeEventCheckpoints(): CCEvent[] {
-        if (globalCheckpoints == null) {
+        if (this.globalCheckpoints == null) {
             throw new Error('Checkpoints not loaded');
         }
-        return Object.values(globalCheckpoints.ccevents);
+        return Object.values(this.globalCheckpoints.ccevents);
     }
 }
