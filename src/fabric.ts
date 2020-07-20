@@ -38,7 +38,7 @@ export class FabricListener implements ManagedResource {
 
     public async initClient(): Promise<FabricClient.User | void> {
         if (this.config.networkConfig === 'mock') {
-            debug('Skipping fabric client initializtion for mock mode');
+            debug('Skipping fabric client initialization for mock mode');
             return;
         }
 

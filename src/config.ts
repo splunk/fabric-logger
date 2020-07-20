@@ -68,7 +68,6 @@ export interface HecClientsConfigSchema {
      * different HEC tokens, URL or destination index.
      */
     default: HecConfigSchema;
-    /** HEC settings (overrides for `default`) for events sent to Splunk */
 }
 
 export interface HecOutputConfig {
@@ -99,7 +98,7 @@ export interface ConsoleOutputConfig {
 /** File output will append all generated messages to a file. (this output type has not been implemented) */
 export interface FileOutputConfig {
     type: 'file';
-    /** Path to otuput file */
+    /** Path to output file */
     path: string;
 }
 
@@ -119,7 +118,7 @@ export interface HecConfigSchema {
     /** The HEC token used to authenticate HTTP requests */
     token?: string;
     /**
-     * Defaults for host, source, sourcetype and index. Can be overriden for each message
+     * Defaults for host, source, sourcetype and index. Can be overridden for each message
      * @see [Use variables in metadata](#metadata-variables)
      */
     defaultMetadata?: {
@@ -143,7 +142,7 @@ export interface HecConfigSchema {
     gzip?: boolean;
     /** Maximum number of attempts to send a batch to HEC. By default this there is no limit */
     maxRetries?: number;
-    /** Number of milliseconds to wait before considereing an HTTP request as failed */
+    /** Number of milliseconds to wait before considering an HTTP request as failed */
     timeout?: DurationConfig;
     /** Set to `false` to disable HTTP keep-alive for connections to Splunk */
     requestKeepAlive?: boolean;
@@ -159,7 +158,7 @@ export interface HecConfigSchema {
     /** Wait time before retrying to send a (batch of) HEC messages after an error */
     retryWaitTime?: WaitTimeConfig;
     /**
-     * Enable sending multipe metrics in a single message to HEC.
+     * Enable sending multiple metrics in a single message to HEC.
      * Supported as of Splunk 8.0.0
      *
      * https://docs.splunk.com/Documentation/Splunk/8.0.0/Metrics/GetMetricsInOther#The_multiple-metric_JSON_format
@@ -207,8 +206,8 @@ export type Duration = number;
 /** Duration specified as golang style duration expression (eg "1h30m") or a number in milliseconds */
 export type DurationConfig = number | string;
 
-/** Exponentiallly increasing wait time with randomness */
-export interface ExponentalBackoffConfig {
+/** Exponentially increasing wait time with randomness */
+export interface ExponentialBackoffConfig {
     type: 'exponential-backoff';
     /** Minimum wait time */
     min?: DurationConfig;
@@ -229,7 +228,7 @@ export interface LinearBackoffConfig {
  * Time to wait between retries. Can either be a fixed duration or a dynamic backoff function
  * where the wait time is determined based on the number of attempts made so far.
  */
-export type WaitTimeConfig = DurationConfig | ExponentalBackoffConfig | LinearBackoffConfig;
+export type WaitTimeConfig = DurationConfig | ExponentialBackoffConfig | LinearBackoffConfig;
 
 export function parseDuration(value?: DurationConfig): Duration | undefined {
     if (typeof value === 'string') {
@@ -312,7 +311,7 @@ const parseBooleanEnvVar = (envVar?: string): boolean | undefined => {
                     return false;
                 default:
                     throw new ConfigError(
-                        `Unexpected vablue for environment variable ${envVar} - boolean value (true or false) expected`
+                        `Unexpected value for environment variable ${envVar} - boolean value (true or false) expected`
                     );
             }
         }
@@ -483,7 +482,7 @@ export async function loadFabricloggerConfig(flags: CliFlags, dryRun: boolean = 
         }
         if (!dryRun) {
             throw new ConfigError(
-                problems.length > 1 ? 'Detected multipe problems in fabriclogger configuration, see logs' : problems[0]
+                problems.length > 1 ? 'Detected multiple problems in fabriclogger configuration, see logs' : problems[0]
             );
         }
     }

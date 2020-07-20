@@ -69,7 +69,7 @@ export const CLI_FLAGS = {
     'config-file': flags.string({
         char: 'c',
         description:
-            'Fabriclogger configuration file to use. If not specfified fabriclogger will look for a file ' +
+            'Fabriclogger configuration file to use. If not specified fabriclogger will look for a file ' +
             'called fabriclogger.yaml or fabriclogger.json in the current working directory',
     }),
     'splunk-host': flags.string({

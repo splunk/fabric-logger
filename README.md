@@ -65,7 +65,7 @@ Running the Fabric Logger in Docker is recommended. A sample docker-compose entr
                 - ./crypto:/usr/src/app/crypto/
                 - ./network.yaml:/usr/src/app/network.yaml
                 - ./fabriclogger.yaml:/usr/src/app/fabriclogger.yaml
-                - ./.checkpoints.json:/usr/src/app/checkpoints.json
+                - ./.checkpoints:/usr/src/app/.checkpoints
             depends_on:
                 - orderer.example.com
                 - peer0.example.com

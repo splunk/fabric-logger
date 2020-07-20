@@ -93,7 +93,7 @@ export class FileOutput implements Output {
 
     public async logEvent(event: any) {
         const meta = event.metadata || {};
-        const { sourcetype = 'unkown_sourcetype', time = Date.now() } = meta as any;
+        const { sourcetype = 'unknown_sourcetype', time = Date.now() } = meta as any;
         const fileName = `event_${filenameSafe(sourcetype)}_${time}_${randSuffix()}.json`;
         debug(`Writing event to file`, fileName);
         await writeFile(join(this.outputDir, fileName), JSON.stringify(event, null, 2), { encoding: 'utf-8' });
