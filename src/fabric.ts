@@ -1,18 +1,7 @@
 import * as FabricClient from 'fabric-client';
-import { getChannelCheckpoint, storeChannelCheckpoint } from './checkpoint';
-import { createModuleDebug } from './debug';
-import {
-    checkRequiredEnvVar,
-    FABRIC_CERTFILE,
-    FABRIC_KEYFILE,
-    FABRIC_CLIENT_CERTFILE,
-    FABRIC_CLIENT_KEYFILE,
-    FABRIC_LOGGER_USERNAME,
-    FABRIC_MSP,
-    FABRIC_PEER,
-    NETWORK_CONFIG,
-} from './env';
-import { logEvent } from './output';
+import { Checkpoint, CCEvent } from './checkpoint';
+import { createModuleDebug } from '@splunkdlt/debug-logging';
+import { Output } from './output';
 import {
     decodeChainCodeAction,
     decodeChaincodeDeploymentSpec,
@@ -21,280 +10,365 @@ import {
 } from './protobuf';
 import { isLikelyText, toText } from './convert';
 import { get } from 'lodash';
-import { promisify } from 'util';
-import * as fs from 'fs';
+import { FabricConfigSchema } from './config';
+import { ManagedResource } from '@splunkdlt/managed-resource';
+import { retry, exponentialBackoff } from '@splunkdlt/async-tasks';
+import { readFile } from 'fs-extra';
 
 const { debug, info, error } = createModuleDebug('fabric');
-const readFile = promisify(fs.readFile);
 
-let client: FabricClient;
-const eventHubs: { [channelName: string]: FabricClient.ChannelEventHub } = {};
+export class FabricListener implements ManagedResource {
+    private client: FabricClient | undefined;
+    private eventHubs: { [channelName: string]: FabricClient.ChannelEventHub } = {};
+    private checkpoint: Checkpoint;
+    private config: FabricConfigSchema;
+    private output: Output;
 
-export async function initClient(): Promise<void> {
-    if (NETWORK_CONFIG === 'mock') {
-        debug('Skipping fabric client initializtion for mock mode');
-        return;
+    constructor(checkpoint: Checkpoint, config: FabricConfigSchema, output: Output) {
+        this.checkpoint = checkpoint;
+        this.config = config;
+        this.output = output;
     }
 
-    info('Creating fabric client from network config', NETWORK_CONFIG);
-    client = FabricClient.loadFromConfig(NETWORK_CONFIG);
-
-    if (FABRIC_CLIENT_CERTFILE && FABRIC_CLIENT_KEYFILE) {
-        const clientkey = await readFile(FABRIC_CLIENT_KEYFILE, { encoding: 'utf-8' });
-        const clientcert = await readFile(FABRIC_CLIENT_CERTFILE, { encoding: 'utf-8' });
-        client.setTlsClientCertAndKey(clientcert, clientkey);
-    }
-
-    info('Creating fabric user %o', FABRIC_LOGGER_USERNAME);
-    client.createUser({
-        username: FABRIC_LOGGER_USERNAME,
-        mspid: FABRIC_MSP,
-        cryptoContent: {
-            privateKey: checkRequiredEnvVar(FABRIC_KEYFILE, 'FABRIC_KEYFILE'),
-            signedCert: checkRequiredEnvVar(FABRIC_CERTFILE, 'FABRIC_CERTFILE'),
-        },
-        skipPersistence: true,
-    });
-}
-
-export function getChannelType(data: FabricClient.BlockData): string {
-    return data.payload.header.channel_header.typeString.toLowerCase();
-}
-
-export function getChannelId(data: FabricClient.BlockData): string {
-    return data.payload.header.channel_header.channel_id;
-}
-
-export const handleBlockError = (channelName: string) => (e: Error) => {
-    error('Failed to receive the tx event for channel=%s ::', channelName, e);
-};
-
-export const handleChaincodeEventError = (channelName: string) => (e: Error) => {
-    error('Failed to receive the chaincode event for channel=%s ::', channelName, e);
-};
-
-const isFilteredBlock = (block: FabricClient.Block | FabricClient.FilteredBlock): block is FabricClient.FilteredBlock =>
-    'filtered_transactions' in block;
-
-export function processFilteredBlock(block: FabricClient.FilteredBlock) {
-    error('Received unexpected filtered block', block);
-}
-
-export function parseMessageHeaderExtension(msg: FabricClient.BlockData): void {
-    const { header } = msg.payload;
-    const { type, extension } = header.channel_header || { type: undefined, extension: undefined };
-    if (extension instanceof Buffer) {
-        if (type === 3) {
-            try {
-                const chainCodeAction = decodeChainCodeAction(extension);
-                header.channel_header.extension = chainCodeAction;
-            } catch (e) {
-                debug('Failed to decode chain code action from ENDORSER_TRANSACTION header extension', e);
-            }
-        } else if (isLikelyText(extension)) {
-            header.channel_header.extension = toText(extension);
+    public async shutdown() {
+        for (const eventHub in this.eventHubs) {
+            this.eventHubs[eventHub].close();
         }
     }
-}
 
-export function parseChaincodeSpecInput(msg: FabricClient.BlockData): void {
-    const actions = msg.payload.data.actions;
-    if (Array.isArray(actions)) {
-        for (const action of actions) {
-            const chaincodeInput = get(action, 'payload.chaincode_proposal_payload.input.chaincode_spec.input');
-            if (chaincodeInput && Array.isArray(chaincodeInput.args)) {
-                const inputArgs: Buffer[] = chaincodeInput.args;
-                const firstArg = toText(inputArgs[0]);
-                if (firstArg === 'deploy') {
-                    const [, second, cds, spe, ...rest] = inputArgs;
-                    const args: any[] = [firstArg, toText(second)];
-                    try {
-                        args[2] = decodeChaincodeDeploymentSpec(cds);
-                    } catch (e) {
-                        if (isSignaturePolicyEnvolope(cds)) {
-                            args[2] = decodeSignaturePolicyEnvolope(cds);
-                        } else {
-                            args[2] = isLikelyText(cds) ? toText(cds) : cds;
-                        }
-                    }
-                    try {
-                        args[3] = decodeSignaturePolicyEnvolope(spe);
-                    } catch (e) {
-                        args[3] = isLikelyText(spe) ? toText(spe) : spe;
-                    }
-                    chaincodeInput.args = [...args, rest.map((buf: Buffer) => (isLikelyText(buf) ? toText(buf) : buf))];
-                } else {
-                    chaincodeInput.args = chaincodeInput.args.map((buf: Buffer) =>
-                        isLikelyText(buf) ? toText(buf) : buf
-                    );
+    public async initClient(): Promise<FabricClient.User | void> {
+        if (this.config.networkConfig === 'mock') {
+            debug('Skipping fabric client initialization for mock mode');
+            return;
+        }
+
+        info('Creating fabric client from network config', this.config.networkConfig);
+        this.client = FabricClient.loadFromConfig(this.config.networkConfig);
+
+        if (this.config.clientCertFile && this.config.clientKeyFile) {
+            const clientkey = await readFile(this.config.clientKeyFile, { encoding: 'utf-8' });
+            const clientcert = await readFile(this.config.clientCertFile, { encoding: 'utf-8' });
+            this.client.setTlsClientCertAndKey(clientcert, clientkey);
+        }
+
+        info('Creating fabric user %o', this.config.user);
+        return this.client.createUser({
+            username: this.config.user,
+            mspid: this.config.msp,
+            cryptoContent: {
+                privateKey: this.config.keyFile,
+                signedCert: this.config.certFile,
+            },
+            skipPersistence: true,
+        });
+    }
+
+    public async listen() {
+        for (const channel of this.checkpoint.getAllChannelsWithCheckpoints()) {
+            info('Resuming listener for channel=%s', channel);
+            await retry(() => this.registerListener(channel), {
+                attempts: 30,
+                waitBetween: exponentialBackoff({ min: 10, max: 5000 }),
+            });
+        }
+        for (const ccEvent of this.checkpoint.getAllChaincodeEventCheckpoints()) {
+            info('Resuming listener for chaincode=%s', ccEvent);
+            await retry(() => this.registerChaincodeEvent(ccEvent), {
+                attempts: 30,
+                waitBetween: exponentialBackoff({ min: 10, max: 5000 }),
+            });
+        }
+        if (this.config.channels) {
+            for (const channel of this.config.channels) {
+                if (!this.hasListener(channel)) {
+                    info('Registering listener for channel=%s', channel);
+                    await retry(() => this.registerListener(channel), {
+                        attempts: 30,
+                        waitBetween: exponentialBackoff({ min: 10, max: 5000 }),
+                    });
+                }
+            }
+        }
+        if (this.config.ccevents) {
+            for (const ccEvent of this.config.ccevents) {
+                const name = `${ccEvent.channelName}_${ccEvent.chaincodeId}_${ccEvent.filter}`;
+                if (!this.hasListener(name)) {
+                    info('Registering listener for chaincode event %s', name);
+                    await retry(() => this.registerChaincodeEvent(ccEvent), {
+                        attempts: 30,
+                        waitBetween: exponentialBackoff({ min: 10, max: 5000 }),
+                    });
                 }
             }
         }
     }
-}
 
-export function getMessageTimestamp(msg: FabricClient.BlockData): string | undefined {
-    return get(msg, 'payload.header.channel_header.timestamp');
-}
-
-export const processBlock = (channelName: string, initCheckpoint: number) => (
-    block: FabricClient.Block | FabricClient.FilteredBlock
-) => {
-    if (isFilteredBlock(block)) {
-        return processFilteredBlock(block);
-    }
-
-    const blockNumber = +block.header.number;
-    if (blockNumber <= initCheckpoint) {
-        debug(`Ignoring block number=%d on channel=%d since we already processed it`, blockNumber, channelName);
-        return;
-    }
-    debug('Processing block number=%d on channel=%s', blockNumber, channelName);
-
-    for (const msg of block.data.data) {
-        if ('payload' in msg) {
-            parseMessageHeaderExtension(msg);
-            parseChaincodeSpecInput(msg);
-            logEvent(
-                {
-                    block_number: blockNumber,
-                    ...msg,
-                },
-                getChannelType(msg),
-                getMessageTimestamp(msg)
-            );
-        } else {
-            debug(`Ignoring message without payload: %O`, msg);
+    private getChannelType(data: FabricClient.BlockData): string {
+        switch (data.payload.header.channel_header.typeString.toLowerCase()) {
+            case 'endorser_transaction':
+                return 'endorserTransaction';
         }
+        return data.payload.header.channel_header.typeString.toLowerCase();
     }
 
-    debug('Processed all transactions for block number=%d on channel=%s', blockNumber, channelName);
-
-    logEvent(block, 'block');
-    storeChannelCheckpoint(channelName, +block.header.number);
-
-    info('Completed processing block number=%d on channel=%s', blockNumber, channelName);
-};
-
-export async function registerListener(channelName: string): Promise<void> {
-    if (client == null) {
-        throw new Error('Fabric client not initialized');
-    }
-    const channel: FabricClient.Channel = client.getChannel(channelName);
-
-    let channelEventHub: FabricClient.ChannelEventHub;
-    try {
-        info('Creating new event hub for channel=%s', channelName);
-        channelEventHub = channel.newChannelEventHub(FABRIC_PEER);
-    } catch (err) {
-        if (err.message == `Peer with name "${FABRIC_PEER}" not assigned to this channel`) {
-            info('Assigning fabric peer=%s to channel=%s', FABRIC_PEER, channelName);
-            channel.addPeer(client.getPeer(FABRIC_PEER), FABRIC_MSP);
-            channelEventHub = channel.newChannelEventHub(FABRIC_PEER);
-        } else {
-            error('Failed to create channel event hub for channel=%s', channelName, err);
-            throw err;
-        }
+    private getChannelId(data: FabricClient.BlockData): string {
+        return data.payload.header.channel_header.channel_id;
     }
 
-    eventHubs[channelName] = channelEventHub;
+    private handleBlockError = (channelName: string) => (e: Error) => {
+        //TODO Recconect if this is not from managed resource shutdown
+        info('Eventhub for blocks on channel=%s shutting down ::', channelName, e.message);
+    };
 
-    const latestCheckpoint = getChannelCheckpoint(channelName, 0);
-    info('Subscribing to block events on channel=%s from block number=%d', channelName, latestCheckpoint);
-    channelEventHub.registerBlockEvent(processBlock(channelName, latestCheckpoint), handleBlockError(channelName), {
-        startBlock: latestCheckpoint || 1,
-    });
+    private handleChaincodeEventError = (channelName: string) => (e: Error) => {
+        //TODO Recconect if this is not from managed resource shutdown
+        info('Eventhub for chaincode events on channel=%s shutting down ::', channelName, e.message);
+    };
 
-    return new Promise((resolve, reject) => {
-        channelEventHub.connect({ full_block: true }, err => {
-            if (err != null) {
-                error('Failed to connect channel event hub', err);
-                reject(err);
-            } else {
-                resolve();
+    isFilteredBlock = (block: FabricClient.Block | FabricClient.FilteredBlock): block is FabricClient.FilteredBlock =>
+        'filtered_transactions' in block;
+
+    private processFilteredBlock(block: FabricClient.FilteredBlock) {
+        error('Received unexpected filtered block', block);
+    }
+
+    private parseMessageHeaderExtension(msg: FabricClient.BlockData): void {
+        const { header } = msg.payload;
+        const { type, extension } = header.channel_header || { type: undefined, extension: undefined };
+        if (extension instanceof Buffer) {
+            if (type === 3) {
+                try {
+                    const chainCodeAction = decodeChainCodeAction(extension);
+                    header.channel_header.extension = chainCodeAction;
+                } catch (e) {
+                    debug('Failed to decode chain code action from ENDORSER_TRANSACTION header extension', e);
+                }
+            } else if (isLikelyText(extension)) {
+                header.channel_header.extension = toText(extension);
             }
-        });
-    });
-}
-
-export const processChaincodeEvent = (channelName: string) => (
-    event: FabricClient.ChaincodeEvent,
-    blockNumber: number | undefined,
-    txid: string | undefined,
-    txstatus: string | undefined
-) => {
-    info('Processing chaincode event');
-    logEvent(
-        {
-            block_number: blockNumber,
-            channel: channelName,
-            transaction_id: txid,
-            transaction_status: txstatus,
-            event: event,
-            payload_message: event.payload.toString(),
-        },
-        'ccevent'
-    );
-    info(
-        'Completed processing chaincode event on block=%s transaction_id=%s transaction_status=%s',
-        blockNumber,
-        txid,
-        txstatus
-    );
-};
-
-export async function registerChaincodeEvent(channelName: string, chaincodeId: string, filter: string): Promise<void> {
-    if (client == null) {
-        throw new Error('Fabric client not initialized');
-    }
-    const channel: FabricClient.Channel = client.getChannel(channelName);
-    let channelEventHub: FabricClient.ChannelEventHub;
-    try {
-        info('Creating new event hub for channel=%s', channelName);
-        channelEventHub = channel.newChannelEventHub(FABRIC_PEER);
-    } catch (err) {
-        if (err.message == `Peer with name "${FABRIC_PEER}" not assigned to this channel`) {
-            info('Assigning fabric peer=%s to channel=%s', FABRIC_PEER, channelName);
-            channel.addPeer(client.getPeer(FABRIC_PEER), FABRIC_MSP);
-            channelEventHub = channel.newChannelEventHub(FABRIC_PEER);
-        } else {
-            error('Failed to create channel event hub for channel=%s', channelName, err);
-            throw err;
         }
     }
-    const name = `${channelName}_${chaincodeId}_${filter}`;
-    eventHubs[name] = channelEventHub;
 
-    channelEventHub.registerChaincodeEvent(
-        chaincodeId,
-        filter,
-        processChaincodeEvent(channelName),
-        handleChaincodeEventError(channelName)
-    );
-
-    return new Promise((resolve, reject) => {
-        info('Connecting to eventhub');
-        channelEventHub.connect(true, err => {
-            if (err != null) {
-                error('Failed to connect channel event hub', err);
-                reject(err);
-            } else {
-                info('Connected to eventhub');
-                resolve();
+    private parseChaincodeSpecInput(msg: FabricClient.BlockData): void {
+        const actions = msg.payload.data.actions;
+        if (Array.isArray(actions)) {
+            for (const action of actions) {
+                const chaincodeInput = get(action, 'payload.chaincode_proposal_payload.input.chaincode_spec.input');
+                if (chaincodeInput && Array.isArray(chaincodeInput.args)) {
+                    const inputArgs: Buffer[] = chaincodeInput.args;
+                    const firstArg = toText(inputArgs[0]);
+                    if (firstArg === 'deploy') {
+                        const [, second, cds, spe, ...rest] = inputArgs;
+                        const args: any[] = [firstArg, toText(second)];
+                        try {
+                            args[2] = decodeChaincodeDeploymentSpec(cds);
+                        } catch (e) {
+                            if (isSignaturePolicyEnvolope(cds)) {
+                                args[2] = decodeSignaturePolicyEnvolope(cds);
+                            } else {
+                                args[2] = isLikelyText(cds) ? toText(cds) : cds;
+                            }
+                        }
+                        try {
+                            args[3] = decodeSignaturePolicyEnvolope(spe);
+                        } catch (e) {
+                            args[3] = isLikelyText(spe) ? toText(spe) : spe;
+                        }
+                        chaincodeInput.args = [
+                            ...args,
+                            rest.map((buf: Buffer) => (isLikelyText(buf) ? toText(buf) : buf)),
+                        ];
+                    } else {
+                        chaincodeInput.args = chaincodeInput.args.map((buf: Buffer) =>
+                            isLikelyText(buf) ? toText(buf) : buf
+                        );
+                    }
+                }
             }
-        });
-    });
-}
-
-export function removeListener(channelName: string) {
-    const hub = eventHubs[channelName];
-    if (hub != null) {
-        hub.disconnect();
-        delete eventHubs[channelName];
+        }
     }
-}
 
-export function hasListener(channelName: string): boolean {
-    const hub = eventHubs[channelName];
-    return hub != null && hub.isconnected();
+    private getMessageTimestamp(msg: FabricClient.BlockData): Date {
+        return new Date(get(msg, 'payload.header.channel_header.timestamp'));
+    }
+
+    private processBlock = (channelName: string, initCheckpoint: number) => (
+        block: FabricClient.Block | FabricClient.FilteredBlock
+    ) => {
+        if (this.isFilteredBlock(block)) {
+            return this.processFilteredBlock(block);
+        }
+
+        const blockNumber = +block.header.number;
+        if (blockNumber <= initCheckpoint) {
+            debug(`Ignoring block number=%d on channel=%d since we already processed it`, blockNumber, channelName);
+            return;
+        }
+        debug('Processing block number=%d on channel=%s', blockNumber, channelName);
+
+        for (const msg of block.data.data) {
+            if ('payload' in msg) {
+                this.parseMessageHeaderExtension(msg);
+                this.parseChaincodeSpecInput(msg);
+                this.output.logEvent(
+                    {
+                        type: this.getChannelType(msg),
+                        block_number: blockNumber,
+                        ...msg,
+                    },
+                    this.getMessageTimestamp(msg),
+                    this.config.peer
+                );
+            } else {
+                debug(`Ignoring message without payload: %O`, msg);
+            }
+        }
+
+        debug('Processed all transactions for block number=%d on channel=%s', blockNumber, channelName);
+
+        this.output.logEvent(
+            { type: 'block', ...block },
+            this.getMessageTimestamp(block.data.data[0]),
+            this.config.peer
+        );
+        this.checkpoint.storeChannelCheckpoint(channelName, +block.header.number);
+
+        info('Completed processing block number=%d on channel=%s', blockNumber, channelName);
+    };
+
+    public async registerListener(channelName: string): Promise<void> {
+        if (this.client == null) {
+            throw new Error('Fabric client not initialized');
+        }
+        const channel: FabricClient.Channel = this.client.getChannel(channelName);
+
+        let channelEventHub: FabricClient.ChannelEventHub;
+        try {
+            info('Creating new event hub for channel=%s', channelName);
+            channelEventHub = channel.newChannelEventHub(this.config.peer);
+        } catch (err) {
+            if (err.message == `Peer with name "${this.config.peer}" not assigned to this channel`) {
+                info('Assigning fabric peer=%s to channel=%s', this.config.peer, channelName);
+                channel.addPeer(this.client.getPeer(this.config.peer), this.config.msp);
+                channelEventHub = channel.newChannelEventHub(this.config.peer);
+            } else {
+                error('Failed to create channel event hub for channel=%s', channelName, err);
+                throw err;
+            }
+        }
+
+        this.eventHubs[channelName] = channelEventHub;
+
+        const latestCheckpoint = this.checkpoint.getChannelCheckpoint(channelName);
+        info('Subscribing to block events on channel=%s from block number=%d', channelName, latestCheckpoint);
+        channelEventHub.registerBlockEvent(
+            this.processBlock(channelName, latestCheckpoint),
+            this.handleBlockError(channelName),
+            {
+                startBlock: latestCheckpoint,
+            }
+        );
+
+        return new Promise((resolve, reject) => {
+            channelEventHub.connect({ full_block: true }, (err) => {
+                if (err != null) {
+                    error('Failed to connect channel event hub', err);
+                    reject(err);
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+
+    private processChaincodeEvent = (channelName: string, name: string, filter: string, chaincodeId: string) => (
+        event: FabricClient.ChaincodeEvent,
+        blockNumber: number | undefined,
+        txid: string | undefined,
+        txstatus: string | undefined
+    ) => {
+        info('Processing chaincode event');
+        this.output.logEvent(
+            {
+                type: 'ccevent',
+                block_number: blockNumber,
+                channel: channelName,
+                transaction_id: txid,
+                transaction_status: txstatus,
+                event: event,
+                payload_message: event.payload.toString(),
+            },
+            undefined, // TODO Get timestamp from block transaction
+            this.config.peer
+        );
+        if (blockNumber != undefined) {
+            this.checkpoint.storeChaincodeEventCheckpoint(name, channelName, filter, chaincodeId, +blockNumber);
+        }
+        info(
+            'Completed processing chaincode event on block=%s transaction_id=%s transaction_status=%s',
+            blockNumber,
+            txid,
+            txstatus
+        );
+    };
+
+    public async registerChaincodeEvent(ccEvent: CCEvent): Promise<void> {
+        if (this.client == null) {
+            throw new Error('Fabric client not initialized');
+        }
+        const channel: FabricClient.Channel = this.client.getChannel(ccEvent.channelName);
+        let channelEventHub: FabricClient.ChannelEventHub;
+        try {
+            info('Creating new event hub for channel=%s', ccEvent.channelName);
+            channelEventHub = channel.newChannelEventHub(this.config.peer);
+        } catch (err) {
+            if (err.message == `Peer with name "${this.config.peer}" not assigned to this channel`) {
+                info('Assigning fabric peer=%s to channel=%s', this.config.peer, ccEvent.channelName);
+                channel.addPeer(this.client.getPeer(this.config.peer), this.config.msp);
+                channelEventHub = channel.newChannelEventHub(this.config.peer);
+            } else {
+                error('Failed to create channel event hub for channel=%s', ccEvent.channelName, err);
+                throw err;
+            }
+        }
+        const name = `${ccEvent.channelName}_${ccEvent.chaincodeId}_${ccEvent.filter}`;
+        this.eventHubs[name] = channelEventHub;
+
+        const latestCheckpoint = ccEvent.block || 0;
+        channelEventHub.registerChaincodeEvent(
+            ccEvent.chaincodeId,
+            ccEvent.filter,
+            this.processChaincodeEvent(ccEvent.channelName, name, ccEvent.filter, ccEvent.chaincodeId),
+            this.handleChaincodeEventError(ccEvent.channelName),
+            {
+                startBlock: latestCheckpoint,
+            }
+        );
+
+        return new Promise((resolve, reject) => {
+            info('Connecting to eventhub');
+            channelEventHub.connect(true, (err) => {
+                if (err != null) {
+                    error('Failed to connect channel event hub', err);
+                    reject(err);
+                } else {
+                    info('Connected to eventhub');
+                    resolve();
+                }
+            });
+        });
+    }
+
+    public removeListener(channelName: string) {
+        const hub = this.eventHubs[channelName];
+        if (hub != null) {
+            hub.disconnect();
+            delete this.eventHubs[channelName];
+        }
+    }
+
+    public hasListener(channelName: string): boolean {
+        const hub = this.eventHubs[channelName];
+        return hub != null && hub.isconnected();
+    }
 }

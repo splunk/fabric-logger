@@ -69,3 +69,4 @@ build/
 .checkpoints
 .vscode
 /generated
+/lib
