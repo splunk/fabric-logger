@@ -35,3 +35,15 @@ data:
         tlsCACerts:
           path: /var/hyperledger/msp/tlscacert/tlscacert.pem
         {{- end }}
+  fabriclogger.yaml: |-
+    fabric:
+      channels:
+        {{- range .Values.channels }}
+        - {{ . }}
+        {{- end }}
+      ccevents:
+        {{- range .Values.ccevents }}
+        - channelName: {{ .channelName }}
+          filter: {{ .filter }}
+          chaincodeId: {{ .chaincodeId }}
+        {{- end }}
