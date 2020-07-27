@@ -13,13 +13,11 @@ User authentication in Hyperledger Fabric depends on a private key and a signed 
 
 Additionally, Hyperledger Fabric users depend on ACLs defined in the `configtx.yaml` file in order to listen for events on peers. You can see all the ACLs documented [here](https://github.com/hyperledger/fabric/blob/309194182870aebc1e5faf153ea9e4aabda25b8e/sampleconfig/configtx.yaml#L144). The only required ACL policy for using this app is `event/Block`, by default this is mapped to the policy `/Channel/Application/Readers`. Any user defined under this policy in the organization can be used for the fabric-logger. User membership into policies are defined at the organization level, an example can be seen [here](https://github.com/hyperledger/fabric/blob/309194182870aebc1e5faf153ea9e4aabda25b8e/sampleconfig/configtx.yaml#L38).
 
-
 ## Configuration
 
+NOTE: In previous versions of Fabric Logger there was a web server exposed to configure channels and chaincode events. The web server has been removed in favor of configuration files.
 
-NOTE: In previous versions of Fabric Logger there was a web server exposed to configure channels and chaincode events.  The web server has been removed in favor of configuration files.
-
-Fabric Logger  uses two files for configuration:
+Fabric Logger uses two files for configuration:
 
 Connection profile `network.yaml` with the appropriate values.
 
@@ -28,7 +26,8 @@ Connection profile `network.yaml` with the appropriate values.
 Refer to fabriclogger.yaml.example for how to setup
 
 ## Checkpoints
-As Fabric Logger processes blocks and chaincode events the progress is stored in a `.checkpoints` file.  Upon restart Fabric Logger will load this file and resume from the last processed block number.  The file uses ini format.  Sample below:
+
+As Fabric Logger processes blocks and chaincode events the progress is stored in a `.checkpoints` file. Upon restart Fabric Logger will load this file and resume from the last processed block number. The file uses ini format. Sample below:
 
 ```
 myChannel=5
@@ -159,7 +158,7 @@ You will also need to update the `network.yaml` with appropriate values for you 
 ## Environment Variables
 
 | Environment Variable   | Flag             | Description                                                                                                                                              | Default            |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| ---------------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
 | FABRIC_KEYFILE         | user-key         | The private key file used to authenticate with the Fabric peer.                                                                                          | None (Required)    |
 | FABRIC_CERTFILE        | user-cert        | The signed certificate returned from the Fabric CA.                                                                                                      | None (Required)    |
 | FABRIC_CLIENT_KEYFILE  | client-keyfile   | The client private key file used in mutual TLS to authenticate with the Fabric peer.                                                                     | None               |
@@ -170,8 +169,8 @@ You will also need to update the `network.yaml` with appropriate values for you 
 | LOGGING_LOCATION       |                  | The logging location, valid values are `splunk` or `stdout`.                                                                                             | `splunk`           |
 | SPLUNK_HEC_TOKEN       | hec-token        | If using `splunk` as the logging location, the HEC token value.                                                                                          | None               |
 | SPLUNK_HEC_URL         | hec-url          | If using `splunk` as the logging location, the url to the splunk instance event collector.                                                               | None               |
-| SPLUNK_HOST  DEPRECATED| splunk-host      | Splunk hostname. DEPRECATED Please use SPLUNK_HEC_URL.                                                                                                   | None               |
-| SPLUNK_PORT  DEPRECATED| splunk-port      | Splunk HEC port. DEPRECATED Please use SPLUNK_HEC_URL.                                                                                                   | `8088`             |
+| SPLUNK_HOST DEPRECATED | splunk-host      | Splunk hostname. DEPRECATED Please use SPLUNK_HEC_URL.                                                                                                   | None               |
+| SPLUNK_PORT DEPRECATED | splunk-port      | Splunk HEC port. DEPRECATED Please use SPLUNK_HEC_URL.                                                                                                   | `8088`             |
 | SPLUNK_INDEX           | hec-events-index | Splunk index to log to.                                                                                                                                  | `hyperledger_logs` |
 | NETWORK_CONFIG         | network          | A network configuration object, an example can be found [here](https://hyperledger.github.io/fabric-sdk-node/release-1.4/tutorial-network-config.html)   | None (Required)    |
 | CHECKPOINTS_FILE       |                  | A file used to hold checkpoints for each channel watched. If running in docker, be sure to mount a volume so that the file is not lost between restarts. | `.checkpoints`     |
