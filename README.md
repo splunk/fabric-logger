@@ -47,7 +47,7 @@ Running the Fabric Logger in Docker is recommended. A sample docker-compose entr
     services:
         fabric-logger.example.com:
             container_name: fabric-logger.example.com
-            image: splunkdlt/fabric-logger:latest
+            image: splunkdlt/fabric-logger:release-2.0.1
             environment:
                 - FABRIC_KEYFILE=<path to private key file>
                 - FABRIC_CERTFILE=<path to signed certificate>
@@ -57,6 +57,7 @@ Running the Fabric Logger in Docker is recommended. A sample docker-compose entr
                 - FABRIC_PEER=peer0.example.com
                 - SPLUNK_HEC_TOKEN=12345678-ABCD-EFGH-IJKL-123456789012
                 - SPLUNK_HEC_URL=https://splunk.example.com:8088
+                - SPLUNK_HEC_REJECT_INVALID_CERTS="false"
                 - SPLUNK_INDEX=hyperledger_logs
                 - LOGGING_LOCATION=splunk
                 - NETWORK_CONFIG=network.yaml
@@ -90,14 +91,25 @@ We also include a helm chart for Kubernetes deployments. First set your `values.
         hec:
             token: 12345678-ABCD-EFGH-IJKL-123456789012
             url: https://splunk-splunk-kube.splunk.svc.cluster.local:8088
+            rejectInvalidCerts: "false"
         index: hyperledger_logs
 
     secrets:
         peer:
             cert: hlf-peer--peer0-cert
             key: hlf-peer--peer0-key
+    channels:
+        - channel1
+        - channel2
+    ccevents:
+        - channelName: channel1
+          filter: myEvent
+          chaincodeId: myChaincodeId
+        - channelName: channel1
+          filter: myOtherEvent
+          chaincodeId: myChaincodeId
 
-### Autogenerating Secrets
+### Kubernetes: Autogenerating Secrets
 
 Alternatively, if you are using `cryptogen` to generate identities, the helm chart can auto-populate secrets for you. You will need to download the helm file and untar it locally so you can copy your `crypto-config` into the director.
 
@@ -116,7 +128,7 @@ You can now deploy using:
     helm install -n fabric-logger-${PEER_NAME}-${NS} --namespace ${NS} \
                  -f values.yaml ./fabric-logger
 
-### Manually Populating Secrets
+### Kubernetes: Manually Populating Secrets
 
 Make sure that the peer credentials are stored in the appropriately named secrets in the same namespace. It's not required to use the admin credential for connecting, just make sure to select the appropriate user for your use case.
 
@@ -133,9 +145,9 @@ A `network.yaml` will automatically be generated using the secrets and channel d
 
     helm install -n fabric-logger-${PEER_NAME}-${NS} --namespace ${NS} \
                  -f values.yaml \
-                 https://github.com/splunk/fabric-logger/releases/download/v1.2.0/fabric-logger-helm-v1.2.0.tgz
+                 https://github.com/splunk/fabric-logger/releases/download/v2.0.1/fabric-logger-helm-v2.0.1.tgz
 
-### Deleting Helm Chart
+### Kubernetes: Deleting Helm Chart
 
     helm delete --purge fabric-logger-${PEER_NAME}-${NS}
 
@@ -157,21 +169,22 @@ You will also need to update the `network.yaml` with appropriate values for you 
 
 ## Environment Variables
 
-| Environment Variable   | Flag             | Description                                                                                                                                              | Default            |
-| ---------------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| FABRIC_KEYFILE         | user-key         | The private key file used to authenticate with the Fabric peer.                                                                                          | None (Required)    |
-| FABRIC_CERTFILE        | user-cert        | The signed certificate returned from the Fabric CA.                                                                                                      | None (Required)    |
-| FABRIC_CLIENT_KEYFILE  | client-keyfile   | The client private key file used in mutual TLS to authenticate with the Fabric peer.                                                                     | None               |
-| FABRIC_CLIENT_CERTFILE | client-certfile  | The client signed certificate used in mutual TLS.                                                                                                        | None               |
-| FABRIC_MSP             | msp              | The name of the MSP that the logging user is enrolled in.                                                                                                | None (Required)    |
-| FABRIC_LOGGER_USERNAME | user             | The username the that the `FABRIC_KEYFILE` is enrolled under.                                                                                            | None (Required)    |
-| FABRIC_PEER            | peer             | The hostname of the peer to connect to.                                                                                                                  | None (Required)    |
-| LOGGING_LOCATION       |                  | The logging location, valid values are `splunk` or `stdout`.                                                                                             | `splunk`           |
-| SPLUNK_HEC_TOKEN       | hec-token        | If using `splunk` as the logging location, the HEC token value.                                                                                          | None               |
-| SPLUNK_HEC_URL         | hec-url          | If using `splunk` as the logging location, the url to the splunk instance event collector.                                                               | None               |
-| SPLUNK_HOST DEPRECATED | splunk-host      | Splunk hostname. DEPRECATED Please use SPLUNK_HEC_URL.                                                                                                   | None               |
-| SPLUNK_PORT DEPRECATED | splunk-port      | Splunk HEC port. DEPRECATED Please use SPLUNK_HEC_URL.                                                                                                   | `8088`             |
-| SPLUNK_INDEX           | hec-events-index | Splunk index to log to.                                                                                                                                  | `hyperledger_logs` |
-| NETWORK_CONFIG         | network          | A network configuration object, an example can be found [here](https://hyperledger.github.io/fabric-sdk-node/release-1.4/tutorial-network-config.html)   | None (Required)    |
-| CHECKPOINTS_FILE       |                  | A file used to hold checkpoints for each channel watched. If running in docker, be sure to mount a volume so that the file is not lost between restarts. | `.checkpoints`     |
-| SOURCETYPE_PREFIX      |                  | A prefix used for the sourcetype when writing to Splunk.                                                                                                 | `fabric_logger:`   |
+| Environment Variable            | Flag                     | Description                                                                                | Default            |
+| ------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------ | ------------------ |
+| FABRIC_KEYFILE                  | user-key                 | The private key file used to authenticate with the Fabric peer.                            | None (Required)    |
+| FABRIC_CERTFILE                 | user-cert                | The signed certificate returned from the Fabric CA.                                        | None (Required)    |
+| FABRIC_CLIENT_KEYFILE           | client-keyfile           | The client private key file used in mutual TLS to authenticate with the Fabric peer.       | None               |
+| FABRIC_CLIENT_CERTFILE          | client-certfile          | The client signed certificate used in mutual TLS.                                          | None               |
+| FABRIC_MSP                      | msp                      | The name of the MSP that the logging user is enrolled in.                                  | None (Required)    |
+| FABRIC_LOGGER_USERNAME          | user                     | The username the that the `FABRIC_KEYFILE` is enrolled under.                              | None (Required)    |
+| FABRIC_PEER                     | peer                     | The hostname of the peer to connect to.                                                    | None (Required)    |
+| LOGGING_LOCATION                |                          | The logging location, valid values are `splunk` or `stdout`.                               | `splunk`           |
+| SPLUNK_HEC_TOKEN                | hec-token                | If using `splunk` as the logging location, the HEC token value.                            | None               |
+| SPLUNK_HEC_URL                  | hec-url                  | If using `splunk` as the logging location, the url to the splunk instance event collector. | None               |
+| SPLUNK_HEC_REJECT_INVALID_CERTS | hec-reject-invalid-certs | If fabric logger should reject invalid or self-signed certs when sending to splunk         | true               |
+| SPLUNK_HOST DEPRECATED          | splunk-host              | Splunk hostname. DEPRECATED Please use SPLUNK_HEC_URL.                                     | None               |
+| SPLUNK_PORT DEPRECATED          | splunk-port              | Splunk HEC port. DEPRECATED Please use SPLUNK_HEC_URL.                                     | `8088`             |
+| SPLUNK_INDEX                    | hec-events-index         | Splunk index to log to.                                                                    | `hyperledger_logs` |
+| NETWORK_CONFIG                  | network                  | A network configuration object, an example can be found [here](https://hyperledger.github.io/fabric-sdk-node/release-1.4/tutorial-network-config.html)                                                                                                                                                     | None (Required)    |
+| CHECKPOINTS_FILE                |                          | A file used to hold checkpoints for each channel watched. If running in docker, be sure to mount a volume so that the file is not lost between restarts.                                                                                                                                                 | `.checkpoints`     |
+| FABRIC_LOGGER_CONFIG            | config-file              | Location of a yaml file for fabric logger configuration, see example file fabriclogger.yaml.example | fabriclogger.yaml |

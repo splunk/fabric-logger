@@ -67,6 +67,7 @@ export const CLI_FLAGS = {
         description: 'The client certificate file used when mutual TLS is enabled to authenticate with the peer',
     }),
     'config-file': flags.string({
+        env: 'FABRIC_LOGGER_CONFIG',
         char: 'c',
         description:
             'Fabriclogger configuration file to use. If not specified fabriclogger will look for a file ' +
