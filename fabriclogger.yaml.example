@@ -9,4 +9,4 @@ fabric:
       chaincodeId: myChaincodeId
     - channelName: myChannel
       filter: myOtherEvent
-      chaincodeIdL myChaincodeId
+      chaincodeId: myChaincodeId

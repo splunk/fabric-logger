@@ -6,7 +6,7 @@ replicaCount: 1
 
 image:
   repository: splunkdlt/fabric-logger
-  tag: latest
+  tag: release-2.0.1
   pullPolicy: IfNotPresent
 
 nameOverride: ""
@@ -41,10 +41,19 @@ peer:
   peerScheme: grpc  # grpc or grpcs
   peerAddress: peer.default.svc
   peerPort: 7051
-  channels:
-    # A list of channel names that this peer connects to:
-    - channel1
-    - channel2
+
+channels:
+  # A list of channel names that this peer connects to:
+  - channel1
+  - channel2
+ccevents:
+  # A list of chaincode events to listen for:
+  - channelName: myChannel
+    filter: myEvent
+    chaincodeId: myChaincodeId
+  - channelName: myChannel
+    filter: myOtherEvent
+    chaincodeId: myChaincodeId
 
 loggingLocation: splunk
 splunk:

@@ -1,8 +1,8 @@
 apiVersion: v1
-appVersion: "v1.2.1"
+appVersion: "v2.0.1"
 description: A Helm chart for Splunk Connect for Hyperledger Fabric
 name: fabric-logger
-version: v1.2.1
+version: v2.0.1
 keywords:
   - blockchain
   - hyperledger
