@@ -1,0 +1,11 @@
+splunk:
+    conf:
+        indexes:
+            directory: /opt/splunk/etc/apps/search/local
+            content:
+                hyperledger_data:
+                    coldPath: $SPLUNK_DB/hyperledger_data/colddb
+                    datatype: event
+                    homePath: $SPLUNK_DB/hyperledger_data/db
+                    maxTotalDataSizeMB: 25600
+                    thawedPath: $SPLUNK_DB/hyperledger_data/thaweddb
