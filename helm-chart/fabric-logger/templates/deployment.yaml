@@ -48,18 +48,6 @@ spec:
             - mountPath: "/var/hyperledger/tls/keystore"
               name: id-clientkey
             {{- end }}
-          ports:
-            - name: http
-              containerPort: 8080
-              protocol: TCP
-          livenessProbe:
-            httpGet:
-              path: /healthcheck
-              port: http
-          readinessProbe:
-            httpGet:
-              path: /healthcheck
-              port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           env:

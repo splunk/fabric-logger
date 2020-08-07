@@ -6,15 +6,11 @@ replicaCount: 1
 
 image:
   repository: splunkdlt/fabric-logger
-  tag: release-2.0.1
+  tag: release-2.0.2
   pullPolicy: IfNotPresent
 
 nameOverride: ""
 fullnameOverride: ""
-
-service:
-  type: ClusterIP
-  port: 8080
 
 secrets:
   peer:
@@ -60,21 +56,8 @@ splunk:
   hec:
     token: 00000000-0000-0000-0000-000000000000
     url: https://splunk.example.com:8088
+    rejectInvalidCerts: "false"
   index: hyperledger_logs
-
-ingress:
-  enabled: false
-  annotations: {}
-    # kubernetes.io/ingress.class: nginx
-    # kubernetes.io/tls-acme: "true"
-  hosts:
-    - host: fabric-logger.local
-      paths: []
-
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
