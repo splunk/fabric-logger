@@ -15,7 +15,7 @@ import { ManagedResource } from '@splunkdlt/managed-resource';
 import { retry, exponentialBackoff } from '@splunkdlt/async-tasks';
 import { readFile } from 'fs-extra';
 
-const { debug, info, error } = createModuleDebug('fabric');
+const { debug, info, error, warn } = createModuleDebug('fabric');
 
 export class FabricListener implements ManagedResource {
     private client: FabricClient | undefined;
@@ -100,6 +100,9 @@ export class FabricListener implements ManagedResource {
                     });
                 }
             }
+        }
+        if (Object.keys(this.config.channels).length === 0 && Object.keys(this.config.ccevents).length === 0){
+            warn('No Channels or events are configured for listening.  Please update your fabriclogger.yaml config file to include channels or chaincode events to listen on.');
         }
     }
 
