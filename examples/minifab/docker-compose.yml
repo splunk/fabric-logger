@@ -33,7 +33,7 @@ services:
             - NETWORK_CONFIG=/tmp/network-config.yml
             - SPLUNK_HEC_TOKEN=00000000-0000-0000-0000-000000000000
             - SPLUNK_HEC_URL=https://splunk.example.com:8088
-            - SPLUNK_INDEX=hyperledger_data
+            - SPLUNK_INDEX=hyperledger_logs
             - SPLUNK_HEC_REJECT_INVALID_CERTS=false
             - FABRIC_LOGGER_CONFIG=/tmp/fabriclogger.yml
 
