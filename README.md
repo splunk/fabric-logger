@@ -47,7 +47,7 @@ Running the Fabric Logger in Docker is recommended. A sample docker-compose entr
     services:
         fabric-logger.example.com:
             container_name: fabric-logger.example.com
-            image: splunkdlt/fabric-logger:release-2.0.1
+            image: splunkdlt/fabric-logger:release-2.0.2
             environment:
                 - FABRIC_KEYFILE=<path to private key file>
                 - FABRIC_CERTFILE=<path to signed certificate>
@@ -113,8 +113,8 @@ We also include a helm chart for Kubernetes deployments. First set your `values.
 
 Alternatively, if you are using `cryptogen` to generate identities, the helm chart can auto-populate secrets for you. You will need to download the helm file and untar it locally so you can copy your `crypto-config` into the director.
 
-    wget https://github.com/splunk/fabric-logger/releases/download/v1.2.0/fabric-logger-helm-v1.2.0.tgz
-    tar -xf fabric-logger-helm-v1.2.0.tgz
+    wget https://github.com/splunk/fabric-logger/releases/download/2.0.2/fabric-logger-helm-v2.0.2.tgz
+    tar -xf fabric-logger-helm-v2.0.2.tgz
     cp -R crypto-config fabric-logger/crypto-config
 
 Set the secrets section of `values.yaml` to:
@@ -145,7 +145,7 @@ A `network.yaml` will automatically be generated using the secrets and channel d
 
     helm install -n fabric-logger-${PEER_NAME}-${NS} --namespace ${NS} \
                  -f values.yaml \
-                 https://github.com/splunk/fabric-logger/releases/download/v2.0.1/fabric-logger-helm-v2.0.1.tgz
+                 https://github.com/splunk/fabric-logger/releases/download/v2.0.2/fabric-logger-helm-v2.0.2.tgz
 
 ### Kubernetes: Deleting Helm Chart
 
