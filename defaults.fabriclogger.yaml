@@ -25,7 +25,6 @@ hec:
         userAgent: fabric_logger-hec-client/$VERSION
         multipleMetricFormatEnabled: false
         waitForAvailability: 2m
-        index: hyperledger_logs
         retryWaitTime:
             type: exponential-backoff
             min: 10ms
@@ -33,6 +32,7 @@ hec:
         defaultMetadata:
             host: $HOSTNAME
             source: fabric_logger
+            index: hyperledger_logs
     internal:
         flushTime: 5s
         defaultMetadata:
