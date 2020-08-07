@@ -16,7 +16,7 @@ $> ./start.sh
 
 Splunk runs as part of the deployment on your machine, and is available at `https://localhost:8000`.
 
-You can log in with `admin/readme`. Splunk installs the Hyperledger Fabric application, from which you can explore your setup.
+You can log in with `admin/changeme`. Splunk installs the Hyperledger Fabric application, from which you can explore your setup.
 
 ## Stopping the sample
 
