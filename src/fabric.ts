@@ -101,8 +101,10 @@ export class FabricListener implements ManagedResource {
                 }
             }
         }
-        if (Object.keys(this.config.channels).length === 0 && Object.keys(this.config.ccevents).length === 0){
-            warn('No Channels or events are configured for listening.  Please update your fabriclogger.yaml config file to include channels or chaincode events to listen on.');
+        if (Object.keys(this.config.channels).length === 0 && Object.keys(this.config.ccevents).length === 0) {
+            warn(
+                'No Channels or events are configured for listening.  Please update your fabriclogger.yaml config file to include channels or chaincode events to listen on.'
+            );
         }
     }
 

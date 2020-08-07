@@ -451,8 +451,8 @@ export async function loadFabricloggerConfig(flags: CliFlags, dryRun: boolean = 
                 token: required('hec-token', defaults.hec?.default?.token),
                 defaultFields: defaults.hec?.default?.defaultFields,
                 defaultMetadata: flags['hec-events-index']
-                ? Object.assign({}, defaults.hec?.default?.defaultMetadata, { index: flags['hec-events-index'] })
-                : defaults.hec?.default?.defaultMetadata,
+                    ? Object.assign({}, defaults.hec?.default?.defaultMetadata, { index: flags['hec-events-index'] })
+                    : defaults.hec?.default?.defaultMetadata,
                 flushTime: parseDuration(defaults.hec?.default?.flushTime),
                 gzip: defaults.hec?.default?.gzip,
                 maxQueueEntries: defaults.hec?.default?.maxQueueEntries,
