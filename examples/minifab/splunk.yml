@@ -6,6 +6,6 @@ splunk:
                 hyperledger_data:
                     coldPath: $SPLUNK_DB/hyperledger_data/colddb
                     datatype: event
-                    homePath: $SPLUNK_DB/hyperledger_data/db
+                    homePath: $SPLUNK_DB/hyperledger_logs/db
                     maxTotalDataSizeMB: 25600
                     thawedPath: $SPLUNK_DB/hyperledger_logs/thaweddb
