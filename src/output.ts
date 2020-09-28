@@ -5,7 +5,14 @@ import { convertBuffers } from './convert';
 import { HecClient } from '@splunkdlt/hec-client';
 import { ManagedResource } from '@splunkdlt/managed-resource';
 import { FabricloggerConfig, HecOutputConfig } from './config';
-import { BlockMessage, ConfigMessage, EndorserTransactionMessage, ChaincodeEventMessage, TransactionEventMessage, UnKnownMessage } from './msgs';
+import {
+    BlockMessage,
+    ConfigMessage,
+    EndorserTransactionMessage,
+    ChaincodeEventMessage,
+    TransactionEventMessage,
+    UnKnownMessage,
+} from './msgs';
 
 export type OutputMessage =
     | BlockMessage

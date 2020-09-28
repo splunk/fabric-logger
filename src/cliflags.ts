@@ -83,7 +83,8 @@ export const CLI_FLAGS = {
     }),
     'block-type': flags.string({
         env: 'BLOCK_TYPE',
-        description: 'Type of block to subscribe to full or additionally include private data.  NOTE: private is not available and should not be used prior to fabric 2.X',
+        description:
+            'Type of block to subscribe to full or additionally include private data.  NOTE: private is not available and should not be used prior to fabric 2.X',
         options: ['full', 'private'],
-    })
+    }),
 };

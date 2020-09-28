@@ -1,4 +1,3 @@
-
 import { ContractEvent, TransactionEvent } from 'fabric-network';
 import { BlockData } from 'fabric-common';
 
@@ -16,7 +15,7 @@ export interface EndorserTransactionMessage extends BlockData {
     block_number: number;
 }
 
-export interface ChaincodeEventMessage extends ContractEvent{
+export interface ChaincodeEventMessage extends ContractEvent {
     type: 'ccevent';
     block_number: number | undefined;
     channel: string | undefined;

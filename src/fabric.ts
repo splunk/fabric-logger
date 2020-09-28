@@ -269,7 +269,10 @@ export class FabricListener implements ManagedResource {
         const network = await this.gateway.getNetwork(channelName);
         const latestCheckpoint = this.checkpoint.getChannelCheckpoint(channelName);
         info('Subscribing to block events on channel=%s from block number=%d', channelName, latestCheckpoint);
-        return network.addBlockListener(this.processBlock, { startBlock: latestCheckpoint, type: this.config.blockType });
+        return network.addBlockListener(this.processBlock, {
+            startBlock: latestCheckpoint,
+            type: this.config.blockType,
+        });
     }
 
     private processChaincodeEvent: ContractListener = async (event: ContractEvent) => {

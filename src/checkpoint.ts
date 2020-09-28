@@ -94,11 +94,7 @@ export class Checkpoint implements ManagedResource {
         this.scheduleWriteCheckpoints();
     }
 
-    public storeChaincodeEventCheckpoint(
-        channelName: string,
-        chaincodeId: string,
-        block: number
-    ) {
+    public storeChaincodeEventCheckpoint(channelName: string, chaincodeId: string, block: number) {
         if (this.globalCheckpoints == null) {
             throw new Error('Checkpoints not loaded');
         }

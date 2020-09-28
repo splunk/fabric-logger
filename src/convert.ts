@@ -7,9 +7,9 @@ export function convertBuffers(obj: any, path: string[] = []): any {
     }
     if (obj instanceof Buffer) {
         // debug('Converting buffer value to hex at path %o', path.join('.'));
-        if (isLikelyText(obj)){
+        if (isLikelyText(obj)) {
             return { string: obj.toString('utf-8') };
-        }else{
+        } else {
             return { hex: obj.toString('hex') };
         }
     }
@@ -21,9 +21,9 @@ export function convertBuffers(obj: any, path: string[] = []): any {
             const v = obj[k];
             if (v instanceof Buffer) {
                 // debug('Converting buffer property to hex at path %o.%o', path.join('.'), k);
-                if (isLikelyText(v)){
+                if (isLikelyText(v)) {
                     result[`${k}_string`] = v.toString('utf-8');
-                }else{
+                } else {
                     result[`${k}_hex`] = v.toString('hex');
                 }
             } else {
