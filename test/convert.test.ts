@@ -1,9 +1,9 @@
-import { convertBuffersToHex, isLikelyText } from '../src/convert';
+import { convertBuffers, isLikelyText } from '../src/convert';
 
-describe('convertBuffersToHex', () => {
+describe('convertBuffers', () => {
     it('should return an object without buffers as-is', () => {
         expect(
-            convertBuffersToHex({
+            convertBuffers({
                 foo: 'bar',
                 some: 'thing',
                 anumber: 3,
@@ -21,32 +21,32 @@ describe('convertBuffersToHex', () => {
 
     it('should modify an object property containing a buffer', () => {
         expect(
-            convertBuffersToHex({
+            convertBuffers({
                 some: Buffer.from('foobar'),
             })
         ).toMatchInlineSnapshot(`
             Object {
-              "some_hex": "666f6f626172",
+              "some_string": "foobar",
             }
         `);
     });
 
     it('should convert an array of buffers to inline objects with the hex values', () => {
         expect(
-            convertBuffersToHex({
+            convertBuffers({
                 args: [Buffer.from('foobar'), Buffer.from('hello'), Buffer.from('world')],
             })
         ).toMatchInlineSnapshot(`
             Object {
               "args": Array [
                 Object {
-                  "hex": "666f6f626172",
+                  "string": "foobar",
                 },
                 Object {
-                  "hex": "68656c6c6f",
+                  "string": "hello",
                 },
                 Object {
-                  "hex": "776f726c64",
+                  "string": "world",
                 },
               ],
             }
