@@ -8,7 +8,6 @@ const { debug, info, error } = createModuleDebug('checkpoint');
 export type Checkpoints = { [key: string]: any };
 export type CCEvent = {
     channelName: string;
-    filter: string;
     chaincodeId: string;
     block: number;
 };
@@ -96,16 +95,14 @@ export class Checkpoint implements ManagedResource {
     }
 
     public storeChaincodeEventCheckpoint(
-        name: string,
         channelName: string,
-        filter: string,
         chaincodeId: string,
         block: number
     ) {
         if (this.globalCheckpoints == null) {
             throw new Error('Checkpoints not loaded');
         }
-        this.globalCheckpoints.ccevents[name] = { channelName, filter, chaincodeId, block };
+        this.globalCheckpoints.ccevents[channelName] = { chaincodeId, block };
         this.scheduleWriteCheckpoints();
     }
 

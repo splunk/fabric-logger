@@ -1,6 +1,7 @@
 fabric:
     network: network.yaml
     user: fabric-logger
+    blockType: 'full'
 output:
     type: hec
     sourceTypePrefix: 'fabric_logger'

@@ -1,25 +1,33 @@
 const isPlainObject = (obj: any): obj is Object =>
     typeof obj === 'object' && Object.prototype.toString.call(obj) === '[object Object]';
 
-export function convertBuffersToHex(obj: any, path: string[] = []): any {
+export function convertBuffers(obj: any, path: string[] = []): any {
     if (obj == null) {
         return obj;
     }
     if (obj instanceof Buffer) {
         // debug('Converting buffer value to hex at path %o', path.join('.'));
-        return { hex: obj.toString('hex') };
+        if (isLikelyText(obj)){
+            return { string: obj.toString('utf-8') };
+        }else{
+            return { hex: obj.toString('hex') };
+        }
     }
     if (Array.isArray(obj)) {
-        return obj.map((v, i) => convertBuffersToHex(v, [...path, String(i)]));
+        return obj.map((v, i) => convertBuffers(v, [...path, String(i)]));
     } else if (isPlainObject(obj)) {
         const result: { [k: string]: any } = {};
         Object.keys(obj).forEach((k) => {
             const v = obj[k];
             if (v instanceof Buffer) {
                 // debug('Converting buffer property to hex at path %o.%o', path.join('.'), k);
-                result[`${k}_hex`] = v.toString('hex');
+                if (isLikelyText(v)){
+                    result[`${k}_string`] = v.toString('utf-8');
+                }else{
+                    result[`${k}_hex`] = v.toString('hex');
+                }
             } else {
-                result[k] = convertBuffersToHex(v, [...path, k]);
+                result[k] = convertBuffers(v, [...path, k]);
             }
         });
         return result;

@@ -59,6 +59,8 @@ export interface FabricConfigSchema {
     channels: string[];
     /** Chaincode events to listen to*/
     ccevents: CCEvent[];
+    /** Block Type full or private */
+    blockType: 'filtered' | 'full' | 'private';
 }
 
 export interface HecClientsConfigSchema {
@@ -322,11 +324,10 @@ const parseCCEvents = (value: DeepPartial<CCEvent>[] | undefined): CCEvent[] => 
     const ccEvents = [];
     if (value) {
         for (const ccEvent of value) {
-            if (ccEvent['channelName'] && ccEvent['chaincodeId'] && ccEvent['filter']) {
+            if (ccEvent['channelName'] && ccEvent['chaincodeId']) {
                 ccEvents.push({
                     channelName: ccEvent['channelName'],
                     chaincodeId: ccEvent['chaincodeId'],
-                    filter: ccEvent['filter'],
                     block: ccEvent['block'] || 0,
                 });
             }
@@ -441,6 +442,7 @@ export async function loadFabricloggerConfig(flags: CliFlags, dryRun: boolean = 
             clientCertFile: flags['client-cert'] ?? defaults.fabric?.clientCertFile,
             channels: defaults.fabric?.channels ?? [],
             ccevents: parseCCEvents(defaults.fabric?.ccevents),
+            blockType: required('block-type', defaults.fabric?.blockType),
         },
         hec: {
             default: {

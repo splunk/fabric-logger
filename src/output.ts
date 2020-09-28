@@ -1,17 +1,18 @@
 import { createModuleDebug } from '@splunkdlt/debug-logging';
 import { pathExists, mkdir, writeFile } from 'fs-extra';
 import { join } from 'path';
-import { convertBuffersToHex } from './convert';
+import { convertBuffers } from './convert';
 import { HecClient } from '@splunkdlt/hec-client';
 import { ManagedResource } from '@splunkdlt/managed-resource';
 import { FabricloggerConfig, HecOutputConfig } from './config';
-import { BlockMessage, ConfigMessage, EndorserTransactionMessage, ChaincodeEventMessage, UnKnownMessage } from './msgs';
+import { BlockMessage, ConfigMessage, EndorserTransactionMessage, ChaincodeEventMessage, TransactionEventMessage, UnKnownMessage } from './msgs';
 
 export type OutputMessage =
     | BlockMessage
     | ConfigMessage
     | EndorserTransactionMessage
     | ChaincodeEventMessage
+    | TransactionEventMessage
     | UnKnownMessage;
 
 const { debug } = createModuleDebug('output');
@@ -26,7 +27,7 @@ export interface Output extends ManagedResource {
 export class HecOutput implements Output, ManagedResource {
     constructor(private eventsHec: HecClient, private metricsHec: HecClient, private config: HecOutputConfig) {}
     public logEvent(message: OutputMessage, timeField: Date | undefined, source: string): void {
-        const event = convertBuffersToHex(message);
+        const event = convertBuffers(message);
         switch (message.type) {
             case 'block':
             case 'endorserTransaction':
