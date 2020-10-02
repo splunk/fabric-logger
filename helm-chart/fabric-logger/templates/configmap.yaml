@@ -26,17 +26,22 @@ data:
           path: /var/hyperledger/msp/signcerts/cert.pem
     
     peers:
-      {{ .Values.peer.peerName }}:
-        url: {{ .Values.peer.peerScheme }}://{{ .Values.peer.peerAddress }}:{{ .Values.peer.peerPort }}
+      {{- range .Values.peers }}
+      {{ $.peerName }}:
+        url: {{ $.peerScheme }}://{{ $.peerAddress }}:{{ $.peerPort }}
         grpcOptions:
-          ssl-target-name-override: {{ .Values.peer.peerAddress }}
+          ssl-target-name-override: {{ $.peerAddress }}
           grpc.keepalive_time_ms: 600000
-        {{- if eq .Values.peer.peerScheme "grpcs"}}
+        {{- if eq $.peerScheme "grpcs"}}
         tlsCACerts:
           path: /var/hyperledger/msp/tlscacert/tlscacert.pem
         {{- end }}
+      {{- end }}
   fabriclogger.yaml: |-
     fabric:
+      blockType: {{ .Values.fabric.blockType }}
+      discovery: {{ .Values.fabric.discovery }}
+      asLocalhost: {{ .Values.fabric.asLocalhost }}
       channels:
         {{- range .Values.channels }}
         - {{ . }}
@@ -44,6 +49,5 @@ data:
       ccevents:
         {{- range .Values.ccevents }}
         - channelName: {{ .channelName }}
-          filter: {{ .filter }}
           chaincodeId: {{ .chaincodeId }}
         {{- end }}

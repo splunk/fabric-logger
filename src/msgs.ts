@@ -10,11 +10,6 @@ export interface ConfigMessage extends BlockData {
     block_number: number;
 }
 
-export interface EndorserTransactionMessage extends BlockData {
-    type: 'endorserTransaction';
-    block_number: number;
-}
-
 export interface ChaincodeEventMessage extends ContractEvent {
     type: 'ccevent';
     block_number: number | undefined;
@@ -29,4 +24,7 @@ export interface UnKnownMessage extends BlockData {
 
 export interface TransactionEventMessage extends TransactionEvent {
     type: string;
+    block_number: number;
+    channel: string;
+    channel_header: any;
 }

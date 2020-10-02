@@ -2,12 +2,14 @@ fabric:
     network: network.yaml
     user: fabric-logger
     blockType: 'full'
+    discovery: false
+    asLocalhost: false
 output:
     type: hec
     sourceTypePrefix: 'fabric_logger'
     sourcetypes:
         block: 'fabric_logger:block'
-        endorserTransaction: 'fabric_logger:endorser_transaction'
+        endorser_transaction: 'fabric_logger:endorser_transaction'
         config: 'fabric_logger:config'
         ccevent: 'fabric_logger:ccevent'
 checkpoint:

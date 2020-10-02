@@ -3,11 +3,6 @@ fabric:
   blockType: full
   channels:
     - myChannel
+      ccevents:
+        chaincodeId: myChaincodeId
     - mySecondChannel
-  ccevents:
-    - channelName: myChannel
-      filter: myEvent
-      chaincodeId: myChaincodeId
-    - channelName: myChannel
-      filter: myOtherEvent
-      chaincodeId: myChaincodeId

@@ -29,7 +29,6 @@ services:
             - FABRIC_CLIENT_CERTFILE=/crypto-config/peerOrganizations/org0.example.com/peers/peer1.org0.example.com/tls/server.crt
             - FABRIC_MSP=org0-example-com
             - FABRIC_LOGGER_USERNAME=Admin
-            - FABRIC_PEER=peer1.org0.example.com
             - NETWORK_CONFIG=/tmp/network-config.yml
             - SPLUNK_HEC_TOKEN=00000000-0000-0000-0000-000000000000
             - SPLUNK_HEC_URL=https://splunk.example.com:8088

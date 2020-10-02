@@ -25,11 +25,11 @@ export class Checkpoint implements ManagedResource {
         this.latestWritePromise = Promise.resolve();
     }
 
-    public async shutdown() {
+    public async shutdown(): Promise<void> {
         await this.writeCheckpoints();
     }
 
-    public async loadCheckpoints() {
+    public async loadCheckpoints(): Promise<Checkpoints> {
         if (await pathExists(this.checkpointFile)) {
             info('Loading checkpoints from file at %s', this.checkpointFile);
             const contents = await readFile(this.checkpointFile, { encoding: 'utf-8' });
@@ -41,12 +41,12 @@ export class Checkpoint implements ManagedResource {
             debug('Loaded checkpoints: %o', this.globalCheckpoints);
         } else {
             info('Checkpoints file does not exist, starting with empty checkpoints dictionary');
-            this.globalCheckpoints = { ccevents: {} };
+            this.globalCheckpoints = { };
         }
         return this.globalCheckpoints;
     }
 
-    public async writeCheckpoints(checkpoints: Checkpoints | null = this.globalCheckpoints) {
+    public async writeCheckpoints(checkpoints: Checkpoints | null = this.globalCheckpoints): Promise<void> {
         const contents = stringify(checkpoints);
         if (contents !== this.lastSerialized) {
             debug('Serialized checkpoint contents: %o', contents);
@@ -75,18 +75,18 @@ export class Checkpoint implements ManagedResource {
         return value;
     }
 
-    public getChaincodeCheckpoint(name: string, defaultValue: number = 1): number {
+    public getChaincodeCheckpoint(channel: string, chaincodeId: string, defaultValue: number = 1): number {
         if (this.globalCheckpoints == null) {
             throw new Error('Checkpoints not loaded');
         }
-        const value = this.globalCheckpoints.ccevents[name];
+        const value = this.globalCheckpoints.ccevents[`${channel}_${chaincodeId}`];
         if (value == null) {
             return defaultValue;
         }
         return value;
     }
 
-    public storeChannelCheckpoint(channel: string, value: number) {
+    public storeChannelCheckpoint(channel: string, value: number): void {
         if (this.globalCheckpoints == null) {
             throw new Error('Checkpoints not loaded');
         }
@@ -94,11 +94,11 @@ export class Checkpoint implements ManagedResource {
         this.scheduleWriteCheckpoints();
     }
 
-    public storeChaincodeEventCheckpoint(channelName: string, chaincodeId: string, block: number) {
+    public storeChaincodeEventCheckpoint(channelName: string, chaincodeId: string, block: number): void {
         if (this.globalCheckpoints == null) {
             throw new Error('Checkpoints not loaded');
         }
-        this.globalCheckpoints.ccevents[channelName] = { chaincodeId, block };
+        this.globalCheckpoints.ccevents[`${channelName}_${chaincodeId}`] = { block, channelName, chaincodeId };
         this.scheduleWriteCheckpoints();
     }
 

@@ -26,12 +26,13 @@ import {
 import { BlockData } from 'fabric-common';
 import { safeLoad } from 'js-yaml';
 
-const { debug, info, error, warn } = createModuleDebug('fabric');
+const { debug, info, warn } = createModuleDebug('fabric');
 
 export class FabricListener implements ManagedResource {
     private gateway: Gateway;
 
     private listeners: { [channelName: string]: BlockListener } = {};
+    private ccListeners: { [name: string]: ContractListener } = {};
     private checkpoint: Checkpoint;
     private config: FabricConfigSchema;
     private output: Output;
@@ -43,7 +44,7 @@ export class FabricListener implements ManagedResource {
         this.output = output;
     }
 
-    public async shutdown() {
+    public async shutdown(): Promise<void> {
         for (const channel in this.listeners) {
             const network = await this.gateway.getNetwork(channel);
             network.removeBlockListener(this.listeners[channel]);
@@ -61,8 +62,8 @@ export class FabricListener implements ManagedResource {
         const connectionProfile = safeLoad(connectionProfileYaml);
         const wallet = await Wallets.newInMemoryWallet();
         if (this.config.clientCertFile && this.config.clientKeyFile) {
-            const clientkey = await readFile(this.config.clientKeyFile, { encoding: 'utf-8' });
-            const clientcert = await readFile(this.config.clientCertFile, { encoding: 'utf-8' });
+            const clientKey = await readFile(this.config.clientKeyFile, { encoding: 'utf-8' });
+            const clientCert = await readFile(this.config.clientCertFile, { encoding: 'utf-8' });
             const cert = await readFile(this.config.certFile, { encoding: 'utf-8' });
             const key = await readFile(this.config.keyFile, { encoding: 'utf-8' });
             const identity: X509Identity = {
@@ -70,7 +71,7 @@ export class FabricListener implements ManagedResource {
                     certificate: cert,
                     privateKey: key,
                 },
-                mspId: 'ButtercupMSP',
+                mspId: this.config.msp,
                 type: 'X.509',
             };
 
@@ -78,17 +79,17 @@ export class FabricListener implements ManagedResource {
             const gatewayOptions: GatewayOptions = {
                 identity: identity,
                 wallet,
-                discovery: { enabled: false, asLocalhost: false },
+                discovery: { enabled: this.config.discovery, asLocalhost: this.config.asLocalHost },
                 tlsInfo: {
-                    certificate: clientcert,
-                    key: clientkey,
+                    certificate: clientCert,
+                    key: clientKey,
                 },
             };
             return this.gateway.connect(connectionProfile, gatewayOptions);
         }
     }
 
-    public async listen() {
+    public async listen(): Promise<void> {
         for (const channel of this.checkpoint.getAllChannelsWithCheckpoints()) {
             info('Resuming listener for channel=%s', channel);
             const listener = await retry(() => this.registerListener(channel), {
@@ -98,11 +99,17 @@ export class FabricListener implements ManagedResource {
             this.listeners[channel] = listener;
         }
         for (const ccEvent of this.checkpoint.getAllChaincodeEventCheckpoints()) {
-            info('Resuming listener for chaincode=%s', ccEvent);
-            await retry(() => this.registerChaincodeEvent(ccEvent), {
+            info(
+                'Resuming listener for chaincode=%s on channel=%s at block=%d',
+                ccEvent.chaincodeId,
+                ccEvent.channelName,
+                ccEvent.block
+            );
+            const ccListener = await retry(() => this.registerChaincodeEvent(ccEvent), {
                 attempts: 30,
                 waitBetween: exponentialBackoff({ min: 10, max: 5000 }),
             });
+            this.ccListeners[`${ccEvent.channelName}_${ccEvent.chaincodeId}`] = ccListener;
         }
         if (this.config.channels) {
             for (const channel of this.config.channels) {
@@ -117,16 +124,17 @@ export class FabricListener implements ManagedResource {
         }
         if (this.config.ccevents) {
             for (const ccEvent of this.config.ccevents) {
-                if (!this.hasListener(ccEvent.channelName)) {
+                if (!this.hasCCListener(`${ccEvent.channelName}_${ccEvent.chaincodeId}`)) {
                     info(
                         'Registering listener for chaincode events channel=%s chaincodeId=%s',
                         ccEvent.channelName,
                         ccEvent.chaincodeId
                     );
-                    await retry(() => this.registerChaincodeEvent(ccEvent), {
+                    const ccListener = await retry(() => this.registerChaincodeEvent(ccEvent), {
                         attempts: 30,
                         waitBetween: exponentialBackoff({ min: 10, max: 5000 }),
                     });
+                    this.ccListeners[`${ccEvent.channelName}_${ccEvent.chaincodeId}`] = ccListener;
                 }
             }
         }
@@ -138,15 +146,22 @@ export class FabricListener implements ManagedResource {
     }
 
     private getChannelType(data: BlockData): string {
-        switch (data.payload.header.channel_header.typeString.toLowerCase()) {
-            case 'endorser_transaction':
-                return 'endorserTransaction';
-        }
         return data.payload.header.channel_header.typeString.toLowerCase();
     }
 
     private getChannelId(data: BlockData): string {
         return data.payload.header.channel_header.channel_id;
+    }
+
+    private getExtraBlockData(id: string, data: any): any {
+        if (Array.isArray(data)) {
+            for (const txn of data) {
+                if (txn.payload.header.channel_header.tx_id === id) {
+                    return txn;
+                }
+            }
+        }
+        return undefined;
     }
 
     private parseMessageHeaderExtension(msg: BlockData): void {
@@ -212,29 +227,33 @@ export class FabricListener implements ManagedResource {
     private processBlock: BlockListener = async (event) => {
         debug('Got block number %d block data %s', event.blockNumber, JSON.stringify(event.blockData));
         const block = event.blockData as any;
-        const transactions = event.getTransactionEvents();
-        for (const transaction of transactions) {
-            this.output.logEvent(
-                {
-                    type: 'transaction',
-                    ...transaction,
-                },
-                this.getMessageTimestamp(block.data.data[0]),
-                this.config.peer
-            );
-        }
-
         if (block && block.data) {
             const channelName = String(this.getChannelId(block.data.data[0]));
             const initCheckpoint = this.checkpoint.getChannelCheckpoint(channelName);
             const blockNumber = Number(event.blockNumber);
             if (blockNumber <= initCheckpoint) {
-                debug(`Ignoring block number=%d on channel=%d since we already processed it`, blockNumber, channelName);
+                debug(`Ignoring block_number=%d on channel=%d since we already processed it`, blockNumber, channelName);
                 return;
             }
-            debug('Processing block number=%d on channel=%s', blockNumber);
+
+            debug('Processing block_number=%d on channel=%s', blockNumber);
+            const transactions = event.getTransactionEvents();
+            for (const transaction of transactions) {
+                const extraBlockData = this.getExtraBlockData(transaction.transactionId, block.data.data);
+                this.output.logEvent(
+                    {
+                        type: this.getChannelType(extraBlockData),
+                        block_number: blockNumber,
+                        channel: channelName,
+                        channel_header: extraBlockData.payload.header.channel_header,
+                        ...transaction,
+                    },
+                    this.getMessageTimestamp(block.data.data[0])
+                );
+            }
+
             for (const msg of block.data.data) {
-                if ('payload' in msg) {
+                if ('payload' in msg && this.getChannelType(msg) != 'endorser_transaction') {
                     this.parseMessageHeaderExtension(msg);
                     this.parseChaincodeSpecInput(msg);
                     this.output.logEvent(
@@ -243,24 +262,20 @@ export class FabricListener implements ManagedResource {
                             block_number: blockNumber,
                             ...msg,
                         },
-                        this.getMessageTimestamp(msg),
-                        this.config.peer
+                        this.getMessageTimestamp(msg)
                     );
                 } else {
                     debug(`Ignoring message without payload: %O`, msg);
                 }
             }
-
-            debug('Processed all transactions for block number=%d on channel=%s', blockNumber, channelName);
+            debug('Processed all transactions for block_number=%d on channel=%s', blockNumber, channelName);
 
             this.output.logEvent(
-                { type: 'block', ...block },
-                this.getMessageTimestamp(block.data.data[0]),
-                this.config.peer
+                { type: 'block', block_number: blockNumber, ...block },
+                this.getMessageTimestamp(block.data.data[0])
             );
             this.checkpoint.storeChannelCheckpoint(channelName, +blockNumber);
-
-            info('Completed processing block number=%d on channel=%s', blockNumber, channelName);
+            info('Completed processing block_number=%d on channel=%s', blockNumber, channelName);
         }
         return Promise.resolve();
     };
@@ -268,7 +283,7 @@ export class FabricListener implements ManagedResource {
     public async registerListener(channelName: string): Promise<BlockListener> {
         const network = await this.gateway.getNetwork(channelName);
         const latestCheckpoint = this.checkpoint.getChannelCheckpoint(channelName);
-        info('Subscribing to block events on channel=%s from block number=%d', channelName, latestCheckpoint);
+        info('Subscribing to block events on channel=%s from block_number=%d', channelName, latestCheckpoint);
         return network.addBlockListener(this.processBlock, {
             startBlock: latestCheckpoint,
             type: this.config.blockType,
@@ -276,11 +291,12 @@ export class FabricListener implements ManagedResource {
     }
 
     private processChaincodeEvent: ContractListener = async (event: ContractEvent) => {
-        info('Processing chaincode event');
+        info('Processing chaincode event=%s  on chaincode=%s', event.eventName, event.chaincodeId);
         const blockEvent: BlockEvent = event.getTransactionEvent().getBlockEvent();
         const blockNumber = Number(blockEvent.blockNumber);
         const blockData = blockEvent.blockData as any;
         const channelName = this.getChannelId(blockData.data.data[0]);
+        const timeStamp = this.getMessageTimestamp(blockData.data.data[0]);
         this.output.logEvent(
             {
                 type: 'ccevent',
@@ -289,13 +305,12 @@ export class FabricListener implements ManagedResource {
                 channel: channelName,
                 ...event,
             },
-            undefined, // TODO Get timestamp from block transaction
-            this.config.peer
+            timeStamp
         );
 
         this.checkpoint.storeChaincodeEventCheckpoint(channelName, event.chaincodeId, +blockNumber);
 
-        info('Completed processing chaincode event on block=%s transaction_id=%s transaction_status=%s', blockNumber);
+        info('Completed processing chaincode event=%s on block_number=%d', event.eventName, blockNumber);
     };
 
     public async registerChaincodeEvent(ccEvent: CCEvent): Promise<ContractListener> {
@@ -303,14 +318,14 @@ export class FabricListener implements ManagedResource {
         const contract = await network.getContract(ccEvent.chaincodeId);
         const latestCheckpoint = ccEvent.block || 0;
         info(
-            'Subscribing to chaincode events on channel=%s from block number=%d',
+            'Subscribing to chaincode events on channel=%s from block_number=%d',
             ccEvent.channelName,
             latestCheckpoint
         );
         return contract.addContractListener(this.processChaincodeEvent, { startBlock: latestCheckpoint });
     }
 
-    public async removeListener(channelName: string) {
+    public async removeListener(channelName: string): Promise<void> {
         const hub = this.listeners[channelName];
         if (hub != null) {
             const network = await this.gateway.getNetwork(channelName);
@@ -322,5 +337,10 @@ export class FabricListener implements ManagedResource {
     public hasListener(channelName: string): boolean {
         const hub = this.listeners[channelName];
         return hub != null;
+    }
+
+    public hasCCListener(name: string): boolean {
+        const listener = this.ccListeners[name];
+        return listener != null;
     }
 }

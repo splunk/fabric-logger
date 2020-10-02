@@ -1,7 +1,7 @@
 const isPlainObject = (obj: any): obj is Object =>
     typeof obj === 'object' && Object.prototype.toString.call(obj) === '[object Object]';
 
-export function convertBuffers(obj: any, path: string[] = []): any {
+export function convertBuffers(obj: Buffer | Object | any | undefined, path: string[] = []): any {
     if (obj == null) {
         return obj;
     }

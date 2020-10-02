@@ -65,8 +65,6 @@ spec:
           {{- end }}
           - name: FABRIC_MSP
             value: {{ .Values.peer.mspName | quote }}
-          - name: FABRIC_PEER
-            value: {{ .Values.peer.peerName | quote }}
           - name: FABRIC_LOGGER_USERNAME
             value: {{ .Values.peer.username | quote }}
           - name: SPLUNK_HEC_TOKEN

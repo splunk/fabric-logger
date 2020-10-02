@@ -18,7 +18,7 @@ class Fabriclogger extends Command {
 
     private resources: ManagedResource[] = [];
 
-    async run() {
+    async run(): Promise<void> {
         const { flags } = this.parse(Fabriclogger);
         if (flags.debug) {
             debugModule.enable('fabriclogger:*');
@@ -46,7 +46,7 @@ class Fabriclogger extends Command {
         }
     }
 
-    async startFabriclogger(config: FabricloggerConfig) {
+    async startFabriclogger(config: FabricloggerConfig): Promise<void> {
         const checkpoint = new Checkpoint(config.checkpoint.filename);
         await checkpoint.loadCheckpoints();
         this.resources.push(checkpoint);
