@@ -429,14 +429,15 @@ export async function loadFabricloggerConfig(flags: CliFlags, dryRun: boolean = 
         }
     };
 
-    const parseBlockType = (value: string | undefined): BlockType => {
+    const parseBlockType = (value: string | undefined): BlockType | undefined => {
         switch (value) {
+            case 'filtered':
+                throw new ConfigError('Config error BlockType filtered is not a supported option');
             case 'full':
             case 'private':
-            case 'filtered':
                 return value;
             default:
-                return 'full';
+                return undefined;
         }
     };
 
@@ -455,7 +456,7 @@ export async function loadFabricloggerConfig(flags: CliFlags, dryRun: boolean = 
             clientCertFile: flags['client-cert'] ?? defaults.fabric?.clientCertFile,
             channels: defaults.fabric?.channels ?? [],
             ccevents: parseCCEvents(defaults.fabric?.ccevents),
-            blockType: parseBlockType(flags['block-type']),
+            blockType: parseBlockType(flags['block-type']) ?? defaults.fabric?.blockType,
             discovery: flags['discovery'] ?? defaults.fabric?.discovery,
             asLocalHost: flags['discovery-as-localhost'] ?? defaults.fabric?.asLocalHost,
         },

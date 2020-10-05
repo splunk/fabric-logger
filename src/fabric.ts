@@ -45,9 +45,9 @@ export class FabricListener implements ManagedResource {
     }
 
     public async shutdown(): Promise<void> {
-        for (const channel in this.listeners) {
+        for (const [channel, listener] of Object.entries(this.listeners)) {
             const network = await this.gateway.getNetwork(channel);
-            network.removeBlockListener(this.listeners[channel]);
+            network.removeBlockListener(listener);
         }
     }
 
@@ -58,7 +58,7 @@ export class FabricListener implements ManagedResource {
         }
 
         info('Creating fabric client from network config', this.config.networkConfig);
-        const connectionProfileYaml = (await readFile(this.config.networkConfig)).toString();
+        const connectionProfileYaml = await readFile(this.config.networkConfig, { encoding: 'utf-8' });
         const connectionProfile = safeLoad(connectionProfileYaml);
         const wallet = await Wallets.newInMemoryWallet();
         if (this.config.clientCertFile && this.config.clientKeyFile) {
@@ -227,7 +227,7 @@ export class FabricListener implements ManagedResource {
     private processBlock: BlockListener = async (event) => {
         debug('Got block number %d block data %s', event.blockNumber, JSON.stringify(event.blockData));
         const block = event.blockData as any;
-        if (block && block.data) {
+        if (block && block.data && block.data.data) {
             const channelName = String(this.getChannelId(block.data.data[0]));
             const initCheckpoint = this.checkpoint.getChannelCheckpoint(channelName);
             const blockNumber = Number(event.blockNumber);
@@ -236,7 +236,7 @@ export class FabricListener implements ManagedResource {
                 return;
             }
 
-            debug('Processing block_number=%d on channel=%s', blockNumber);
+            info('Processing block_number=%d on channel=%s', blockNumber, channelName);
             const transactions = event.getTransactionEvents();
             for (const transaction of transactions) {
                 const extraBlockData = this.getExtraBlockData(transaction.transactionId, block.data.data);
