@@ -1,49 +1,54 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "fabric-logger.name" . }}-{{ .Values.peer.peerName }}-network-config
+  name: {{ include "fabric-logger.name" . }}-network-config
 data:
   network.yaml: |-
-    name: Fabric
+    name: "Network"
     version: "1.0"
-    
+    client:
+      {{ toYaml .Values.client }}
     channels:
-      {{- range .Values.peer.channels }}
-      {{ . }}:
+      {{- range $key, $value:=.Values.channels }}
+      {{ $key }}:
         peers:
-          {{ $.Values.peer.peerName }}:
-            eventSource: true
+        {{- range .peers }}
+          {{ . }}:  
+        {{- end }}
       {{- end }}
-    
     organizations:
-      org:
-        mspid: {{ .Values.peer.mspName }}
+      {{- range $key, $value:= .Values.organizations }}
+      {{ $key }}:
+        mspid: {{ .mspid }}
         peers:
-        - {{ .Values.peer.peerName }}
-        adminPrivateKey:
-          path: /var/hyperledger/msp/keystore/key.pem
-        signedCert:
-          path: /var/hyperledger/msp/signcerts/cert.pem
-    
+          {{- range .peers }}
+          - {{ . }}
+          {{- end }}
+      {{- end }}
     peers:
-      {{ .Values.peer.peerName }}:
-        url: {{ .Values.peer.peerScheme }}://{{ .Values.peer.peerAddress }}:{{ .Values.peer.peerPort }}
-        grpcOptions:
-          ssl-target-name-override: {{ .Values.peer.peerAddress }}
-          grpc.keepalive_time_ms: 600000
-        {{- if eq .Values.peer.peerScheme "grpcs"}}
+      {{- range $key, $value:= .Values.peers }}
+      {{ $key }}:
+        url: {{ .url }}
+        grpcOption:
+        {{- range $key,$value:= .grpcOptions }}
+          {{ $key }}: {{ toYaml $value }}
+        {{- end }}
         tlsCACerts:
           path: /var/hyperledger/msp/tlscacert/tlscacert.pem
-        {{- end }}
+      {{- end }}
+
   fabriclogger.yaml: |-
     fabric:
+      blockType: {{ .Values.fabric.blockType }}
+      discovery: {{ .Values.fabric.discovery }}
+      asLocalhost: {{ .Values.fabric.asLocalhost }}
+      user: {{ .Values.fabric.user }}
       channels:
-        {{- range .Values.channels }}
+        {{- range .Values.fabric.channels }}
         - {{ . }}
         {{- end }}
       ccevents:
-        {{- range .Values.ccevents }}
+        {{- range .Values.fabric.ccevents }}
         - channelName: {{ .channelName }}
-          filter: {{ .filter }}
           chaincodeId: {{ .chaincodeId }}
         {{- end }}

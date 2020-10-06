@@ -6,11 +6,16 @@ replicaCount: 1
 
 image:
   repository: splunkdlt/fabric-logger
-  tag: release-2.0.2
+  tag: release-3.0.0
   pullPolicy: IfNotPresent
 
 nameOverride: ""
 fullnameOverride: ""
+
+fabric:
+  blockType: full
+  discovery: false
+  asLocalhost: false
 
 secrets:
   peer:
@@ -28,28 +33,6 @@ secrets:
     # clientCertItem: clientCert.pem
     # clientKey: hlf--peer-clientkey
     # clientKeyItem: clientKey.pem
-
-peer:
-  mspName: PeerMSP
-  peerName: peer
-  username: Admin   # If secrets.peer.create = true, this is the user that will be used in the crytpogen directory.
-  orgDomain: example.com
-  peerScheme: grpc  # grpc or grpcs
-  peerAddress: peer.default.svc
-  peerPort: 7051
-
-channels:
-  # A list of channel names that this peer connects to:
-  - channel1
-  - channel2
-ccevents:
-  # A list of chaincode events to listen for:
-  - channelName: myChannel
-    filter: myEvent
-    chaincodeId: myChaincodeId
-  - channelName: myChannel
-    filter: myOtherEvent
-    chaincodeId: myChaincodeId
 
 loggingLocation: splunk
 splunk:

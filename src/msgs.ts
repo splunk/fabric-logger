@@ -1,6 +1,7 @@
-import { Block, BlockData, ChaincodeEvent } from 'fabric-client';
+import { ContractEvent, TransactionEvent } from 'fabric-network';
+import { BlockData } from 'fabric-common';
 
-export interface BlockMessage extends Block {
+export interface BlockMessage {
     type: 'block';
 }
 
@@ -9,22 +10,21 @@ export interface ConfigMessage extends BlockData {
     block_number: number;
 }
 
-export interface EndorserTransactionMessage extends BlockData {
-    type: 'endorserTransaction';
-    block_number: number;
-}
-
-export interface ChaincodeEventMessage {
+export interface ChaincodeEventMessage extends ContractEvent {
     type: 'ccevent';
     block_number: number | undefined;
     channel: string | undefined;
-    transaction_id: string | undefined;
-    transaction_status: string | undefined;
-    event: ChaincodeEvent;
     payload_message: string | undefined;
 }
 
 export interface UnKnownMessage extends BlockData {
     type: string;
     block_number: number | undefined;
+}
+
+export interface TransactionEventMessage extends TransactionEvent {
+    type: string;
+    block_number: number;
+    channel: string;
+    channel_header: any;
 }

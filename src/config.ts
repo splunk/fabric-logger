@@ -8,6 +8,7 @@ import { durationStringToMs } from './utils/parse';
 import { deepMerge } from './utils/obj';
 import { exponentialBackoff, linearBackoff, WaitTime } from '@splunkdlt/async-tasks';
 import { CCEvent } from './checkpoint';
+import { BlockType } from 'fabric-common';
 
 const { debug, error } = createModuleDebug('config');
 
@@ -39,8 +40,6 @@ export interface FabricloggerConfig {
 }
 
 export interface FabricConfigSchema {
-    /** Hostname of peer to connect to */
-    peer: string;
     /** The name of the MSP that the user is enrolled in */
     msp: string;
     /** Network configuration file */
@@ -59,6 +58,12 @@ export interface FabricConfigSchema {
     channels: string[];
     /** Chaincode events to listen to*/
     ccevents: CCEvent[];
+    /** Block Type full or private */
+    blockType?: BlockType;
+    /** Enable Discovery service */
+    discovery: boolean;
+    /** Convert discovered addresses to localhost for docker */
+    asLocalHost: boolean;
 }
 
 export interface HecClientsConfigSchema {
@@ -83,7 +88,7 @@ export interface SourcetypesSchema {
     /** @default "fabric_logger:block" */
     block?: string;
     /** @default "fabric_logger:endorser_transaction" */
-    endorserTransaction?: string;
+    endorser_transaction?: string;
     /** @default "fabric_logger:ccevent" */
     ccevent?: string;
     /** @default "fabric_logger:config" */
@@ -322,11 +327,10 @@ const parseCCEvents = (value: DeepPartial<CCEvent>[] | undefined): CCEvent[] => 
     const ccEvents = [];
     if (value) {
         for (const ccEvent of value) {
-            if (ccEvent['channelName'] && ccEvent['chaincodeId'] && ccEvent['filter']) {
+            if (ccEvent['channelName'] && ccEvent['chaincodeId']) {
                 ccEvents.push({
                     channelName: ccEvent['channelName'],
                     chaincodeId: ccEvent['chaincodeId'],
-                    filter: ccEvent['filter'],
                     block: ccEvent['block'] || 0,
                 });
             }
@@ -425,13 +429,24 @@ export async function loadFabricloggerConfig(flags: CliFlags, dryRun: boolean = 
         }
     };
 
+    const parseBlockType = (value: string | undefined): BlockType | undefined => {
+        switch (value) {
+            case 'filtered':
+                throw new ConfigError('Config error BlockType filtered is not a supported option');
+            case 'full':
+            case 'private':
+                return value;
+            default:
+                return undefined;
+        }
+    };
+
     const config: FabricloggerConfig = {
         checkpoint: {
             filename: defaults.checkpoint?.filename ?? '.checkpoints',
             saveInterval: parseDuration(defaults.checkpoint?.saveInterval) ?? 100,
         },
         fabric: {
-            peer: required('peer', defaults.fabric?.peer),
             msp: required('msp', defaults.fabric?.msp),
             networkConfig: required('network', defaults.fabric?.networkConfig),
             user: required('user', defaults.fabric?.user),
@@ -441,6 +456,9 @@ export async function loadFabricloggerConfig(flags: CliFlags, dryRun: boolean = 
             clientCertFile: flags['client-cert'] ?? defaults.fabric?.clientCertFile,
             channels: defaults.fabric?.channels ?? [],
             ccevents: parseCCEvents(defaults.fabric?.ccevents),
+            blockType: parseBlockType(flags['block-type']) ?? defaults.fabric?.blockType,
+            discovery: flags['discovery'] ?? defaults.fabric?.discovery,
+            asLocalHost: flags['discovery-as-localhost'] ?? defaults.fabric?.asLocalHost,
         },
         hec: {
             default: {

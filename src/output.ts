@@ -1,17 +1,17 @@
 import { createModuleDebug } from '@splunkdlt/debug-logging';
 import { pathExists, mkdir, writeFile } from 'fs-extra';
 import { join } from 'path';
-import { convertBuffersToHex } from './convert';
+import { convertBuffers } from './convert';
 import { HecClient } from '@splunkdlt/hec-client';
 import { ManagedResource } from '@splunkdlt/managed-resource';
 import { FabricloggerConfig, HecOutputConfig } from './config';
-import { BlockMessage, ConfigMessage, EndorserTransactionMessage, ChaincodeEventMessage, UnKnownMessage } from './msgs';
+import { BlockMessage, ConfigMessage, ChaincodeEventMessage, TransactionEventMessage, UnKnownMessage } from './msgs';
 
 export type OutputMessage =
     | BlockMessage
     | ConfigMessage
-    | EndorserTransactionMessage
     | ChaincodeEventMessage
+    | TransactionEventMessage
     | UnKnownMessage;
 
 const { debug } = createModuleDebug('output');
@@ -19,17 +19,17 @@ const filenameSafe = (name: string): string => name.replace(/[^\w]+/g, '_');
 const randSuffix = () => Math.floor(Math.random() * 0xfffffff).toString(36);
 
 export interface Output extends ManagedResource {
-    logEvent(event: OutputMessage, timeField: Date | undefined, source: string): void;
+    logEvent(event: OutputMessage, timeField: Date | undefined, source?: string): void;
     waitUntilAvailable?(maxTime: number): Promise<void>;
 }
 
 export class HecOutput implements Output, ManagedResource {
     constructor(private eventsHec: HecClient, private metricsHec: HecClient, private config: HecOutputConfig) {}
-    public logEvent(message: OutputMessage, timeField: Date | undefined, source: string): void {
-        const event = convertBuffersToHex(message);
+    public logEvent(message: OutputMessage, timeField: Date | undefined, source: string = 'fabriclogger'): void {
+        const event = convertBuffers(message);
         switch (message.type) {
             case 'block':
-            case 'endorserTransaction':
+            case 'endorser_transaction':
             case 'config':
             case 'ccevent':
                 this.eventsHec.pushEvent({
@@ -67,7 +67,7 @@ export class HecOutput implements Output, ManagedResource {
         ]).then(() => Promise.resolve());
     }
 
-    public async shutdown() {
+    public async shutdown(): Promise<void> {
         return Promise.all([this.eventsHec.shutdown(), this.metricsHec.shutdown()]).then(() => {
             /* noop */
         });
@@ -91,25 +91,25 @@ export class FileOutput implements Output {
         return outputDir;
     }
 
-    public async logEvent(event: any) {
-        const meta = event.metadata || {};
+    public async logEvent(event: OutputMessage): Promise<void> {
+        const meta = {};
         const { sourcetype = 'unknown_sourcetype', time = Date.now() } = meta as any;
         const fileName = `event_${filenameSafe(sourcetype)}_${time}_${randSuffix()}.json`;
         debug(`Writing event to file`, fileName);
         await writeFile(join(this.outputDir, fileName), JSON.stringify(event, null, 2), { encoding: 'utf-8' });
     }
 
-    public async shutdown() {
+    public async shutdown(): Promise<void> {
         // noop
     }
 }
 
 export class ConsoleOutput implements Output {
-    logEvent(message: any): void {
+    logEvent(message: OutputMessage): void {
         // eslint-disable-next-line no-console
         console.log(JSON.stringify(message));
     }
-    public async shutdown() {
+    public async shutdown(): Promise<void> {
         // noop
     }
 }

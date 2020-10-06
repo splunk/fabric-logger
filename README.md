@@ -33,9 +33,8 @@ As Fabric Logger processes blocks and chaincode events the progress is stored in
 myChannel=5
 mySecondChannel=3
 
-[ccevents.myChannel_myChaincodeId_myRegexFilter]
+[ccevents.myChannel_myChaincodeId]
 channelName=myChannel
-filter=myRegexFilter
 chaincodeId=myChaincodeId
 block=5
 ```
@@ -47,14 +46,13 @@ Running the Fabric Logger in Docker is recommended. A sample docker-compose entr
     services:
         fabric-logger.example.com:
             container_name: fabric-logger.example.com
-            image: splunkdlt/fabric-logger:release-2.0.2
+            image: splunkdlt/fabric-logger:release-3.0.0
             environment:
                 - FABRIC_KEYFILE=<path to private key file>
                 - FABRIC_CERTFILE=<path to signed certificate>
                 - FABRIC_CLIENT_CERTFILE=<path to client certificate when using mutual tls>
                 - FABRIC_CLIENT_KEYFILE=<path to client private key when using mutual tls>
                 - FABRIC_MSP=<msp name>
-                - FABRIC_PEER=peer0.example.com
                 - SPLUNK_HEC_TOKEN=12345678-ABCD-EFGH-IJKL-123456789012
                 - SPLUNK_HEC_URL=https://splunk.example.com:8088
                 - SPLUNK_HEC_REJECT_INVALID_CERTS="false"
@@ -79,14 +77,6 @@ Running the Fabric Logger in Docker is recommended. A sample docker-compose entr
 
 We also include a helm chart for Kubernetes deployments. First set your `values.yaml` file. Here is an example configuration (although this will be specific to your environment):
 
-    peer:
-        mspName: PeerMSP
-        peerName: peer0
-        username: admin
-        peerAddress: peer0.example.com
-        channels:
-            - mychannel
-
     splunk:
         hec:
             token: 12345678-ABCD-EFGH-IJKL-123456789012
@@ -98,23 +88,27 @@ We also include a helm chart for Kubernetes deployments. First set your `values.
         peer:
             cert: hlf-peer--peer0-cert
             key: hlf-peer--peer0-key
-    channels:
-        - channel1
-        - channel2
-    ccevents:
-        - channelName: channel1
-          filter: myEvent
-          chaincodeId: myChaincodeId
-        - channelName: channel1
-          filter: myOtherEvent
-          chaincodeId: myChaincodeId
+
+    fabric:
+        msp: PeerMSP
+        orgDomain: example.com
+        blockType: full
+        user: Admin
+        channels:
+            - channel1
+            - channel2
+        ccevents:
+            - channelName: channel1
+              chaincodeId: myChaincodeId
+            - channelName: channel1
+              chaincodeId: myChaincodeId
 
 ### Kubernetes: Autogenerating Secrets
 
 Alternatively, if you are using `cryptogen` to generate identities, the helm chart can auto-populate secrets for you. You will need to download the helm file and untar it locally so you can copy your `crypto-config` into the director.
 
-    wget https://github.com/splunk/fabric-logger/releases/download/2.0.2/fabric-logger-helm-v2.0.2.tgz
-    tar -xf fabric-logger-helm-v2.0.2.tgz
+    wget https://github.com/splunk/fabric-logger/releases/download/3.0.0/fabric-logger-helm-v3.0.0.tgz
+    tar -xf fabric-logger-helm-v3.0.0.tgz
     cp -R crypto-config fabric-logger/crypto-config
 
 Set the secrets section of `values.yaml` to:
@@ -125,8 +119,8 @@ Set the secrets section of `values.yaml` to:
 
 You can now deploy using:
 
-    helm install -n fabric-logger-${PEER_NAME}-${NS} --namespace ${NS} \
-                 -f values.yaml ./fabric-logger
+    helm install -n fabric-logger-${NS} --namespace ${NS} \
+                 -f values.yaml -f network.yaml ./fabric-logger
 
 ### Kubernetes: Manually Populating Secrets
 
@@ -141,11 +135,11 @@ Make sure that the peer credentials are stored in the appropriately named secret
     KEY=$(find ${ADMIN_MSP_DIR}/keystore/*_sk -type f)
     kubectl create secret generic -n ${NS} hlf-peer--peer0-key --from-file=key.pem=$KEY
 
-A `network.yaml` will automatically be generated using the secrets and channel details set above. You can deploy via helm:
+A `network.yaml` configmap will automatically be generated using the secrets and channel details set above. You can deploy via helm:
 
     helm install -n fabric-logger-${PEER_NAME}-${NS} --namespace ${NS} \
-                 -f values.yaml \
-                 https://github.com/splunk/fabric-logger/releases/download/v2.0.2/fabric-logger-helm-v2.0.2.tgz
+                 -f values.yaml -f network.yaml \
+                 https://github.com/splunk/fabric-logger/releases/download/v3.0.0/fabric-logger-helm-v3.0.0.tgz
 
 ### Kubernetes: Deleting Helm Chart
 
@@ -177,7 +171,6 @@ You will also need to update the `network.yaml` with appropriate values for you 
 | FABRIC_CLIENT_CERTFILE          | client-certfile          | The client signed certificate used in mutual TLS.                                          | None               |
 | FABRIC_MSP                      | msp                      | The name of the MSP that the logging user is enrolled in.                                  | None (Required)    |
 | FABRIC_LOGGER_USERNAME          | user                     | The username the that the `FABRIC_KEYFILE` is enrolled under.                              | None (Required)    |
-| FABRIC_PEER                     | peer                     | The hostname of the peer to connect to.                                                    | None (Required)    |
 | NETWORK_CONFIG                  | network                  | A network configuration object, an example can be found [here](https://hyperledger.github.io/fabric-sdk-node/release-1.4/tutorial-network-config.html)                                                                                                                                                     | None (Required)    |
 | LOGGING_LOCATION                |                          | The logging location, valid values are `splunk` or `stdout`.                               | `splunk`           |
 | SPLUNK_HEC_TOKEN                | hec-token                | If using `splunk` as the logging location, the HEC token value.                            | None               |
@@ -188,3 +181,5 @@ You will also need to update the `network.yaml` with appropriate values for you 
 | SPLUNK_INDEX                    | hec-events-index         | Splunk index to log to.                                                                    | `hyperledger_logs` |
 | CHECKPOINTS_FILE                |                          | A file used to hold checkpoints for each channel watched. If running in docker, be sure to mount a volume so that the file is not lost between restarts.                                                                                                                                                 | `.checkpoints`     |
 | FABRIC_LOGGER_CONFIG            | config-file              | Location of a yaml file for fabric logger configuration, see example file fabriclogger.yaml.example | fabriclogger.yaml |
+| FABRIC_DISCOVERY                | discovery                | Indicates if peers and orderers should be discovered using the discovery service.  If set to false only the network.yaml will be used | false |
+| FABRIC_DISCOVERY_AS_LOCALHOST   | discovery-as-localhost   | Convert discovered host addresses to be localhost. Will be needed when running a docker composed fabric network on the local system; otherwise should be disabled. | false |

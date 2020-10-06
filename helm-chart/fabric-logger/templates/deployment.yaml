@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "fabric-logger.name" . }}-{{ .Values.peer.peerName }}
+  name: {{ include "fabric-logger.name" . }}
   labels:
     app.kubernetes.io/name: {{ include "fabric-logger.name" . }}
     helm.sh/chart: {{ include "fabric-logger.chart" . }}
@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
         - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          image: "{{ .Values.image.repository }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["fabriclogger"]
           args: ["-c", "network/fabriclogger.yaml"]
@@ -64,11 +64,9 @@ spec:
             value: "/var/hyperledger/tls/keystore/clientKey.pem"
           {{- end }}
           - name: FABRIC_MSP
-            value: {{ .Values.peer.mspName | quote }}
-          - name: FABRIC_PEER
-            value: {{ .Values.peer.peerName | quote }}
+            value: {{ .Values.fabric.msp | quote }}
           - name: FABRIC_LOGGER_USERNAME
-            value: {{ .Values.peer.username | quote }}
+            value: {{ .Values.fabric.user | quote }}
           - name: SPLUNK_HEC_TOKEN
             value: {{ .Values.splunk.hec.token | quote }}
           - name: SPLUNK_HEC_URL
@@ -88,7 +86,7 @@ spec:
       volumes:
       - name: network 
         configMap:
-          name: {{ include "fabric-logger.name" . }}-{{ .Values.peer.peerName }}-network-config
+          name: {{ include "fabric-logger.name" . }}-network-config
 
       {{- if .Values.secrets.peer.cert }}
       - name: id-cert
@@ -102,7 +100,7 @@ spec:
       {{- else if .Values.secrets.peer.create }}
       - name: id-cert
         secret:
-          secretName: fabric-logger--{{ .Values.peer.orgDomain | lower }}--{{ .Values.peer.peerName  | lower }}-msp
+          secretName: fabric-logger--{{ .Values.fabric.orgDomain | lower }}-msp
           items:
             - key: cert.pem
               path: cert.pem
@@ -120,7 +118,7 @@ spec:
       {{- else if .Values.secrets.peer.create }}
       - name: id-key
         secret:
-          secretName: fabric-logger--{{ .Values.peer.orgDomain | lower }}--{{ .Values.peer.peerName  | lower }}-msp
+          secretName: fabric-logger--{{ .Values.fabric.orgDomain | lower }}-msp
           items:
             - key: key.pem
               path: key.pem
@@ -138,7 +136,7 @@ spec:
       {{- else if .Values.secrets.peer.create }}
       - name: tls-cert
         secret:
-          secretName: fabric-logger--{{ .Values.peer.orgDomain | lower }}--{{ .Values.peer.peerName  | lower }}-msp
+          secretName: fabric-logger--{{ .Values.fabric.orgDomain | lower }}-msp
           items:
             - key: tlscacert.pem
               path: tlscacert.pem
@@ -156,7 +154,7 @@ spec:
       {{- else if .Values.secrets.peer.create }}
       - name: id-clientkey
         secret:
-          secretName: fabric-logger--{{ .Values.peer.orgDomain | lower }}--{{ .Values.peer.peerName  | lower }}-msp
+          secretName: fabric-logger--{{ .Values.fabric.orgDomain | lower }}-msp
           items:
             - key: clientKey.pem
               path: clientKey.pem
@@ -174,7 +172,7 @@ spec:
       {{- else if .Values.secrets.peer.create }}
       - name: id-clientcert
         secret:
-          secretName: fabric-logger--{{ .Values.peer.orgDomain | lower }}--{{ .Values.peer.peerName  | lower }}-msp
+          secretName: fabric-logger--{{ .Values.fabric.orgDomain | lower }}-msp
           items:
             - key: clientCert.pem
               path: clientCert.pem

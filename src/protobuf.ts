@@ -85,7 +85,7 @@ export function isSignaturePolicyEnvolope(buffer: Buffer): boolean {
     }
 }
 
-export function decodeSignaturePolicyEnvolope(buffer: Buffer) {
+export function decodeSignaturePolicyEnvolope(buffer: Buffer): any {
     const spe = common.SignaturePolicyEnvelope.decode(buffer);
     return {
         ...common.SignaturePolicyEnvelope.toObject(spe, DEFAULT_CONVERSION_OPTIONS),
@@ -93,12 +93,12 @@ export function decodeSignaturePolicyEnvolope(buffer: Buffer) {
     };
 }
 
-export function decodeChaincodeDeploymentSpec(buffer: Buffer) {
+export function decodeChaincodeDeploymentSpec(buffer: Buffer): any {
     const decoded = protos.ChaincodeDeploymentSpec.decode(buffer);
     return protos.ChaincodeDeploymentSpec.toObject(decoded, DEFAULT_CONVERSION_OPTIONS);
 }
 
-export function decodeChainCodeAction(buffer: Buffer) {
+export function decodeChainCodeAction(buffer: Buffer): any {
     const decoded = protos.ChaincodeAction.decode(buffer);
     return protos.ChaincodeAction.toObject(decoded, DEFAULT_CONVERSION_OPTIONS);
 }

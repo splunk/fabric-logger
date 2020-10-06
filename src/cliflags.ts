@@ -38,10 +38,6 @@ export const CLI_FLAGS = {
         env: 'NETWORK_CONFIG',
         description: 'Network configuration file',
     }),
-    peer: flags.string({
-        env: 'FABRIC_PEER',
-        description: 'Hostname of peer to connect to',
-    }),
     msp: flags.string({
         env: 'FABRIC_MSP',
         description: 'The name of the MSP that the user is enrolled in',
@@ -80,5 +76,21 @@ export const CLI_FLAGS = {
     'splunk-port': flags.string({
         env: 'SPLUNK_PORT',
         description: 'DEPRECATED Port that splunk HEC is listening on to send',
+    }),
+    'block-type': flags.string({
+        env: 'BLOCK_TYPE',
+        description:
+            'Type of block to subscribe to full or additionally include private data.  NOTE: private is not available and should not be used prior to fabric 2.X',
+        options: ['full', 'private'],
+    }),
+    discovery: flags.boolean({
+        env: 'FABRIC_DISCOVERY',
+        description:
+            'Indicates if peers and orderers should be discovered using the discovery service.  If set to false only the network.yaml will be used',
+    }),
+    'discovery-as-localhost': flags.boolean({
+        env: 'FABRIC_DISCOVERY_AS_LOCALHOST',
+        description:
+            'Convert discovered host addresses to be localhost. Will be needed when running a docker composed fabric network on the local system; otherwise should be disabled.',
     }),
 };

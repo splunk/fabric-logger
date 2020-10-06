@@ -1,6 +1,6 @@
 {
   "name": "fabric-logger",
-  "version": "2.0.2",
+  "version": "3.0.0",
   "description": "Hyperledger Fabric Splunk integration",
   "author": "splunk <blockchain@splunk.com>",
   "main": "lib/index.js",
@@ -20,7 +20,7 @@
     "test": "jest --config jest.config.json",
     "generate": "yarn generate:cleanup && mkdir -p generated && yarn generate:pbjs && yarn generate:pbts",
     "generate:cleanup": "rm -rf generated",
-    "generate:pbjs": "pbjs -t static-module -w commonjs -o generated/protos.js node_modules/fabric-client/lib/protos/common/policies.proto node_modules/fabric-client/lib/protos/peer/chaincode.proto node_modules/fabric-client/lib/protos/peer/proposal.proto",
+    "generate:pbjs": "pbjs -t static-module -w commonjs -o generated/protos.js node_modules/fabric-protos/protos/peer/collection.proto node_modules/fabric-protos/protos/common/collection.proto node_modules/fabric-protos/protos/gossip/message.proto node_modules/fabric-protos/protos/discovery/protocol.proto node_modules/fabric-protos/protos/msp/msp_config.proto node_modules/fabric-protos/protos/msp/msp_principal.proto node_modules/fabric-protos/protos/common/policies.proto node_modules/fabric-protos/protos/peer/chaincode.proto node_modules/fabric-protos/protos/peer/proposal.proto",
     "generate:pbts": "pbts -o generated/protos.d.ts generated/protos.js"
   },
   "files": [
@@ -44,7 +44,7 @@
     "@types/lodash": "^4.14.138",
     "debug": "^4.1.1",
     "express": "^4.17.1",
-    "fabric-client": "^1.4.7",
+    "fabric-network": "^2.2.2",
     "fs-extra": "^9.0.1",
     "ini": "^1.3.5",
     "js-yaml": "^3.13.1",

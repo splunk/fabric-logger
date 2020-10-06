@@ -48,6 +48,7 @@ test('decodeChaincodeDeploymentSpec', () => {
                 },
               ],
               "decorations": Object {},
+              "isInit": false,
             },
             "timeout": 0,
             "type": "GOLANG",
@@ -56,7 +57,6 @@ test('decodeChaincodeDeploymentSpec', () => {
             "data": Array [],
             "type": "Buffer",
           },
-          "execEnv": "DOCKER",
         }
     `);
     expect(decodeChaincodeDeploymentSpec(buf2)).toMatchInlineSnapshot(`
@@ -80,6 +80,7 @@ test('decodeChaincodeDeploymentSpec', () => {
                 },
               ],
               "decorations": Object {},
+              "isInit": false,
             },
             "timeout": 0,
             "type": "GOLANG",
@@ -88,7 +89,6 @@ test('decodeChaincodeDeploymentSpec', () => {
             "data": Array [],
             "type": "Buffer",
           },
-          "execEnv": "DOCKER",
         }
     `);
 });
