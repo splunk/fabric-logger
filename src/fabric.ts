@@ -85,11 +85,13 @@ export class FabricListener implements ManagedResource {
                     key: clientKey,
                 },
             };
-            return this.gateway.connect(connectionProfile, gatewayOptions);
+            await this.gateway.connect(connectionProfile, gatewayOptions);
+            info('Finished Connecting to gateway');
         }
     }
 
     public async listen(): Promise<void> {
+        info('Starting to listen on channels');
         for (const channel of this.checkpoint.getAllChannelsWithCheckpoints()) {
             info('Resuming listener for channel=%s', channel);
             const listener = await retry(() => this.registerListener(channel), {

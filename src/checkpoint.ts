@@ -41,7 +41,9 @@ export class Checkpoint implements ManagedResource {
             debug('Loaded checkpoints: %o', this.globalCheckpoints);
         } else {
             info('Checkpoints file does not exist, starting with empty checkpoints dictionary');
-            this.globalCheckpoints = {};
+            this.globalCheckpoints = {
+                ccevents: {}
+            };
         }
         return this.globalCheckpoints;
     }
