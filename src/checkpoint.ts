@@ -42,7 +42,7 @@ export class Checkpoint implements ManagedResource {
         } else {
             info('Checkpoints file does not exist, starting with empty checkpoints dictionary');
             this.globalCheckpoints = {
-                ccevents: {}
+                ccevents: {},
             };
         }
         return this.globalCheckpoints;
