@@ -12,7 +12,6 @@
 Listen to your data.
 
 SSplunk Connect for Hyperledger Fabric is spinning up in your cluster.
-It is configured to connect to the peer: {{ .Values.peer.peerName }}
 
 If you get stuck, we're here to help.
 Look for answers here: http://www.github.com/splunk/fabric-logger

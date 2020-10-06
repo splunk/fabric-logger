@@ -77,15 +77,6 @@ Running the Fabric Logger in Docker is recommended. A sample docker-compose entr
 
 We also include a helm chart for Kubernetes deployments. First set your `values.yaml` file. Here is an example configuration (although this will be specific to your environment):
 
-    peers:
-        peer0:
-            mspName: PeerMSP
-            peerName: peer0
-            username: admin
-            peerAddress: peer0.example.com
-            channels:
-                - mychannel
-
     splunk:
         hec:
             token: 12345678-ABCD-EFGH-IJKL-123456789012
@@ -97,21 +88,27 @@ We also include a helm chart for Kubernetes deployments. First set your `values.
         peer:
             cert: hlf-peer--peer0-cert
             key: hlf-peer--peer0-key
-    channels:
-        - channel1
-        - channel2
-    ccevents:
-        - channelName: channel1
-          chaincodeId: myChaincodeId
-        - channelName: channel1
-          chaincodeId: myChaincodeId
+
+    fabric:
+        msp: PeerMSP
+        orgDomain: example.com
+        blockType: full
+        user: Admin
+        channels:
+            - channel1
+            - channel2
+        ccevents:
+            - channelName: channel1
+              chaincodeId: myChaincodeId
+            - channelName: channel1
+              chaincodeId: myChaincodeId
 
 ### Kubernetes: Autogenerating Secrets
 
 Alternatively, if you are using `cryptogen` to generate identities, the helm chart can auto-populate secrets for you. You will need to download the helm file and untar it locally so you can copy your `crypto-config` into the director.
 
-    wget https://github.com/splunk/fabric-logger/releases/download/2.0.2/fabric-logger-helm-v2.0.2.tgz
-    tar -xf fabric-logger-helm-v2.0.2.tgz
+    wget https://github.com/splunk/fabric-logger/releases/download/3.0.0/fabric-logger-helm-v3.0.0.tgz
+    tar -xf fabric-logger-helm-v3.0.0.tgz
     cp -R crypto-config fabric-logger/crypto-config
 
 Set the secrets section of `values.yaml` to:
@@ -122,8 +119,8 @@ Set the secrets section of `values.yaml` to:
 
 You can now deploy using:
 
-    helm install -n fabric-logger-${PEER_NAME}-${NS} --namespace ${NS} \
-                 -f values.yaml ./fabric-logger
+    helm install -n fabric-logger-${NS} --namespace ${NS} \
+                 -f values.yaml -f network.yaml ./fabric-logger
 
 ### Kubernetes: Manually Populating Secrets
 
@@ -138,10 +135,10 @@ Make sure that the peer credentials are stored in the appropriately named secret
     KEY=$(find ${ADMIN_MSP_DIR}/keystore/*_sk -type f)
     kubectl create secret generic -n ${NS} hlf-peer--peer0-key --from-file=key.pem=$KEY
 
-A `network.yaml` will automatically be generated using the secrets and channel details set above. You can deploy via helm:
+A `network.yaml` configmap will automatically be generated using the secrets and channel details set above. You can deploy via helm:
 
     helm install -n fabric-logger-${PEER_NAME}-${NS} --namespace ${NS} \
-                 -f values.yaml \
+                 -f values.yaml -f network.yaml \
                  https://github.com/splunk/fabric-logger/releases/download/v3.0.0/fabric-logger-helm-v3.0.0.tgz
 
 ### Kubernetes: Deleting Helm Chart

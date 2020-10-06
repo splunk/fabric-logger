@@ -1,8 +1,7 @@
 fabric:
-  peer: peer0.example.com
   blockType: full
   channels:
     - myChannel
-      ccevents:
-        chaincodeId: myChaincodeId
-    - mySecondChannel
+  ccevents:
+    channelName: myChannel
+    chaincodeId: myChaincodeId

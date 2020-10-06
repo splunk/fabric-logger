@@ -33,26 +33,6 @@ secrets:
     # clientCertItem: clientCert.pem
     # clientKey: hlf--peer-clientkey
     # clientKeyItem: clientKey.pem
-peers:
-  peer0:
-    mspName: PeerMSP
-    peerName: peer
-    username: Admin   # If secrets.peer.create = true, this is the user that will be used in the crytpogen directory.
-    orgDomain: example.com
-    peerScheme: grpc  # grpc or grpcs
-    peerAddress: peer.default.svc
-    peerPort: 7051
-
-channels:
-  # A list of channel names that this peer connects to:
-  - channel1
-  - channel2
-ccevents:
-  # A list of chaincode events to listen for:
-  - channelName: myChannel
-    chaincodeId: myChaincodeId
-  - channelName: myChannel
-    chaincodeId: myChaincodeId
 
 loggingLocation: splunk
 splunk:
