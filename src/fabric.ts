@@ -61,33 +61,37 @@ export class FabricListener implements ManagedResource {
         const connectionProfileYaml = await readFile(this.config.networkConfig, { encoding: 'utf-8' });
         const connectionProfile = safeLoad(connectionProfileYaml);
         const wallet = await Wallets.newInMemoryWallet();
+
+        const cert = await readFile(this.config.certFile, { encoding: 'utf-8' });
+        const key = await readFile(this.config.keyFile, { encoding: 'utf-8' });
+        const identity: X509Identity = {
+            credentials: {
+                certificate: cert,
+                privateKey: key,
+            },
+            mspId: this.config.msp,
+            type: 'X.509',
+        };
+
+        wallet.put(this.config.user, identity);
+
+        const gatewayOptions: GatewayOptions = {
+            identity: identity,
+            wallet,
+            discovery: { enabled: this.config.discovery, asLocalhost: this.config.asLocalHost },
+        };
+
         if (this.config.clientCertFile && this.config.clientKeyFile) {
             const clientKey = await readFile(this.config.clientKeyFile, { encoding: 'utf-8' });
             const clientCert = await readFile(this.config.clientCertFile, { encoding: 'utf-8' });
-            const cert = await readFile(this.config.certFile, { encoding: 'utf-8' });
-            const key = await readFile(this.config.keyFile, { encoding: 'utf-8' });
-            const identity: X509Identity = {
-                credentials: {
-                    certificate: cert,
-                    privateKey: key,
-                },
-                mspId: this.config.msp,
-                type: 'X.509',
+            gatewayOptions.tlsInfo = {
+                certificate: clientCert,
+                key: clientKey,
             };
-
-            wallet.put(this.config.user, identity);
-            const gatewayOptions: GatewayOptions = {
-                identity: identity,
-                wallet,
-                discovery: { enabled: this.config.discovery, asLocalhost: this.config.asLocalHost },
-                tlsInfo: {
-                    certificate: clientCert,
-                    key: clientKey,
-                },
-            };
-            await this.gateway.connect(connectionProfile, gatewayOptions);
-            info('Finished Connecting to gateway');
         }
+
+        await this.gateway.connect(connectionProfile, gatewayOptions);
+        info('Finished Connecting to gateway');
     }
 
     public async listen(): Promise<void> {
