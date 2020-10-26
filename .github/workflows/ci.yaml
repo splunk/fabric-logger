@@ -56,12 +56,16 @@ jobs:
                   CI: true
     check-helm:
         runs-on: ubuntu-latest
+        container:
+            image: quay.io/helmpack/chart-testing:v3.1.1
         steps:
             - name: Checkout
               uses: actions/checkout@v2
+              with:
+                path: /workdir
             - name: Run chart-testing (lint)
               id: lint
               uses: helm/chart-testing-action@v1.0.0
               with:
-                command: lint
+                command: helm lint helm-chart/fabric-logger/
 
