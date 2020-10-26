@@ -61,8 +61,6 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@v2
-              with:
-                path: /workdir
             - name: Run chart-testing (lint)
               id: lint
               uses: helm/chart-testing-action@v1.0.0
