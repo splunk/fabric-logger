@@ -62,8 +62,5 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v2
             - name: Run chart-testing (lint)
-              id: lint
-              uses: helm/chart-testing-action@v1.0.0
-              with:
-                command: helm lint helm-chart/fabric-logger/
-
+              run: |
+                  helm lint helm-chart/fabric-logger/
