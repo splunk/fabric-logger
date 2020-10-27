@@ -63,4 +63,11 @@ jobs:
               uses: actions/checkout@v2
             - name: Run chart-testing (lint)
               run: |
-                  helm lint helm-chart/fabric-logger/
+                  mkdir -p build
+                  helm lint helm-chart/fabric-logger
+                  helm package -d build helm-chart/fabric-logger
+            - name: Archive helm package
+              uses: actions/upload-artifact@v2
+              with:
+                name: helm package
+                path: build
