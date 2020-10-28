@@ -25,10 +25,9 @@ async function main() {
     await replaceLineInFile('helm-chart/fabric-logger/Chart.yaml', 'version: ', 'version: ' + newVersion);
     await replaceLineInFile('helm-chart/fabric-logger/Chart.yaml', 'appVersion: ', 'version: ' + newVersion);
     await replaceLineInFile('helm-chart/fabric-logger/values.yaml', '  version: ', '  version: ' + newVersion);
-
 }
 
-main().catch(e => {
+main().catch((e) => {
     debug('FATAL', e);
     process.exit(1);
 });
