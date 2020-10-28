@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
         - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}"
+          image: "{{ .Values.image.repository }}:release-{{ .Values.image.version }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["fabriclogger"]
           args: ["-c", "network/fabriclogger.yaml"]
