@@ -69,5 +69,5 @@ jobs:
             - name: Archive helm package
               uses: actions/upload-artifact@v2
               with:
-                name: helm package
+                name: fabric-logger-helm
                 path: build
