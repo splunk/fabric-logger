@@ -1,6 +1,6 @@
 # Simple minifab example
 
-This example uses [minifab](https://github.com/litong01/minifabric).
+This example uses [minifab](https://github.com/hyperledger-labs/minifabric).
 
 This example targets Hyperledger 2.2.
 
