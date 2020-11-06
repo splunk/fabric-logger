@@ -1,0 +1,4 @@
+fabric:
+    peer: peer0.org1.example.com
+    channels:
+        - mychannel

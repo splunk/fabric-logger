@@ -1,0 +1,55 @@
+version: '3'
+services:
+    splunk.example.com:
+        container_name: splunk.example.com
+        image: splunk/splunk:latest
+        environment:
+            - SPLUNK_START_ARGS=--accept-license
+            - SPLUNK_PASSWORD=changeme
+            - SPLUNK_HEC_TOKEN=00000000-0000-0000-0000-000000000000
+            - SPLUNK_APPS_URL=http://s3.amazonaws.com/splunk-hyperledger/status-indicator-custom-visualization_130.tgz,http://s3.amazonaws.com/splunk-hyperledger/splunk-metrics-workspace_101.tgz,http://s3.amazonaws.com/splunk-hyperledger/fabric/${BRANCH}/splunk-hyperledger-fabric.tgz
+        ports:
+            - '8000:8000'
+        volumes:
+            - ./splunk.yml:/tmp/defaults/default.yml
+    otelcollector.example.com:
+        container_name: otelcollector.example.com
+        image: otel/opentelemetry-collector-contrib:0.13.0
+        command: ['--config=/etc/otel-collector-config.yml']
+        volumes:
+            - ./otel-collector-config.yml:/etc/otel-collector-config.yml
+        ports:
+            - '1888:1888' # pprof extension
+            - '8888:8888' # Prometheus metrics exposed by the collector
+            - '8889:8889' # Prometheus exporter metrics
+            - '13133:13133' # health_check extension
+            - '55680:55680' # zpages extension
+    fabric-logger.example.com:
+        restart: always
+        depends_on:
+            - splunk.example.com
+        container_name: fabric-logger.example.com
+        image: splunkdlt/fabric-logger:release-3.0.1
+        volumes:
+            - ./network-config.yml:/tmp/network-config.yml
+            - ./vars/keyfiles:/crypto-config
+            - ./fabriclogger.yml:/tmp/fabriclogger.yml
+        environment:
+            - FABRIC_KEYFILE=/crypto-config/peerOrganizations/org0.example.com/users/Admin@org0.example.com/msp/keystore/priv_sk
+            - FABRIC_CERTFILE=/crypto-config/peerOrganizations/org0.example.com/users/Admin@org0.example.com/msp/signcerts/Admin@org0.example.com-cert.pem
+            - FABRIC_CLIENT_KEYFILE=/crypto-config/peerOrganizations/org0.example.com/peers/peer1.org0.example.com/tls/server.key
+            - FABRIC_CLIENT_CERTFILE=/crypto-config/peerOrganizations/org0.example.com/peers/peer1.org0.example.com/tls/server.crt
+            - FABRIC_MSP=org0-example-com
+            - FABRIC_LOGGER_USERNAME=Admin
+            - FABRIC_PEER=peer1.org0.example.com
+            - NETWORK_CONFIG=/tmp/network-config.yml
+            - SPLUNK_HEC_TOKEN=00000000-0000-0000-0000-000000000000
+            - SPLUNK_HEC_URL=https://splunk.example.com:8088
+            - SPLUNK_INDEX=hyperledger_logs
+            - SPLUNK_HEC_REJECT_INVALID_CERTS=false
+            - FABRIC_LOGGER_CONFIG=/tmp/fabriclogger.yml
+
+networks:
+    default:
+        external:
+            name: $CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE

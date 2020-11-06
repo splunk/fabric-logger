@@ -1,0 +1,95 @@
+receivers:
+    otlp:
+        protocols:
+            grpc:
+            http:
+    prometheus_simple/orderer1:
+        endpoint: 'orderer1.example.com:7060'
+        tls_enabled: false
+        collection_interval: 10s
+    prometheus_simple/orderer2:
+        endpoint: 'orderer2.example.com:7060'
+        tls_enabled: false
+        collection_interval: 10s
+    prometheus_simple/orderer3:
+        endpoint: 'orderer3.example.com:7060'
+        tls_enabled: false
+        collection_interval: 10s
+    prometheus_simple/peer1_org0:
+        endpoint: 'peer1.org0.example.com:7061'
+        tls_enabled: false
+        collection_interval: 10s
+    prometheus_simple/peer2_org0:
+        endpoint: 'peer2.org0.example.com:7061'
+        tls_enabled: false
+        collection_interval: 10s
+    prometheus_simple/peer1_org1:
+        endpoint: 'peer1.org1.example.com:7061'
+        tls_enabled: false
+        collection_interval: 10s
+    prometheus_simple/peer2_org1:
+        endpoint: 'peer2.org1.example.com:7061'
+        tls_enabled: false
+        collection_interval: 10s
+
+exporters:
+    splunk_hec/metrics:
+        # Splunk HTTP Event Collector token.
+        token: '00000000-0000-0000-0000-000000000000'
+        # URL to a Splunk instance to send data to.
+        endpoint: 'https://splunk.example.com:8088/services/collector'
+        # Optional Splunk source: https://docs.splunk.com/Splexicon:Source
+        source: 'fabric_peer'
+        # Optional Splunk source type: https://docs.splunk.com/Splexicon:Sourcetype
+        sourcetype: 'prometheus'
+        # Splunk index, optional name of the Splunk index targeted.
+        index: 'hyperledger_metrics'
+        # Maximum HTTP connections to use simultaneously when sending data. Defaults to 100.
+        max_connections: 20
+        # Whether to disable gzip compression over HTTP. Defaults to false.
+        disable_compression: false
+        # HTTP timeout when sending data. Defaults to 10s.
+        timeout: 10s
+        # Whether to skip checking the certificate of the HEC endpoint when sending data over HTTPS. Defaults to false.
+        # For this demo, we use a self-signed certificate on the Splunk docker instance, so this flag is set to true.
+        insecure_skip_verify: true
+
+processors:
+    batch:
+
+extensions:
+    health_check:
+    pprof:
+    zpages:
+
+service:
+    extensions: [pprof, zpages, health_check]
+    pipelines:
+        metrics/orderer1:
+            receivers: [prometheus_simple/orderer1]
+            exporters: [splunk_hec/metrics]
+            processors: [batch]
+        metrics/orderer2:
+            receivers: [prometheus_simple/orderer2]
+            exporters: [splunk_hec/metrics]
+            processors: [batch]
+        metrics/orderer3:
+            receivers: [prometheus_simple/orderer3]
+            exporters: [splunk_hec/metrics]
+            processors: [batch]
+        metrics/peer1_org0:
+            receivers: [prometheus_simple/peer1_org0]
+            exporters: [splunk_hec/metrics]
+            processors: [batch]
+        metrics/peer2_org0:
+            receivers: [prometheus_simple/peer2_org0]
+            exporters: [splunk_hec/metrics]
+            processors: [batch]
+        metrics/peer1_org1:
+            receivers: [prometheus_simple/peer1_org1]
+            exporters: [splunk_hec/metrics]
+            processors: [batch]
+        metrics/peer2_org1:
+            receivers: [prometheus_simple/peer2_org1]
+            exporters: [splunk_hec/metrics]
+            processors: [batch]
