@@ -23,7 +23,7 @@ async function main() {
 
     debug(`Updating version of chart to ${newVersion}`);
     await replaceLineInFile('helm-chart/fabric-logger/Chart.yaml', 'version: ', 'version: ' + newVersion);
-    await replaceLineInFile('helm-chart/fabric-logger/Chart.yaml', 'appVersion: ', 'version: ' + newVersion);
+    await replaceLineInFile('helm-chart/fabric-logger/Chart.yaml', 'appVersion: ', 'appVersion: ' + newVersion);
     await replaceLineInFile('helm-chart/fabric-logger/values.yaml', '  version: ', '  version: ' + newVersion);
 }
 
