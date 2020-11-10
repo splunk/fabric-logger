@@ -6,7 +6,7 @@ replicaCount: 1
 
 image:
   repository: splunkdlt/fabric-logger
-  tag: release-3.0.1
+  version: 3.0.1
   pullPolicy: IfNotPresent
 
 nameOverride: ""

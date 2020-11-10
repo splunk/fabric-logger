@@ -54,3 +54,54 @@ jobs:
                   yarn lint
               env:
                   CI: true
+    check-helm:
+        runs-on: ubuntu-latest
+        container:
+            image: quay.io/helmpack/chart-testing:v3.1.1
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v2
+            - name: Run chart-testing (lint)
+              run: |
+                  mkdir -p build
+                  helm lint helm-chart/fabric-logger
+
+    package-helm:
+        runs-on: ubuntu-latest
+        container:
+            image: quay.io/helmpack/chart-testing:v3.1.1
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v2
+            - name: Package
+              run: |
+                  mkdir -p build
+                  helm package -d build helm-chart/fabric-logger
+            - name: Archive helm package
+              uses: actions/upload-artifact@v2
+              with:
+                name: fabric-logger-helm
+                path: build
+
+    trigger-release:
+        runs-on: ubuntu-latest
+        container:
+            image: node:12-alpine
+        needs:
+            - build
+            - docker-image
+            - unit-tests
+            - check-format
+            - check-helm
+            - package-helm
+        if: github.ref == 'refs/heads/master'
+        steps:
+            - uses: actions/checkout@v2
+              with:
+                  fetch-depth: 0
+            - name: Semantic release
+              run: |
+                  yarn install --frozen-lockfile
+                  yarn semantic-release
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
