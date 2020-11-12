@@ -2,12 +2,12 @@ version: '3'
 services:
     splunk.example.com:
         container_name: splunk.example.com
-        image: splunk/splunk:latest
+        image: splunk/splunk:8.1
         environment:
             - SPLUNK_START_ARGS=--accept-license
             - SPLUNK_PASSWORD=changeme
             - SPLUNK_HEC_TOKEN=00000000-0000-0000-0000-000000000000
-            - SPLUNK_APPS_URL=http://s3.amazonaws.com/splunk-hyperledger/status-indicator-custom-visualization_130.tgz,http://s3.amazonaws.com/splunk-hyperledger/splunk-metrics-workspace_101.tgz,http://s3.amazonaws.com/splunk-hyperledger/fabric/${BRANCH}/splunk-hyperledger-fabric.tgz
+            - SPLUNK_APPS_URL=http://s3.amazonaws.com/splunk-hyperledger/status-indicator-custom-visualization_130.tgz,http://s3.amazonaws.com/splunk-hyperledger/fabric/${BRANCH}/splunk-hyperledger-fabric.tgz
         ports:
             - '8000:8000'
         volumes:
