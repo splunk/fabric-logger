@@ -121,10 +121,11 @@ export class FabricListener implements ManagedResource {
             for (const channel of this.config.channels) {
                 if (!this.hasListener(channel)) {
                     info('Registering listener for channel=%s', channel);
-                    await retry(() => this.registerListener(channel), {
+                    const listener = await retry(() => this.registerListener(channel), {
                         attempts: 30,
                         waitBetween: exponentialBackoff({ min: 10, max: 5000 }),
                     });
+                    this.listeners[channel] = listener;
                 }
             }
         }
@@ -238,13 +239,13 @@ export class FabricListener implements ManagedResource {
             const initCheckpoint = this.checkpoint.getChannelCheckpoint(channelName);
             const blockNumber = Number(event.blockNumber);
             if (blockNumber <= initCheckpoint) {
-                debug(`Ignoring block_number=%d on channel=%d since we already processed it`, blockNumber, channelName);
-                return;
+                info(`Ignoring block_number=%d on channel=%d since we already processed it`, blockNumber, channelName);
+                return Promise.resolve();
             }
-
             info('Processing block_number=%d on channel=%s', blockNumber, channelName);
             const transactions = event.getTransactionEvents();
             for (const transaction of transactions) {
+                info(`Processing TransactionId=%s`, transaction.transactionId);
                 const extraBlockData = this.getExtraBlockData(transaction.transactionId, block.data.data);
                 this.output.logEvent(
                     {
@@ -256,8 +257,8 @@ export class FabricListener implements ManagedResource {
                     },
                     this.getMessageTimestamp(block.data.data[0])
                 );
+                info(`Finished Processing TransactionId=$s`, transaction.transactionId);
             }
-
             for (const msg of block.data.data) {
                 if ('payload' in msg && this.getChannelType(msg) != 'endorser_transaction') {
                     this.parseMessageHeaderExtension(msg);
@@ -274,7 +275,7 @@ export class FabricListener implements ManagedResource {
                     debug(`Ignoring message without payload: %O`, msg);
                 }
             }
-            debug('Processed all transactions for block_number=%d on channel=%s', blockNumber, channelName);
+            info('Processed all transactions for block_number=%d on channel=%s', blockNumber, channelName);
 
             this.output.logEvent(
                 { type: 'block', block_number: blockNumber, ...block },
