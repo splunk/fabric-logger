@@ -1,9 +1,9 @@
 fabric:
-    network: network.yaml
+    networkConfig: network.yaml
     user: fabric-logger
     blockType: 'full'
     discovery: false
-    asLocalhost: false
+    asLocalHost: false
 output:
     type: hec
     sourceTypePrefix: 'fabric_logger'
