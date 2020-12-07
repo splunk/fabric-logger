@@ -3,5 +3,5 @@ fabric:
   channels:
     - myChannel
   ccevents:
-    channelName: myChannel
-    chaincodeId: myChaincodeId
+    - channelName: myChannel
+      chaincodeId: myChaincodeId
