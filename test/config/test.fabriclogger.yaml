@@ -1,0 +1,58 @@
+fabric:
+    networkConfig: 'test/config/network.yaml'
+    user: fabric-logger
+    keyFile: 'test/fixtures/testkey'
+    certFile: 'test/fixtures/testcert'
+    msp: 'msp'
+    blockType: 'full'
+    discovery: false
+    asLocalHost: false
+    channels:
+        - myChannel
+    ccevents:
+        - channelName: myChannel
+          chaincodeId: myChaincodeId
+output:
+    type: hec
+    sourceTypePrefix: 'fabric_logger'
+    sourcetypes:
+        block: 'fabric_logger:block'
+        endorser_transaction: 'fabric_logger:endorser_transaction'
+        config: 'fabric_logger:config'
+        ccevent: 'fabric_logger:ccevent'
+checkpoint:
+    filename: '.checkpoints'
+    saveInterval: 250
+hec:
+    default:
+        url: 'http://localhost:8088'
+        token: '1'
+        flushTime: 0
+        maxQueueEntries: -1
+        maxQueueSize: 512000
+        gzip: true
+        timeout: 30s
+        requestKeepAlive: true
+        validateCertificate: true
+        maxSockets: 128
+        userAgent: fabric_logger-hec-client/$VERSION
+        multipleMetricFormatEnabled: false
+        waitForAvailability: 2m
+        retryWaitTime:
+            type: exponential-backoff
+            min: 10ms
+            max: 3m
+        defaultMetadata:
+            host: $HOSTNAME
+            source: fabric_logger
+            index: hyperledger_logs
+    internal:
+        flushTime: 5s
+        defaultMetadata:
+            host: $HOSTNAME
+            source: fabric_logger:internal
+            sourcetype: fabric_logger:internal
+        defaultFields:
+            version: $VERSION
+            nodeVersion: $NODE_VERSION
+            pid: $PID

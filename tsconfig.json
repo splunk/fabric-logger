@@ -6,7 +6,8 @@
         "moduleResolution": "node",
         "strict": true,
         "noImplicitAny": true,
-        "outDir": "lib"
+        "outDir": "lib",
+        "resolveJsonModule": true,
     },
     "include": ["src/**/*"]
 }
