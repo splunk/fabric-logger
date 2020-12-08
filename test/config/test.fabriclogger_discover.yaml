@@ -1,9 +1,28 @@
 fabric:
-    networkConfig: network.yaml
+    networkConfig: 'test/config/network.yaml'
     user: fabric-logger
+    keyFile: 'test/fixtures/testkey'
+    certFile: 'test/fixtures/testcert'
+    msp: 'msp'
     blockType: 'full'
     discovery: false
     asLocalHost: false
+    channels:
+        - myChannel
+    ccevents:
+        - channelName: myChannel
+          chaincodeId: myChaincodeId
+prometheus:
+    discovery: true
+    validateCertificates: false
+    port: 9999
+    peerPort: 7081
+    ordererPort: 7080
+    endpoints:
+        - url: 'http://orderer1.example.com:7060/metrics'
+          scrapeInterval: 5s
+        - url: 'http://peer1.org0.example.com:7061/metrics'
+          scrapeInterval: 7s
 output:
     type: hec
     sourceTypePrefix: 'fabric_logger'
@@ -12,17 +31,13 @@ output:
         endorser_transaction: 'fabric_logger:endorser_transaction'
         config: 'fabric_logger:config'
         ccevent: 'fabric_logger:ccevent'
-        nodeMetrics: 'fabric:node:metrics'
-
 checkpoint:
     filename: '.checkpoints'
     saveInterval: 250
 hec:
     default:
-        defaultMetadata:
-            host: $HOSTNAME
-            source: fabric_logger
-            index: hyperledger_logs
+        url: 'http://localhost:8088'
+        token: '1'
         flushTime: 0
         maxQueueEntries: -1
         maxQueueSize: 512000
@@ -38,6 +53,10 @@ hec:
             type: exponential-backoff
             min: 10ms
             max: 3m
+        defaultMetadata:
+            host: $HOSTNAME
+            source: fabric_logger
+            index: hyperledger_logs
     internal:
         flushTime: 5s
         defaultMetadata:

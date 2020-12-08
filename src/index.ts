@@ -8,6 +8,7 @@ import { FabricListener } from './fabric';
 import { createOutput } from './output';
 import { waitForSignal } from './utils/signal';
 import { HecClient } from '@splunkdlt/hec-client';
+import { PrometheusMetricsScraper } from './prometheus';
 import { ManagedResource, shutdownAll } from '@splunkdlt/managed-resource';
 
 const { debug, info, error } = createModuleDebug('main');
@@ -59,6 +60,15 @@ class Fabriclogger extends Command {
         this.resources.push(fabricListener);
         await fabricListener.initClient();
         await fabricListener.listen();
+
+        const prometheusMetricsScraper = new PrometheusMetricsScraper(
+            config.prometheus,
+            config.fabric.networkConfig,
+            output
+        );
+        await prometheusMetricsScraper.initScrapers();
+        await prometheusMetricsScraper.start();
+        this.resources.push(prometheusMetricsScraper);
     }
 }
 

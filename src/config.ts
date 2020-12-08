@@ -5,9 +5,10 @@ import { join } from 'path';
 import { safeLoad } from 'js-yaml';
 import { createModuleDebug } from '@splunkdlt/debug-logging';
 import { durationStringToMs } from './utils/parse';
-import { deepMerge } from './utils/obj';
+import { deepMerge, isEmpty, removeEmptyValues } from './utils/obj';
 import { exponentialBackoff, linearBackoff, WaitTime } from '@splunkdlt/async-tasks';
 import { CCEvent } from './checkpoint';
+import { ScraperEndpoint, ScraperConfigDefaults } from './prometheus';
 import { BlockType } from 'fabric-common';
 
 const { debug, error } = createModuleDebug('config');
@@ -21,6 +22,8 @@ export interface FabricloggerConfigSchema {
     fabric: FabricConfigSchema;
     /** HTTP event collector */
     hec: HecClientsConfigSchema;
+    /** Prometheus Scraper Configuration */
+    prometheus: PrometheusConfigSchema;
     /**
      * In the output configuration you can specify where fabriclogger will send generated
      * events to. By default it will send all information to Splunk HEC,
@@ -33,8 +36,12 @@ export interface FabricloggerConfigSchema {
 export interface FabricloggerConfig {
     fabric: FabricConfigSchema;
     checkpoint: CheckpointConfigSchema;
+    prometheus: PrometheusConfig;
     hec: {
         default: HecConfig;
+        events?: OptionalHecConfig;
+        metrics?: OptionalHecConfig;
+        internal?: OptionalHecConfig;
     };
     output: OutputConfigSchema;
 }
@@ -66,6 +73,60 @@ export interface FabricConfigSchema {
     asLocalHost: boolean;
 }
 
+export interface PrometheusConfigSchema extends PrometheusScraperConfigSchema {
+    /** Enable prometheus endpoint discovery. */
+    discovery?: boolean;
+    /** A common prefix for all Prometheus metrics emitted to Splunk */
+    namePrefix?: string;
+    /** Default port to try for discovered peers (overrides port). */
+    peerPort?: string;
+    /** Default path to try for discovered peers (overrides path). */
+    peerPath?: string;
+    /** Default port to try for discovered orderers (overrides port). */
+    ordererPort?: string;
+    /** Default path to try for discovered orderers (overrides path). */
+    ordererPath?: string;
+    /** Prometheus endpoints to scrape */
+    endpoints?: PrometheusEndpointConfigSchema[];
+}
+
+export interface PrometheusScraperConfigSchema {
+    /** Time between scrapes of Prometheus endpoints. */
+    scrapeInterval?: DurationConfig;
+    /** URL path to use when scraping Prometheus metrics */
+    path?: string;
+    /** Protocol to use when scraping Prometheus metrics */
+    protocol?: string;
+    /** Port to use when scraping Prometheus metrics. */
+    port?: string;
+    /** Request timeout */
+    timeout?: number;
+    /** If not disabled, this will allow the prometheus server to respond with compressed body (gzip or deflate) */
+    allowCompression?: boolean;
+    /** If set to false, the scraper will not check the content type of the response from the server */
+    validateContentType?: boolean;
+    /** If set to false, the HTTP client will ignore certificate errors (eg. when using self-signed certs) */
+    validateCertificate?: boolean;
+    /** User-agent header sent to metrics endpoint */
+    userAgent?: string;
+}
+export interface PrometheusConfig {
+    /** Enable prometheus endpoint discovery. */
+    discovery: boolean;
+    /** Prometheus endpoints to scrape */
+    endpoints: ScraperEndpoint[];
+    /** Default options */
+    defaultOptions: ScraperConfigDefaults;
+    /** Default options for discovered peers (overrides defaultOptions) */
+    defaultPeerOptions?: OptionalScraperConfigDefaults;
+    /** Default options for discovered orderers (overrides defaultOptions) */
+    defaultOrdererOptions?: OptionalScraperConfigDefaults;
+}
+
+export interface PrometheusEndpointConfigSchema extends PrometheusScraperConfigSchema {
+    /** Full URL to scrape for Prometheus metrics */
+    url: string;
+}
 export interface HecClientsConfigSchema {
     /**
      * Base settings that apply to all HEC clients. Overrides for events, metrics and
@@ -73,6 +134,12 @@ export interface HecClientsConfigSchema {
      * different HEC tokens, URL or destination index.
      */
     default: HecConfigSchema;
+    /** HEC settings (overrides for `default`) for events sent to Splunk */
+    events?: OptionalHecConfigSchema;
+    /** HEC settings (overrides for `default`) for metrics sent to Splunk */
+    metrics?: OptionalHecConfigSchema;
+    /** HEC settings (overrides for `default`) for internal metrics sent to Splunk */
+    internal?: OptionalHecConfigSchema;
 }
 
 export interface HecOutputConfig {
@@ -93,6 +160,8 @@ export interface SourcetypesSchema {
     ccevent?: string;
     /** @default "fabric_logger:config" */
     config?: string;
+    /** @default "fabric:node:metrics" */
+    nodeMetrics?: string;
 }
 
 /** Console output prints all generated events and metrics to STDOUT */
@@ -187,6 +256,8 @@ export interface HecConfig extends Omit<HecConfigSchema, 'retryWaitTime'> {
 export type OptionalHecConfigSchema = Partial<HecConfigSchema>;
 
 export type OptionalHecConfig = Partial<HecConfig>;
+
+export type OptionalScraperConfigDefaults = Partial<ScraperConfigDefaults>;
 
 /**
  * The checkpoint is where fabriclogger keeps track of its state, which blocks have already been processed.
@@ -398,6 +469,73 @@ export async function loadFabricloggerConfig(flags: CliFlags, dryRun: boolean = 
         return val;
     };
 
+    const parsePrometheusEndpointsConfig = (
+        value: DeepPartial<PrometheusEndpointConfigSchema[]> | undefined
+    ): ScraperEndpoint[] => {
+        const prometheusEndpoints = [];
+        if (value) {
+            for (const prometheusEndpointConfig of value) {
+                if (prometheusEndpointConfig) {
+                    if (!prometheusEndpointConfig.url) {
+                        throw new ConfigError(
+                            `Provided Prometheus endpoint does not have 'url' set, which is a required field: ${JSON.stringify(
+                                prometheusEndpointConfig
+                            )}`
+                        );
+                    }
+                    try {
+                        new URL(prometheusEndpointConfig.url);
+                    } catch (e) {
+                        throw new ConfigError(`Unable to construct URL from provided Prometheus endpoint. ${e}`);
+                    }
+
+                    const parsedPrometheusEndpoint = {
+                        scrapeInterval: parseDuration(prometheusEndpointConfig.scrapeInterval),
+                        scrapeOptions: {
+                            url: prometheusEndpointConfig.url,
+                            timeout: prometheusEndpointConfig.timeout,
+                            allowCompression: prometheusEndpointConfig.allowCompression,
+                            validateContentType: prometheusEndpointConfig.validateContentType,
+                            validateCertificate: prometheusEndpointConfig.validateCertificate,
+                            userAgent: prometheusEndpointConfig.userAgent,
+                        },
+                    };
+                    prometheusEndpoints.push(parsedPrometheusEndpoint);
+                }
+            }
+        }
+        return prometheusEndpoints;
+    };
+
+    const parseSpecificHecConfig = (
+        defaults: DeepPartial<HecConfigSchema> | undefined,
+        indexFlag: keyof CliFlags,
+        tokenFlag: keyof CliFlags
+    ): HecConfig | undefined => {
+        const result = removeEmptyValues({
+            defaultFields: defaults?.defaultFields,
+            defaultMetadata: flags[indexFlag]
+                ? Object.assign({}, defaults?.defaultMetadata, { index: flags[indexFlag] })
+                : defaults?.defaultMetadata,
+            flushTime: parseDuration(defaults?.flushTime),
+            gzip: defaults?.gzip,
+            maxQueueEntries: defaults?.maxQueueEntries,
+            maxQueueSize: defaults?.maxQueueSize,
+            maxRetries: defaults?.maxRetries,
+            maxSockets: defaults?.maxSockets,
+            multipleMetricFormatEnabled: defaults?.multipleMetricFormatEnabled,
+            requestKeepAlive: defaults?.requestKeepAlive,
+            retryWaitTime: waitTimeFromConfig(defaults?.retryWaitTime as WaitTimeConfig),
+            timeout: parseDuration(defaults?.timeout),
+            token: flags[tokenFlag] ?? defaults?.token,
+            url: defaults?.url,
+            userAgent: defaults?.userAgent,
+            validateCertificate: defaults?.validateCertificate,
+            waitForAvailability: parseDuration(defaults?.waitForAvailability),
+        });
+        return isEmpty(result) ? undefined : result;
+    };
+
     const parseOutput = (defaults?: Partial<OutputConfigSchema>): OutputConfigSchema => {
         switch (defaults?.type) {
             case 'hec':
@@ -460,6 +598,37 @@ export async function loadFabricloggerConfig(flags: CliFlags, dryRun: boolean = 
             discovery: flags['discovery'] ?? defaults.fabric?.discovery,
             asLocalHost: flags['discovery-as-localhost'] ?? defaults.fabric?.asLocalHost,
         },
+        prometheus: {
+            discovery:
+                flags['prometheus-discovery'] ??
+                parseBooleanEnvVar(CLI_FLAGS['prometheus-discovery'].env) ??
+                defaults.prometheus?.discovery ??
+                false,
+            defaultOptions: {
+                namePrefix: flags['prometheus-name-prefix'] ?? defaults.prometheus?.namePrefix ?? 'fabric',
+                scrapeInterval:
+                    parseDuration(flags['prometheus-scrape-interval'] ?? defaults.prometheus?.scrapeInterval) ?? 10000,
+                port: flags['prometheus-port'] ?? defaults.prometheus?.port ?? '9090',
+                path: flags['prometheus-path'] ?? defaults.prometheus?.path ?? '/metrics',
+                protocol: flags['prometheus-protocol'] ?? defaults.prometheus?.protocol ?? 'http',
+                scrapeOptions: {
+                    timeout: defaults.prometheus?.timeout,
+                    allowCompression: defaults.prometheus?.allowCompression,
+                    validateContentType: defaults.prometheus?.validateContentType,
+                    validateCertificate: defaults.prometheus?.validateCertificate,
+                    userAgent: defaults.prometheus?.userAgent,
+                },
+            },
+            defaultPeerOptions: {
+                port: flags['prometheus-peer-port'] ?? defaults.prometheus?.peerPort,
+                path: flags['prometheus-peer-path'] ?? defaults.prometheus?.peerPath,
+            },
+            defaultOrdererOptions: {
+                port: flags['prometheus-orderer-port'] ?? defaults.prometheus?.ordererPort,
+                path: flags['prometheus-orderer-path'] ?? defaults.prometheus?.ordererPath,
+            },
+            endpoints: parsePrometheusEndpointsConfig(defaults.prometheus?.endpoints),
+        },
         hec: {
             default: {
                 url: required(
@@ -488,6 +657,9 @@ export async function loadFabricloggerConfig(flags: CliFlags, dryRun: boolean = 
                     parseBooleanEnvVar(CLI_FLAGS['hec-reject-invalid-certs'].env) ??
                     defaults.hec?.default?.validateCertificate,
             },
+            events: parseSpecificHecConfig(defaults.hec?.events, 'hec-events-index', 'hec-events-token'),
+            metrics: parseSpecificHecConfig(defaults.hec?.metrics, 'hec-metrics-index', 'hec-metrics-token'),
+            internal: parseSpecificHecConfig(defaults.hec?.internal, 'hec-internal-index', 'hec-internal-token'),
         },
         output: parseOutput(defaults.output),
     };

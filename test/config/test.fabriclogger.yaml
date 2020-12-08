@@ -12,6 +12,17 @@ fabric:
     ccevents:
         - channelName: myChannel
           chaincodeId: myChaincodeId
+prometheus:
+    discovery: false
+    validateCertificates: false
+    port: 9999
+    peerPort: 7081
+    ordererPort: 7080
+    endpoints:
+        - url: 'http://orderer1.example.com:7060/metrics'
+          scrapeInterval: 5s
+        - url: 'http://peer1.org0.example.com:7061/metrics'
+          scrapeInterval: 7s
 output:
     type: hec
     sourceTypePrefix: 'fabric_logger'

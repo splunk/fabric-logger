@@ -1,0 +1,63 @@
+# https://fabric-sdk-node.github.io/release-1.4/tutorial-network-config.html
+name: 'Network'
+version: '1.0'
+
+channels:
+    mychannel:
+        orderers:
+            - orderer1.example.com
+        peers:
+            peer1.org0.example.com:
+                endorsingPeer: true
+                chaincodeQuery: true
+                ledgerQuery: true
+                eventSource: true
+            peer2.org0.example.com:
+                endorsingPeer: true
+                chaincodeQuery: true
+                ledgerQuery: true
+                eventSource: true
+organizations:
+    org0-example-com:
+        mspid: org0-example-com
+        peers:
+            - peer1.org0.example.com
+            - peer2.org0.example.com
+
+orderers:
+    orderer1.example.com:
+        url: grpcs://orderer1.example.com:7050
+        grpcOptions:
+            ssl-target-name-override: orderer1.example.com
+            grpc-max-send-message-length: 4194304
+        tlsCACerts:
+            path: /crypto-config/ordererOrganizations/example.com/orderers/orderer1.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
+    orderer2.example.com:
+        url: grpcs://orderer2.example.com:7050
+        grpcOptions:
+            ssl-target-name-override: orderer2.example.com
+            grpc-max-send-message-length: 4194304
+        tlsCACerts:
+            path: /crypto-config/ordererOrganizations/example.com/orderers/orderer2.example.com/msp/tlscacerts/tlsca.example.com-cert.pem
+peers:
+    peer1.org0.example.com:
+        url: grpcs://peer1.org0.example.com:7051
+        grpcOptions:
+            ssl-target-name-override: peer1.org0.example.com
+            grpc.keepalive_time_ms: 600000
+        tlsCACerts:
+            path: /crypto-config/peerOrganizations/org0.example.com/peers/peer1.org0.example.com/msp/tlscacerts/tlsca1.org0.example.com-cert.pem
+    peer2.org0.example.com:
+        url: grpcs://peer2.org0.example.com:7051
+        grpcOptions:
+            ssl-target-name-override: peer2.org0.example.com
+            grpc.keepalive_time_ms: 600000
+        tlsCACerts:
+            path: /crypto-config/peerOrganizations/org0.example.com/peers/peer2.org0.example.com/msp/tlscacerts/tlsca1.org0.example.com-cert.pem
+    peer3.org0.example.com:
+        url: grpcs://peer3.org0.example.com:7051
+        grpcOptions:
+            ssl-target-name-override: peer3.org0.example.com
+            grpc.keepalive_time_ms: 600000
+        tlsCACerts:
+            path: /crypto-config/peerOrganizations/org0.example.com/peers/peer3.org0.example.com/msp/tlscacerts/tlsca1.org0.example.com-cert.pem

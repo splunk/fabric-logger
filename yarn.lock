@@ -679,6 +679,13 @@
   dependencies:
     "@octokit/types" "^5.0.0"
 
+"@octokit/auth-token@^2.4.4":
+  version "2.4.4"
+  resolved "https://registry.yarnpkg.com/@octokit/auth-token/-/auth-token-2.4.4.tgz#ee31c69b01d0378c12fd3ffe406030f3d94d3b56"
+  integrity sha512-LNfGu3Ro9uFAYh10MUZVaT7X2CnNm2C8IDQmabx+3DygYIQjs9FwzFAHN/0t6mu5HEPhxcb1XOuxdpY82vCg2Q==
+  dependencies:
+    "@octokit/types" "^6.0.0"
+
 "@octokit/core@^2.4.3":
   version "2.5.4"
   resolved "https://registry.yarnpkg.com/@octokit/core/-/core-2.5.4.tgz#f7fbf8e4f86c5cc2497a8887ba2561ec8d358054"
@@ -690,6 +697,18 @@
     "@octokit/types" "^5.0.0"
     before-after-hook "^2.1.0"
     universal-user-agent "^5.0.0"
+
+"@octokit/core@^=3":
+  version "3.2.4"
+  resolved "https://registry.yarnpkg.com/@octokit/core/-/core-3.2.4.tgz#5791256057a962eca972e31818f02454897fd106"
+  integrity sha512-d9dTsqdePBqOn7aGkyRFe7pQpCXdibSJ5SFnrTr0axevObZrpz3qkWm7t/NjYv5a66z6vhfteriaq4FRz3e0Qg==
+  dependencies:
+    "@octokit/auth-token" "^2.4.4"
+    "@octokit/graphql" "^4.5.8"
+    "@octokit/request" "^5.4.12"
+    "@octokit/types" "^6.0.3"
+    before-after-hook "^2.1.0"
+    universal-user-agent "^6.0.0"
 
 "@octokit/endpoint@^6.0.1":
   version "6.0.8"
@@ -708,6 +727,20 @@
     "@octokit/request" "^5.3.0"
     "@octokit/types" "^5.0.0"
     universal-user-agent "^6.0.0"
+
+"@octokit/graphql@^4.5.8":
+  version "4.5.8"
+  resolved "https://registry.yarnpkg.com/@octokit/graphql/-/graphql-4.5.8.tgz#d42373633c3015d0eafce64a8ce196be167fdd9b"
+  integrity sha512-WnCtNXWOrupfPJgXe+vSmprZJUr0VIu14G58PMlkWGj3cH+KLZEfKMmbUQ6C3Wwx6fdhzVW1CD5RTnBdUHxhhA==
+  dependencies:
+    "@octokit/request" "^5.3.0"
+    "@octokit/types" "^6.0.0"
+    universal-user-agent "^6.0.0"
+
+"@octokit/openapi-types@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@octokit/openapi-types/-/openapi-types-2.0.0.tgz#6d8f8ad9db3b75a39115f5def2654df8bed39f28"
+  integrity sha512-J4bfM7lf8oZvEAdpS71oTvC1ofKxfEZgU5vKVwzZKi4QPiL82udjpseJwxPid9Pu2FNmyRQOX4iEj6W1iOSnPw==
 
 "@octokit/plugin-paginate-rest@^2.2.0":
   version "2.4.0"
@@ -752,6 +785,20 @@
     once "^1.4.0"
     universal-user-agent "^6.0.0"
 
+"@octokit/request@^5.4.12":
+  version "5.4.12"
+  resolved "https://registry.yarnpkg.com/@octokit/request/-/request-5.4.12.tgz#b04826fa934670c56b135a81447be2c1723a2ffc"
+  integrity sha512-MvWYdxengUWTGFpfpefBBpVmmEYfkwMoxonIB3sUGp5rhdgwjXL1ejo6JbgzG/QD9B/NYt/9cJX1pxXeSIUCkg==
+  dependencies:
+    "@octokit/endpoint" "^6.0.1"
+    "@octokit/request-error" "^2.0.0"
+    "@octokit/types" "^6.0.3"
+    deprecation "^2.0.0"
+    is-plain-object "^5.0.0"
+    node-fetch "^2.6.1"
+    once "^1.4.0"
+    universal-user-agent "^6.0.0"
+
 "@octokit/rest@^17.0.0":
   version "17.11.2"
   resolved "https://registry.yarnpkg.com/@octokit/rest/-/rest-17.11.2.tgz#f3dbd46f9f06361c646230fd0ef8598e59183ead"
@@ -774,6 +821,14 @@
   resolved "https://registry.yarnpkg.com/@octokit/types/-/types-5.5.0.tgz#e5f06e8db21246ca102aa28444cdb13ae17a139b"
   integrity sha512-UZ1pErDue6bZNjYOotCNveTXArOMZQFG6hKJfOnGnulVCMcVVi7YIIuuR4WfBhjo7zgpmzn/BkPDnUXtNx+PcQ==
   dependencies:
+    "@types/node" ">= 8"
+
+"@octokit/types@^6.0.0", "@octokit/types@^6.0.3":
+  version "6.1.1"
+  resolved "https://registry.yarnpkg.com/@octokit/types/-/types-6.1.1.tgz#bc88b3eb5f447b025a2a1a8177a72db216e8d4ca"
+  integrity sha512-btm3D6S7VkRrgyYF31etUtVY/eQ1KzrNRqhFt25KSe2mKlXuLXJilglRC6eDA2P6ou94BUnk/Kz5MPEolXgoiw==
+  dependencies:
+    "@octokit/openapi-types" "^2.0.0"
     "@types/node" ">= 8"
 
 "@protobufjs/aspromise@^1.1.1", "@protobufjs/aspromise@^1.1.2":
@@ -940,26 +995,12 @@
     lodash "^4.17.4"
     read-pkg-up "^7.0.0"
 
-"@splunkdlt/async-tasks@1.0.0-alpha0":
-  version "1.0.0-alpha0"
-  resolved "https://registry.yarnpkg.com/@splunkdlt/async-tasks/-/async-tasks-1.0.0-alpha0.tgz#1ebaea00a6e25de025c36c3c8dffd44b061351f4"
-  integrity sha512-lLLTjmJS9IOra6EqPtk1/+TzVqF2WOG5vS833kU8Wjv1/fMYV66byIurbhNx58Z+p/T3wHdJ2glxgI0bKi/nFA==
-  dependencies:
-    "@splunkdlt/debug-logging" "1.0.0"
-
 "@splunkdlt/async-tasks@^1.0.0":
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/@splunkdlt/async-tasks/-/async-tasks-1.0.0.tgz#784ee49e3ef409cf868c84aa730b8d5bdb08ef2d"
   integrity sha512-2GyBqDmVII5UIwjIpDktiuH5+AoH4Wh+7uMJeOHo870Ph64NMuHPfN2uQJuCS92k6OADavKaGZdlbdcpysTrZw==
   dependencies:
     "@splunkdlt/debug-logging" "^1.0.1"
-
-"@splunkdlt/debug-logging@1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@splunkdlt/debug-logging/-/debug-logging-1.0.0.tgz#5ce6c44a865d9e27ef34b00177c4fa9f32da1b81"
-  integrity sha512-dmz5lRAdjdiPFOijsY+DyBKOoLHnvxCKgwZX3JC30jh5hcpwMrKUhSnoKo2XKPIGUnGBHQxI2hbqCcWoZDsMNA==
-  dependencies:
-    debug "^4.1.1"
 
 "@splunkdlt/debug-logging@^1.0.1":
   version "1.0.1"
@@ -968,14 +1009,14 @@
   dependencies:
     debug "^4.1.1"
 
-"@splunkdlt/hec-client@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@splunkdlt/hec-client/-/hec-client-1.0.0.tgz#41ac6eb25a83e2978aaf320dc29e54493851a359"
-  integrity sha512-k/Jm/zyF3hlfJuPfc0hToKfqFd5RqJikBi8enJWrd1AdQItgsNqwXg7szvLUkut1zRKqVyzPOCR8kvnw6kJoPg==
+"@splunkdlt/hec-client@^1.1.0":
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@splunkdlt/hec-client/-/hec-client-1.2.0.tgz#d189a461f5a09400c5f8fb9d1979e76f9d293a3d"
+  integrity sha512-ah4luc8zs6a/spkX9kcGgttF+BEEBQUwFbVE1XNGK8Lv7/XW38lHz1eGHCPgdZqAosBhpqX4QeTjBz6/aIsOYA==
   dependencies:
-    "@splunkdlt/async-tasks" "1.0.0-alpha0"
+    "@splunkdlt/async-tasks" "^1.0.0"
     "@splunkdlt/debug-logging" "^1.0.1"
-    "@splunkdlt/stats-collector" "^1.0.0"
+    "@splunkdlt/stats-collector" "^1.0.2"
     abort-controller "^3.0.0"
     agentkeepalive "^4.1.0"
     bl "^4.0.0"
@@ -986,12 +1027,28 @@
   resolved "https://registry.yarnpkg.com/@splunkdlt/managed-resource/-/managed-resource-1.0.0.tgz#e6c37060da449c53b259fc7864a72684f4bee3ce"
   integrity sha512-+PeCSS+l8CBFklzs4w59r8PAGZ1N0P6nv/XehlmzIet9NNkkKFQjZBTSSHAMt9Iu9i7X79kEJD77DXr2no0/uA==
 
-"@splunkdlt/stats-collector@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@splunkdlt/stats-collector/-/stats-collector-1.0.0.tgz#d501a35a69fafae80da38011fc7e06a84d685555"
-  integrity sha512-VI3WXphCFib1iqCDjK2vGc8QBY9S8jW7bxJdSPZclMjuCNyOAmF4GqlsD612qXLN9w4x0pQb2wAvE5FPlvqwJQ==
+"@splunkdlt/managed-resource@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@splunkdlt/managed-resource/-/managed-resource-1.0.2.tgz#d9574c8ab848d3da014350b09b517cd6e9cd5975"
+  integrity sha512-HZ1zrCb9RsdSIVIvvWGTpm2bqI4Z8lKovwo/d/Yz7f5YGa4unwtRt9VF+KZoDMPb8vAHXQ5ihcohZ+giiNMAug==
   dependencies:
-    "@splunkdlt/managed-resource" "^1.0.0"
+    "@splunkdlt/debug-logging" "^1.0.1"
+
+"@splunkdlt/prometheus-scraper@^0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@splunkdlt/prometheus-scraper/-/prometheus-scraper-0.1.0.tgz#a0476abe12bffcd972b503ba42aa06e2e3edfd48"
+  integrity sha512-bSnRMFwZjeg9vAdmhaUMgQah5OFsuty6/hRI44r/ETnTrh3nn2TT7zhH/aMkqCr4BjU41CHlwWZpS/45kfkY/g==
+  dependencies:
+    "@splunkdlt/async-tasks" "^1.0.0"
+    "@splunkdlt/debug-logging" "^1.0.1"
+    node-fetch "^2.6.0"
+
+"@splunkdlt/stats-collector@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@splunkdlt/stats-collector/-/stats-collector-1.0.2.tgz#aa55c73bfa7c9bc14478fe66c3a59ec25ec681fd"
+  integrity sha512-HQnR/RHEbBffFIyLYAYkR/zUyoY63YkD2LnfH0rxDOyjpFirRsLNTVKssnf2DW0X121eGDKCn/P4fSdak88i6Q==
+  dependencies:
+    "@splunkdlt/managed-resource" "^1.0.2"
 
 "@tootallnate/once@1":
   version "1.1.2"
@@ -1180,6 +1237,14 @@
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/@types/minimist/-/minimist-1.2.0.tgz#69a23a3ad29caf0097f06eda59b361ee2f0639f6"
   integrity sha1-aaI6OtKcrwCX8G7aWbNh7i8GOfY=
+
+"@types/node-fetch@^2.5.7":
+  version "2.5.7"
+  resolved "https://registry.yarnpkg.com/@types/node-fetch/-/node-fetch-2.5.7.tgz#20a2afffa882ab04d44ca786449a276f9f6bbf3c"
+  integrity sha512-o2WVNf5UhWRkxlf6eq+jMZDu7kjgpgJfl4xVNlvryc95O/6F2ld8ztKX+qu+Rjyet93WAWm5LjeX9H5FGkODvw==
+  dependencies:
+    "@types/node" "*"
+    form-data "^3.0.0"
 
 "@types/node@*":
   version "13.11.1"
@@ -2458,7 +2523,7 @@ columnify@~1.5.4:
     strip-ansi "^3.0.0"
     wcwidth "^1.0.0"
 
-combined-stream@^1.0.6, combined-stream@~1.0.6:
+combined-stream@^1.0.6, combined-stream@^1.0.8, combined-stream@~1.0.6:
   version "1.0.8"
   resolved "https://registry.yarnpkg.com/combined-stream/-/combined-stream-1.0.8.tgz#c3d45a8b34fd730631a110a8a2520682b31d5a7f"
   integrity sha512-FQN4MRfuJeHf7cBbBMJFXhKSDq+2kAArBlmRBvcvFE5BB1HZKXtSFASDhdlz9zOYwxh8lDdnvmMOe/+5cdoEdg==
@@ -3921,6 +3986,15 @@ form-data@^2.5.0:
   dependencies:
     asynckit "^0.4.0"
     combined-stream "^1.0.6"
+    mime-types "^2.1.12"
+
+form-data@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/form-data/-/form-data-3.0.0.tgz#31b7e39c85f1355b7139ee0c647cf0de7f83c682"
+  integrity sha512-CKMFDglpbMi6PyN+brwB9Q/GOw0eAnsrEZDgcsH5Krhz5Od/haKHAX0NmQfha2zPPz0JpWzA7GJHGSnvCRLWsg==
+  dependencies:
+    asynckit "^0.4.0"
+    combined-stream "^1.0.8"
     mime-types "^2.1.12"
 
 form-data@~2.3.2:

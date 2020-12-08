@@ -12,18 +12,6 @@ services:
             - '8000:8000'
         volumes:
             - ./splunk.yml:/tmp/defaults/default.yml
-    otelcollector.example.com:
-        container_name: otelcollector.example.com
-        image: otel/opentelemetry-collector-contrib:0.13.0
-        command: ['--config=/etc/otel-collector-config.yml']
-        volumes:
-            - ./otel-collector-config.yml:/etc/otel-collector-config.yml
-        ports:
-            - '1888:1888' # pprof extension
-            - '8888:8888' # Prometheus metrics exposed by the collector
-            - '8889:8889' # Prometheus exporter metrics
-            - '13133:13133' # health_check extension
-            - '55680:55680' # zpages extension
     fabric-logger.example.com:
         restart: always
         depends_on:
@@ -46,8 +34,12 @@ services:
             - SPLUNK_HEC_TOKEN=00000000-0000-0000-0000-000000000000
             - SPLUNK_HEC_URL=https://splunk.example.com:8088
             - SPLUNK_INDEX=hyperledger_logs
+            - SPLUNK_METRICS_INDEX=hyperledger_metrics
             - SPLUNK_HEC_REJECT_INVALID_CERTS=false
             - FABRIC_LOGGER_CONFIG=/tmp/fabriclogger.yml
+            - PROMETHEUS_DISCOVERY=true
+            - PROMETHEUS_ORDERER_PORT=7060
+            - PROMETHEUS_PEER_PORT=7061
 
 networks:
     default:

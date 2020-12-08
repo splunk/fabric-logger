@@ -4,7 +4,7 @@ This example uses [minifab](https://github.com/hyperledger-labs/minifabric).
 
 This example targets Hyperledger 2.2.
 
-This example builds on the [minifab](../minifab) example, adding Prometheus metrics collection with the OpenTelemetry collector.
+This example builds on the [minifab](../minifab) example, adding Prometheus metrics collection.
 
 ## Start the example
 
@@ -24,7 +24,7 @@ You can log in with `admin/changeme`. Splunk installs the Hyperledger Fabric app
 
 You can explore metrics in the metrics tab of the Hyperledger Fabric application.
 
-The OpenTelemetry collector is [configured](./otel-collector-config.yml) to collect from all peers and orderers of the network.
+fabric-logger is [configured](./fabriclogger.yml) to collect Prometheus metrics from all peers and orderers of the network.
 
 ## Stopping the sample
 
