@@ -4,6 +4,8 @@ This example uses [minifab](https://github.com/hyperledger-labs/minifabric).
 
 This example targets Hyperledger 2.2.
 
+NOTE: Docker for Mac requires to run with the legacy osxfs file sharing mechanism. Please see [this issue](https://github.com/hyperledger-labs/minifabric/issues/141) for more information.
+
 ## Start the example
 
 Make sure Docker and docker-compose are installed.
