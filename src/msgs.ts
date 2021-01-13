@@ -1,5 +1,6 @@
 import { ContractEvent, TransactionEvent } from 'fabric-network';
 import { BlockData } from 'fabric-common';
+import { MultiMetrics } from '@splunkdlt/hec-client';
 
 export interface BlockMessage {
     type: 'block';
@@ -17,6 +18,9 @@ export interface ChaincodeEventMessage extends ContractEvent {
     payload_message: string | undefined;
 }
 
+export interface NodeMetricsMessage extends MultiMetrics {
+    type: 'nodeMetrics';
+}
 export interface UnKnownMessage extends BlockData {
     type: string;
     block_number: number | undefined;

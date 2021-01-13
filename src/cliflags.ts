@@ -28,6 +28,31 @@ export const CLI_FLAGS = {
         description:
             'Splunk index to send events to. You can alternatively use separate HEC tokens to correctly route your data',
     }),
+    'hec-metrics-index': flags.string({
+        env: 'SPLUNK_METRICS_INDEX',
+        description:
+            'Splunk index to send metrics to. You can alternatively use separate HEC tokens to correctly route your data',
+    }),
+    'hec-internal-index': flags.string({
+        env: 'SPLUNK_INTERNAL_INDEX',
+        description:
+            'Splunk index to send internal metrics to. You can alternatively use separate HEC tokens to correctly route your data',
+    }),
+    'hec-events-token': flags.string({
+        env: 'SPLUNK_EVENTS_HEC_TOKEN',
+        description:
+            'HEC token to use for sending events. You can alternatively configure different indexes to correctly route your data',
+    }),
+    'hec-metrics-token': flags.string({
+        env: 'SPLUNK_METRICS_HEC_TOKEN',
+        description:
+            'HEC token to use for sending metrics. You can alternatively configure different indexes to correctly route your data',
+    }),
+    'hec-internal-token': flags.string({
+        env: 'SPLUNK_INTERNAL_HEC_TOKEN',
+        description:
+            'HEC token to use for sending internal metrics. You can alternatively configure different indexes to correctly route your data',
+    }),
     'hec-reject-invalid-certs': flags.boolean({
         allowNo: true,
         env: 'SPLUNK_HEC_REJECT_INVALID_CERTS',
@@ -86,11 +111,56 @@ export const CLI_FLAGS = {
     discovery: flags.boolean({
         env: 'FABRIC_DISCOVERY',
         description:
-            'Indicates if peers and orderers should be discovered using the discovery service.  If set to false only the network.yaml will be used',
+            'Indicates if peers and orderers should be discovered using the discovery service. If set to false only the network.yaml will be used.',
     }),
     'discovery-as-localhost': flags.boolean({
         env: 'FABRIC_DISCOVERY_AS_LOCALHOST',
         description:
             'Convert discovered host addresses to be localhost. Will be needed when running a docker composed fabric network on the local system; otherwise should be disabled.',
+    }),
+    'prometheus-discovery': flags.boolean({
+        env: 'PROMETHEUS_DISCOVERY',
+        description:
+            'Indicates if prometheus endpoints of peers and orderers should be discovered using the connection profile config. If set to false only the endpoints defined in fabriclogger.yml will be used',
+    }),
+    'prometheus-scrape-interval': flags.string({
+        env: 'PROMETHEUS_SCRAPE_INTERVAL',
+        description: 'Time in seconds between prometheus scrapes.',
+    }),
+    'prometheus-name-prefix': flags.string({
+        env: 'PROMETHEUS_NAME_PREFIX',
+        description: 'A common prefix for all Prometheus metrics emitted to Splunk.',
+    }),
+    'prometheus-port': flags.string({
+        env: 'PROMETHEUS_PORT',
+        description: 'Default port to use when scraping Prometheus metrics.',
+    }),
+    'prometheus-path': flags.string({
+        env: 'PROMETHEUS_PATH',
+        description: 'Default URL path to use when scraping Prometheus metrics.',
+    }),
+    'prometheus-protocol': flags.string({
+        env: 'PROMETHEUS_PROTOCOL',
+        description: 'Default protocol to use when scraping Prometheus metrics.',
+    }),
+    'prometheus-peer-port': flags.string({
+        env: 'PROMETHEUS_PEER_PORT',
+        description:
+            'Default port to try for discovered peers when scraping Prometheus metrics (overrides PROMETHEUS_PORT).',
+    }),
+    'prometheus-orderer-port': flags.string({
+        env: 'PROMETHEUS_ORDERER_PORT',
+        description:
+            'Default port to try for discovered orderers when scraping Prometheus metrics (overrides PROMETHEUS_PORT).',
+    }),
+    'prometheus-peer-path': flags.string({
+        env: 'PROMETHEUS_PEER_PATH',
+        description:
+            'Default path to try for discovered peers when scraping Prometheus metrics (overrides PROMETHEUS_PATH).',
+    }),
+    'prometheus-orderer-path': flags.string({
+        env: 'PROMETHEUS_ORDERER_PATH',
+        description:
+            'Default path to try for discovered orderers when scraping Prometheus metrics (overrides PROMETHEUS_PATH).',
     }),
 };

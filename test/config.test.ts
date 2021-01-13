@@ -52,6 +52,21 @@ Object {
       "validateCertificate": true,
       "waitForAvailability": 120000,
     },
+    "events": undefined,
+    "internal": Object {
+      "defaultFields": Object {
+        "nodeVersion": "$NODE_VERSION",
+        "pid": "$PID",
+        "version": "$VERSION",
+      },
+      "defaultMetadata": Object {
+        "host": "$HOSTNAME",
+        "source": "fabric_logger:internal",
+        "sourcetype": "fabric_logger:internal",
+      },
+      "flushTime": 5000,
+    },
+    "metrics": undefined,
   },
   "output": Object {
     "sourceTypePrefix": "fabric_logger",
@@ -60,8 +75,35 @@ Object {
       "ccevent": "fabric_logger:ccevent",
       "config": "fabric_logger:config",
       "endorser_transaction": "fabric_logger:endorser_transaction",
+      "nodeMetrics": "fabric:node:metrics",
     },
     "type": "hec",
+  },
+  "prometheus": Object {
+    "defaultOptions": Object {
+      "namePrefix": "fabric",
+      "path": "/metrics",
+      "port": "9090",
+      "protocol": "http",
+      "scrapeInterval": 10000,
+      "scrapeOptions": Object {
+        "allowCompression": undefined,
+        "timeout": undefined,
+        "userAgent": undefined,
+        "validateCertificate": undefined,
+        "validateContentType": undefined,
+      },
+    },
+    "defaultOrdererOptions": Object {
+      "path": undefined,
+      "port": undefined,
+    },
+    "defaultPeerOptions": Object {
+      "path": undefined,
+      "port": undefined,
+    },
+    "discovery": false,
+    "endpoints": Array [],
   },
 }
 `);

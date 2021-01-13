@@ -5,7 +5,14 @@ import { convertBuffers } from './convert';
 import { HecClient } from '@splunkdlt/hec-client';
 import { ManagedResource } from '@splunkdlt/managed-resource';
 import { FabricloggerConfig, HecOutputConfig } from './config';
-import { BlockMessage, ConfigMessage, ChaincodeEventMessage, TransactionEventMessage, UnKnownMessage } from './msgs';
+import {
+    BlockMessage,
+    ConfigMessage,
+    ChaincodeEventMessage,
+    TransactionEventMessage,
+    NodeMetricsMessage,
+    UnKnownMessage,
+} from './msgs';
 
 export type OutputMessage =
     | BlockMessage
@@ -14,17 +21,32 @@ export type OutputMessage =
     | TransactionEventMessage
     | UnKnownMessage;
 
+export type MetricsMessage = NodeMetricsMessage;
+
 const { debug } = createModuleDebug('output');
 const filenameSafe = (name: string): string => name.replace(/[^\w]+/g, '_');
 const randSuffix = () => Math.floor(Math.random() * 0xfffffff).toString(36);
 
 export interface Output extends ManagedResource {
     logEvent(event: OutputMessage, timeField: Date | undefined, source?: string): void;
+    logMultiMetrics(metrics: MetricsMessage): void;
     waitUntilAvailable?(maxTime: number): Promise<void>;
 }
 
 export class HecOutput implements Output, ManagedResource {
     constructor(private eventsHec: HecClient, private metricsHec: HecClient, private config: HecOutputConfig) {}
+
+    public logMultiMetrics(message: MetricsMessage, source: string = 'fabriclogger'): void {
+        this.metricsHec.pushMetrics({
+            ...message,
+            metadata: {
+                host: message?.metadata?.host,
+                source: source,
+                sourcetype: this.config.sourcetypes[message.type],
+            },
+        });
+    }
+
     public logEvent(message: OutputMessage, timeField: Date | undefined, source: string = 'fabriclogger'): void {
         const event = convertBuffers(message);
         switch (message.type) {
@@ -99,6 +121,14 @@ export class FileOutput implements Output {
         await writeFile(join(this.outputDir, fileName), JSON.stringify(event, null, 2), { encoding: 'utf-8' });
     }
 
+    public async logMultiMetrics(metrics: MetricsMessage): Promise<void> {
+        const meta = {};
+        const { sourcetype = 'unknown_sourcetype', time = Date.now() } = meta as any;
+        const fileName = `event_${filenameSafe(sourcetype)}_${time}_${randSuffix()}.json`;
+        debug(`Writing event to file`, fileName);
+        await writeFile(join(this.outputDir, fileName), JSON.stringify(metrics, null, 2), { encoding: 'utf-8' });
+    }
+
     public async shutdown(): Promise<void> {
         // noop
     }
@@ -109,6 +139,10 @@ export class ConsoleOutput implements Output {
         // eslint-disable-next-line no-console
         console.log(JSON.stringify(message));
     }
+    logMultiMetrics(message: MetricsMessage): void {
+        // eslint-disable-next-line no-console
+        console.log(JSON.stringify(message));
+    }
     public async shutdown(): Promise<void> {
         // noop
     }
@@ -116,8 +150,8 @@ export class ConsoleOutput implements Output {
 
 export async function createOutput(config: FabricloggerConfig, baseHecClient: HecClient): Promise<Output> {
     if (config.output.type === 'hec') {
-        const eventsHec = config.hec.default ? baseHecClient.clone(config.hec.default) : baseHecClient;
-        const metricsHec = config.hec.default ? baseHecClient.clone(config.hec.default) : baseHecClient;
+        const eventsHec = config.hec.events ? baseHecClient.clone(config.hec.events) : baseHecClient;
+        const metricsHec = config.hec.metrics ? baseHecClient.clone(config.hec.metrics) : baseHecClient;
         const hecOutput = new HecOutput(eventsHec, metricsHec, config.output);
         return hecOutput;
     } else if (config.output.type === 'console') {
