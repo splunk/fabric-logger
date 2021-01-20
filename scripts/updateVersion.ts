@@ -34,8 +34,7 @@ async function updateReadme(newVersion: string) {
         .replace(
             /https:\/\/github.com\/splunk\/fabric-logger\/releases\/download\/.*\/fabric-logger-helm-.*tgz/g,
             `https://github.com/splunk/fabric-logger/releases/download/${newVersion}/fabric-logger-helm-${newVersion}.tgz`
-        )
-        .replace(/fabric-logger:release-.*/g, `fabric-logger:release-${newVersion}`);
+        );
     await writeFile(filename, newContents);
 }
 
