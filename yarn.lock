@@ -3209,10 +3209,10 @@ ejs@^2.5.9, ejs@^2.6.1:
   resolved "https://registry.yarnpkg.com/ejs/-/ejs-2.7.4.tgz#48661287573dcc53e366c7a1ae52c3a120eec9ba"
   integrity sha512-7vmuyh5+kuUyJKePhQfRQBhXV5Ce+RnaeeQArKu1EAMpL3WbgMt5WG6uQZpEVvYSSsxMXRKOewtDk9RaTKXRlA==
 
-elliptic@^6.5.2:
-  version "6.5.2"
-  resolved "https://registry.yarnpkg.com/elliptic/-/elliptic-6.5.2.tgz#05c5678d7173c049d8ca433552224a495d0e3762"
-  integrity sha512-f4x70okzZbIQl/NSRLkI/+tteV/9WqL98zx+SQ69KbXxmVrmjwsNUPn/gYJJ0sHvEak24cZgHIPegRePAtA/xw==
+elliptic@^6.5.3:
+  version "6.5.3"
+  resolved "https://registry.yarnpkg.com/elliptic/-/elliptic-6.5.3.tgz#cb59eb2efdaf73a0bd78ccd7015a62ad6e0f93d6"
+  integrity sha512-IMqzv5wNQf+E6aHeIqATs0tOLeOTwj1QKbRcS3jBbYkl5oLAserA8yJTT7/VyHUYG91PRmPyeQDObKLPpeS4dw==
   dependencies:
     bn.js "^4.4.0"
     brorand "^1.0.1"
@@ -3717,16 +3717,17 @@ eyes@0.1.x:
   resolved "https://registry.yarnpkg.com/eyes/-/eyes-0.1.8.tgz#62cf120234c683785d902348a800ef3e0cc20bc0"
   integrity sha1-Ys8SAjTGg3hdkCNIqADvPgzCC8A=
 
-fabric-common@2.2.2:
-  version "2.2.2"
-  resolved "https://registry.yarnpkg.com/fabric-common/-/fabric-common-2.2.2.tgz#ae818e58831e78b9eeee448aefed068b9b6f4016"
-  integrity sha512-OhIvZTTis7tSRzztCzss3+BM6R274ZIM1yFc6VZHqubW7SSAy5qkGyzROSHQEim/6HM5meGgEKS5aHKrLzkMtw==
+fabric-common@2.2.5:
+  version "2.2.5"
+  resolved "https://registry.yarnpkg.com/fabric-common/-/fabric-common-2.2.5.tgz#e4a12318a1b1a6b4165ee96d74515574098bf902"
+  integrity sha512-nAnga2klnAsyzzPlOwxW8kjKBFWqhAH/P3c987RCjh95h/C1lA0VksjyeMhmRmoo6wxFE5MHv/vY2FVh0gwNCw==
   dependencies:
     callsite "^1.0.0"
-    elliptic "^6.5.2"
-    fabric-protos "2.2.2"
+    elliptic "^6.5.3"
+    fabric-protos "2.2.5"
     js-sha3 "^0.7.0"
     jsrsasign "^8.0.20"
+    long "^4.0.0"
     nconf "^0.10.0"
     promise-settle "^0.3.0"
     sjcl "1.0.7"
@@ -3735,20 +3736,20 @@ fabric-common@2.2.2:
   optionalDependencies:
     pkcs11js "^1.0.6"
 
-fabric-network@^2.2.2:
-  version "2.2.2"
-  resolved "https://registry.yarnpkg.com/fabric-network/-/fabric-network-2.2.2.tgz#c1700aaac08032040c6ee8c7c09d639e6da109f7"
-  integrity sha512-zPZ+yrSyHSVzDVS7f9EEMxN9nKOQ7aDg0RX76efevH7PQ7atDogijMnw2EdYnHBcw/t/ATMlMqaIxkKJNBoPjg==
+fabric-network@^2.2.5:
+  version "2.2.5"
+  resolved "https://registry.yarnpkg.com/fabric-network/-/fabric-network-2.2.5.tgz#c90a3afe855035df25f728ec3893c90161b22a71"
+  integrity sha512-NGMwMiZ93hW4R5yimZo1CvjdPs9mRjYR3/fh6xpjTvQZhVsJvHxggRKa+HhkySr4FJGJ52raQ/Nj3DsOxd4XTg==
   dependencies:
-    fabric-common "2.2.2"
-    fabric-protos "2.2.2"
+    fabric-common "2.2.5"
+    fabric-protos "2.2.5"
     long "^4.0.0"
     nano "^8.2.2"
 
-fabric-protos@2.2.2:
-  version "2.2.2"
-  resolved "https://registry.yarnpkg.com/fabric-protos/-/fabric-protos-2.2.2.tgz#572da200eec154835f0b353bc7c144033ff85f75"
-  integrity sha512-deXDIC4l9opKyu7zqZMXqiszxSOULKP66HmWZ435dgmQZyeo0rzFVO7dCwBZYdAVmz9pE4Ze8/qEU2GQ3suCJg==
+fabric-protos@2.2.5:
+  version "2.2.5"
+  resolved "https://registry.yarnpkg.com/fabric-protos/-/fabric-protos-2.2.5.tgz#361ee96858e5d246c479630ac4107d901a5ffa87"
+  integrity sha512-5ylljqycb4621jOFFAkwJxfzfhUbf5ovddb/RpDO8MgrPO+ZIqI5lU7Lc+jPtl29Xa3rxK94MctkVoRejgz5Tg==
   dependencies:
     "@grpc/grpc-js" "1.0.3"
     "@grpc/proto-loader" "0.5.4"
