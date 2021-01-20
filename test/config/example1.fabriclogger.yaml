@@ -1,0 +1,31 @@
+fabric:
+    networkConfig: network.yaml
+    user: fabric-logger
+    keyFile: 'test/fixtures/testkey'
+    certFile: 'test/fixtures/testcert'
+    msp: 'msp'
+    channels:
+        - myChannel
+    ccevents:
+        - channelName: myChannel
+          chaincodeId: myChaincodeId
+prometheus:
+    discovery: true
+    peerPort: '7081'
+    ordererPort: '7080'
+output:
+    type: hec
+    sourceTypePrefix: 'fabric_logger'
+hec:
+    default:
+        url: https://localhost:8088
+        token: 44422111-0000-3232-9821-26664c2e7515
+        validateCertificate: false
+        # Splunk 8.0 or higher support compact metrics HEC messages
+        multipleMetricFormatEnabled: true
+    events:
+        defaultMetadata:
+            index: myevents
+    metrics:
+        defaultMetadata:
+            index: mymetrics

@@ -13,7 +13,11 @@ output:
         config: 'fabric_logger:config'
         ccevent: 'fabric_logger:ccevent'
         nodeMetrics: 'fabric:node:metrics'
-
+prometheus:
+    discovery: false
+    validateCertificate: false
+    port: '9090'
+    path: '/metrics'
 checkpoint:
     filename: '.checkpoints'
     saveInterval: 250
