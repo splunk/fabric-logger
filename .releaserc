@@ -9,13 +9,14 @@
           "npmPublish": false,
         }],
         ["@semantic-release/exec", {
-            "prepareCmd": "yarn ts-node scripts/updatek8s.ts ${nextRelease.version}"
+            "prepareCmd": "yarn ts-node scripts/updateVersion.ts ${nextRelease.version} && mkdir -p build && echo ${nextRelease.version} > build/VERSION"
         }],
         "@semantic-release/github",
         [
             "@semantic-release/git",
             {
-                "message": "chore(release): ${nextRelease.version}\n\n${nextRelease.notes}"
+                "message": "chore(release): ${nextRelease.version}\n\n${nextRelease.notes}",
+                "assets": ['CHANGELOG.md', 'package.json', 'package-lock.json', 'README.md', 'helm-chart/fabric-logger/*.yaml']
             }
         ]
     ]

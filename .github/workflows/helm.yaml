@@ -1,31 +1,31 @@
 name: helm
 on:
-  release:
-    types: [created]
+    release:
+        types: [created]
 jobs:
-  package-helm:
-    runs-on: ubuntu-latest
-    container:
-      image: quay.io/helmpack/chart-testing:v3.1.1
-    steps:
-      - name: Get release
-        id: get_release
-        uses: bruceadams/get-release@v1.2.2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Package
-        run: |
-            mkdir -p build
-            helm package -d build helm-chart/fabric-logger
-      - name: Upload Release Asset
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: build/fabric-logger-v${{ github.ref }}.tgz
-          asset_name: fabric-logger-v${{ github.ref }}.tgz
-          asset_content_type: application/zip
+    package-helm:
+        runs-on: ubuntu-latest
+        container:
+            image: quay.io/helmpack/chart-testing:v3.1.1
+        steps:
+            - name: Get release
+              id: get_release
+              uses: bruceadams/get-release@v1.2.2
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            - name: Checkout
+              uses: actions/checkout@v2
+            - name: Package
+              run: |
+                  mkdir -p build
+                  helm package -d build helm-chart/fabric-logger
+            - name: Upload Release Asset
+              id: upload-release-asset
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ steps.get_release.outputs.upload_url }}
+                  asset_path: build/fabric-logger-${{ steps.get_release.outputs.tag_name }}.tgz
+                  asset_name: fabric-logger-${{ steps.get_release.outputs.tag_name }}.tgz
+                  asset_content_type: application/zip

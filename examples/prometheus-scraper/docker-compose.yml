@@ -17,7 +17,7 @@ services:
         depends_on:
             - splunk.example.com
         container_name: fabric-logger.example.com
-        image: splunkdlt/fabric-logger:release-3.0.1
+        image: splunkdlt/fabric-logger:release-3.1.0
         volumes:
             - ./network-config.yml:/tmp/network-config.yml
             - ./vars/keyfiles:/crypto-config
