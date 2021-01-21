@@ -12,6 +12,10 @@ export const CLI_FLAGS = {
             'Output will include raw payloads sent and received via JSON RPC and HEC',
         exclusive: ['debug'],
     }),
+    'print-config': flags.boolean({
+        description:
+            'Causes fabriclogger to simply print the configuration merged from config file and CLI flags and exit.',
+    }),
     'hec-url': flags.string({
         env: 'SPLUNK_HEC_URL',
         description:
@@ -121,11 +125,11 @@ export const CLI_FLAGS = {
     'prometheus-discovery': flags.boolean({
         env: 'PROMETHEUS_DISCOVERY',
         description:
-            'Indicates if prometheus endpoints of peers and orderers should be discovered using the connection profile config. If set to false only the endpoints defined in fabriclogger.yml will be used',
+            'Indicates if Prometheus endpoints of peers and orderers should be discovered using the connection profile config. If set to false only the endpoints defined in fabriclogger.yml will be used.',
     }),
     'prometheus-scrape-interval': flags.string({
         env: 'PROMETHEUS_SCRAPE_INTERVAL',
-        description: 'Time in seconds between prometheus scrapes.',
+        description: 'Time in seconds between Prometheus scrapes.',
     }),
     'prometheus-name-prefix': flags.string({
         env: 'PROMETHEUS_NAME_PREFIX',

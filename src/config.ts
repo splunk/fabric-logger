@@ -64,7 +64,7 @@ export interface FabricConfigSchema {
     /** Channels to listen to */
     channels: string[];
     /** Chaincode events to listen to*/
-    ccevents: CCEvent[];
+    ccevents: CCEventConfig[];
     /** Block Type full or private */
     blockType?: BlockType;
     /** Enable Discovery service */
@@ -162,6 +162,16 @@ export interface SourcetypesSchema {
     config?: string;
     /** @default "fabric:node:metrics" */
     nodeMetrics?: string;
+}
+
+/** Chaincode event to listen to */
+export interface CCEventConfig {
+    /** channel name */
+    channelName: string;
+    /** chaincodeid */
+    chaincodeId: string;
+    /** block */
+    block: number;
 }
 
 /** Console output prints all generated events and metrics to STDOUT */
@@ -394,15 +404,15 @@ const parseBooleanEnvVar = (envVar?: string): boolean | undefined => {
     }
 };
 
-const parseCCEvents = (value: DeepPartial<CCEvent>[] | undefined): CCEvent[] => {
+const parseCCEvents = (value: DeepPartial<CCEventConfig>[] | undefined): CCEvent[] => {
     const ccEvents = [];
     if (value) {
-        for (const ccEvent of value) {
-            if (ccEvent['channelName'] && ccEvent['chaincodeId']) {
+        for (const ccEventConfig of value) {
+            if (ccEventConfig['channelName'] && ccEventConfig['chaincodeId']) {
                 ccEvents.push({
-                    channelName: ccEvent['channelName'],
-                    chaincodeId: ccEvent['chaincodeId'],
-                    block: ccEvent['block'] || 0,
+                    channelName: ccEventConfig['channelName'],
+                    chaincodeId: ccEventConfig['chaincodeId'],
+                    block: ccEventConfig['block'] || 0,
                 });
             }
         }

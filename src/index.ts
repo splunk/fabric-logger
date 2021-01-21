@@ -1,5 +1,6 @@
 import { Command } from '@oclif/command';
 import debugModule from 'debug';
+import { inspect } from 'util';
 import { createModuleDebug, enableTraceLogging } from '@splunkdlt/debug-logging';
 import { CLI_FLAGS } from './cliflags';
 import { FabricloggerConfig, loadFabricloggerConfig } from './config';
@@ -7,6 +8,7 @@ import { Checkpoint } from './checkpoint';
 import { FabricListener } from './fabric';
 import { createOutput } from './output';
 import { waitForSignal } from './utils/signal';
+import { substituteVariablesInHecConfig } from './meta';
 import { HecClient } from '@splunkdlt/hec-client';
 import { PrometheusMetricsScraper } from './prometheus';
 import { ManagedResource, shutdownAll } from '@splunkdlt/managed-resource';
@@ -30,6 +32,15 @@ class Fabriclogger extends Command {
         }
 
         try {
+            if (flags['print-config']) {
+                const config = await loadFabricloggerConfig(flags, true);
+                debug('Printing config');
+                // eslint-disable-next-line no-console
+                console.log(inspect(config, { depth: 10, colors: true, showHidden: false, compact: false }));
+                await loadFabricloggerConfig(flags);
+                return;
+            }
+
             const config = await loadFabricloggerConfig(flags);
             await this.startFabriclogger(config);
 
@@ -48,6 +59,10 @@ class Fabriclogger extends Command {
     }
 
     async startFabriclogger(config: FabricloggerConfig): Promise<void> {
+        substituteVariablesInHecConfig(config, {
+            fabricloggerVersion: this.config.version,
+        });
+
         const checkpoint = new Checkpoint(config.checkpoint.filename);
         await checkpoint.loadCheckpoints();
         this.resources.push(checkpoint);

@@ -90,7 +90,7 @@ Object {
         "allowCompression": undefined,
         "timeout": undefined,
         "userAgent": undefined,
-        "validateCertificate": undefined,
+        "validateCertificate": false,
         "validateContentType": undefined,
       },
     },

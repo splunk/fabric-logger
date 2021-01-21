@@ -1,0 +1,588 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "definitions": {
+        "CCEventConfig": {
+            "description": "Chaincode event to listen to",
+            "properties": {
+                "block": {
+                    "description": "block",
+                    "type": "number"
+                },
+                "chaincodeId": {
+                    "description": "chaincodeid",
+                    "type": "string"
+                },
+                "channelName": {
+                    "description": "channel name",
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "CheckpointConfigSchema": {
+            "description": "The checkpoint is where fabriclogger keeps track of its state, which blocks have already been processed.\nThis allows it to resume where it left off after being shut down and restarted.",
+            "properties": {
+                "filename": {
+                    "default": ".checkpoints",
+                    "description": "File path (relative to the current working directory) where the checkpoint file will be stored",
+                    "type": "string"
+                },
+                "saveInterval": {
+                    "description": "Maximum duration before saving updated checkpoint information to disk",
+                    "type": ["string", "number"]
+                }
+            },
+            "type": "object"
+        },
+        "ConsoleOutputConfig": {
+            "description": "Console output prints all generated events and metrics to STDOUT",
+            "properties": {
+                "type": {
+                    "enum": ["console"],
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "DevNullOutputConfig": {
+            "description": "Null output will just drop all generated events and metrics",
+            "properties": {
+                "type": {
+                    "enum": ["null"],
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "ExponentialBackoffConfig": {
+            "description": "Exponentially increasing wait time with randomness",
+            "properties": {
+                "max": {
+                    "description": "Maximum wait time",
+                    "type": ["string", "number"]
+                },
+                "min": {
+                    "description": "Minimum wait time",
+                    "type": ["string", "number"]
+                },
+                "type": {
+                    "enum": ["exponential-backoff"],
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "FabricConfigSchema": {
+            "properties": {
+                "asLocalHost": {
+                    "description": "Convert discovered addresses to localhost for docker",
+                    "type": "boolean"
+                },
+                "blockType": {
+                    "description": "Block Type full or private",
+                    "enum": ["filtered", "full", "private"],
+                    "type": "string"
+                },
+                "ccevents": {
+                    "description": "Chaincode events to listen to",
+                    "items": {
+                        "$ref": "#/definitions/CCEventConfig"
+                    },
+                    "type": "array"
+                },
+                "certFile": {
+                    "description": "The signed certificate from the fabric certificate authority",
+                    "type": "string"
+                },
+                "channels": {
+                    "description": "Channels to listen to",
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "clientCertFile": {
+                    "description": "The client certificate file used when mutual TLS is enabled to authenticate with the peer",
+                    "type": "string"
+                },
+                "clientKeyFile": {
+                    "description": "The client private key used when mutual TLS is enabled to authenticate with the peer",
+                    "type": "string"
+                },
+                "discovery": {
+                    "description": "Enable Discovery service",
+                    "type": "boolean"
+                },
+                "keyFile": {
+                    "description": "The private key for the user",
+                    "type": "string"
+                },
+                "msp": {
+                    "description": "The name of the MSP that the user is enrolled in",
+                    "type": "string"
+                },
+                "networkConfig": {
+                    "description": "Network configuration file",
+                    "type": "string"
+                },
+                "user": {
+                    "description": "The username to use for fabric logger",
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "FileOutputConfig": {
+            "description": "File output will append all generated messages to a file. (this output type has not been implemented)",
+            "properties": {
+                "path": {
+                    "description": "Path to output file",
+                    "type": "string"
+                },
+                "type": {
+                    "enum": ["file"],
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "HecClientsConfigSchema": {
+            "properties": {
+                "default": {
+                    "$ref": "#/definitions/HecConfigSchema",
+                    "description": "Base settings that apply to all HEC clients. Overrides for events, metrics and\ninternal metrics will be layered on top of the defaults and allow for using\ndifferent HEC tokens, URL or destination index."
+                },
+                "events": {
+                    "$ref": "#/definitions/Partial<HecConfigSchema>",
+                    "description": "HEC settings (overrides for `default`) for events sent to Splunk"
+                },
+                "internal": {
+                    "$ref": "#/definitions/Partial<HecConfigSchema>",
+                    "description": "HEC settings (overrides for `default`) for internal metrics sent to Splunk"
+                },
+                "metrics": {
+                    "$ref": "#/definitions/Partial<HecConfigSchema>",
+                    "description": "HEC settings (overrides for `default`) for metrics sent to Splunk"
+                }
+            },
+            "type": "object"
+        },
+        "HecConfigSchema": {
+            "description": "Settings for the Splunk HTTP Event Collector client",
+            "properties": {
+                "defaultFields": {
+                    "additionalProperties": {},
+                    "description": "Default set of fields to apply to all events and metrics sent with this HEC client",
+                    "type": "object"
+                },
+                "defaultMetadata": {
+                    "description": "Defaults for host, source, sourcetype and index. Can be overridden for each message",
+                    "properties": {
+                        "host": {
+                            "type": "string"
+                        },
+                        "index": {
+                            "type": "string"
+                        },
+                        "source": {
+                            "type": "string"
+                        },
+                        "sourcetype": {
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                },
+                "flushTime": {
+                    "description": "Maximum number of milliseconds to wait before flushing the HEC message queue",
+                    "type": ["string", "number"]
+                },
+                "gzip": {
+                    "description": "Gzip compress the request body sent to HEC (Content-Encoding: gzip)",
+                    "type": "boolean"
+                },
+                "maxQueueEntries": {
+                    "description": "Maximum number of entries in the HEC message queue before flushing it",
+                    "type": "number"
+                },
+                "maxQueueSize": {
+                    "description": "Maximum number of bytes in the HEC message queue before flushing it",
+                    "type": "number"
+                },
+                "maxRetries": {
+                    "description": "Maximum number of attempts to send a batch to HEC. By default this there is no limit",
+                    "type": "number"
+                },
+                "maxSockets": {
+                    "description": "Maximum number of sockets HEC will use (per host)",
+                    "type": "number"
+                },
+                "multipleMetricFormatEnabled": {
+                    "description": "Enable sending multiple metrics in a single message to HEC.\nSupported as of Splunk 8.0.0\n\nhttps://docs.splunk.com/Documentation/Splunk/8.0.0/Metrics/GetMetricsInOther#The_multiple-metric_JSON_format",
+                    "type": "boolean"
+                },
+                "requestKeepAlive": {
+                    "description": "Set to `false` to disable HTTP keep-alive for connections to Splunk",
+                    "type": "boolean"
+                },
+                "retryWaitTime": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/definitions/ExponentialBackoffConfig"
+                        },
+                        {
+                            "$ref": "#/definitions/LinearBackoffConfig"
+                        },
+                        {
+                            "type": ["string", "number"]
+                        }
+                    ],
+                    "description": "Wait time before retrying to send a (batch of) HEC messages after an error"
+                },
+                "timeout": {
+                    "description": "Number of milliseconds to wait before considering an HTTP request as failed",
+                    "type": ["string", "number"]
+                },
+                "token": {
+                    "description": "The HEC token used to authenticate HTTP requests",
+                    "type": "string"
+                },
+                "url": {
+                    "description": "The URL of HEC. If only the base URL is specified (path is omitted) then the default path will be used",
+                    "type": "string"
+                },
+                "userAgent": {
+                    "default": "`fabriclogger-hec-client/<version>`",
+                    "description": "User-agent header sent to HEC",
+                    "type": "string"
+                },
+                "validateCertificate": {
+                    "description": "If set to false, the HTTP client will ignore certificate errors (eg. when using self-signed certs)",
+                    "type": "boolean"
+                },
+                "waitForAvailability": {
+                    "description": "If set to > 0, then fabriclogger will wait for the HEC service to become available for the given amount of time\nby periodically attempting to request the collector/health REST endpoint. This can be useful when starting\nSplunk and fabriclogger for example in docker-compose, where Splunk takes some time to start.",
+                    "type": ["string", "number"]
+                }
+            },
+            "type": "object"
+        },
+        "HecOutputConfig": {
+            "properties": {
+                "sourceTypePrefix": {
+                    "description": "A common prefix for all unknown events emitted to Splunk",
+                    "type": "string"
+                },
+                "sourcetypes": {
+                    "$ref": "#/definitions/SourcetypesSchema",
+                    "description": "Sourcetypes to use for different kinds of events we send to Splunk"
+                },
+                "type": {
+                    "enum": ["hec"],
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "LinearBackoffConfig": {
+            "description": "Linear increasing wait time",
+            "properties": {
+                "max": {
+                    "description": "Maximum wait time",
+                    "type": ["string", "number"]
+                },
+                "min": {
+                    "description": "Minimum wait time (after the first failure)",
+                    "type": ["string", "number"]
+                },
+                "step": {
+                    "description": "Increase of wait time for each failure after the first until max is reached",
+                    "type": ["string", "number"]
+                },
+                "type": {
+                    "enum": ["linear-backoff"],
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "Partial<HecConfigSchema>": {
+            "properties": {
+                "defaultFields": {
+                    "additionalProperties": {},
+                    "description": "Default set of fields to apply to all events and metrics sent with this HEC client",
+                    "type": "object"
+                },
+                "defaultMetadata": {
+                    "description": "Defaults for host, source, sourcetype and index. Can be overridden for each message",
+                    "properties": {
+                        "host": {
+                            "type": "string"
+                        },
+                        "index": {
+                            "type": "string"
+                        },
+                        "source": {
+                            "type": "string"
+                        },
+                        "sourcetype": {
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
+                },
+                "flushTime": {
+                    "description": "Maximum number of milliseconds to wait before flushing the HEC message queue",
+                    "type": ["string", "number"]
+                },
+                "gzip": {
+                    "description": "Gzip compress the request body sent to HEC (Content-Encoding: gzip)",
+                    "type": "boolean"
+                },
+                "maxQueueEntries": {
+                    "description": "Maximum number of entries in the HEC message queue before flushing it",
+                    "type": "number"
+                },
+                "maxQueueSize": {
+                    "description": "Maximum number of bytes in the HEC message queue before flushing it",
+                    "type": "number"
+                },
+                "maxRetries": {
+                    "description": "Maximum number of attempts to send a batch to HEC. By default this there is no limit",
+                    "type": "number"
+                },
+                "maxSockets": {
+                    "description": "Maximum number of sockets HEC will use (per host)",
+                    "type": "number"
+                },
+                "multipleMetricFormatEnabled": {
+                    "description": "Enable sending multiple metrics in a single message to HEC.\nSupported as of Splunk 8.0.0\n\nhttps://docs.splunk.com/Documentation/Splunk/8.0.0/Metrics/GetMetricsInOther#The_multiple-metric_JSON_format",
+                    "type": "boolean"
+                },
+                "requestKeepAlive": {
+                    "description": "Set to `false` to disable HTTP keep-alive for connections to Splunk",
+                    "type": "boolean"
+                },
+                "retryWaitTime": {
+                    "anyOf": [
+                        {
+                            "$ref": "#/definitions/ExponentialBackoffConfig"
+                        },
+                        {
+                            "$ref": "#/definitions/LinearBackoffConfig"
+                        },
+                        {
+                            "type": ["string", "number"]
+                        }
+                    ],
+                    "description": "Wait time before retrying to send a (batch of) HEC messages after an error"
+                },
+                "timeout": {
+                    "description": "Number of milliseconds to wait before considering an HTTP request as failed",
+                    "type": ["string", "number"]
+                },
+                "token": {
+                    "description": "The HEC token used to authenticate HTTP requests",
+                    "type": "string"
+                },
+                "url": {
+                    "description": "The URL of HEC. If only the base URL is specified (path is omitted) then the default path will be used",
+                    "type": "string"
+                },
+                "userAgent": {
+                    "default": "`fabriclogger-hec-client/<version>`",
+                    "description": "User-agent header sent to HEC",
+                    "type": "string"
+                },
+                "validateCertificate": {
+                    "description": "If set to false, the HTTP client will ignore certificate errors (eg. when using self-signed certs)",
+                    "type": "boolean"
+                },
+                "waitForAvailability": {
+                    "description": "If set to > 0, then fabriclogger will wait for the HEC service to become available for the given amount of time\nby periodically attempting to request the collector/health REST endpoint. This can be useful when starting\nSplunk and fabriclogger for example in docker-compose, where Splunk takes some time to start.",
+                    "type": ["string", "number"]
+                }
+            },
+            "type": "object"
+        },
+        "PrometheusConfigSchema": {
+            "properties": {
+                "allowCompression": {
+                    "description": "If not disabled, this will allow the prometheus server to respond with compressed body (gzip or deflate)",
+                    "type": "boolean"
+                },
+                "discovery": {
+                    "description": "Enable prometheus endpoint discovery.",
+                    "type": "boolean"
+                },
+                "endpoints": {
+                    "description": "Prometheus endpoints to scrape",
+                    "items": {
+                        "$ref": "#/definitions/PrometheusEndpointConfigSchema"
+                    },
+                    "type": "array"
+                },
+                "namePrefix": {
+                    "description": "A common prefix for all Prometheus metrics emitted to Splunk",
+                    "type": "string"
+                },
+                "ordererPath": {
+                    "description": "Default path to try for discovered orderers (overrides path).",
+                    "type": "string"
+                },
+                "ordererPort": {
+                    "description": "Default port to try for discovered orderers (overrides port).",
+                    "type": "string"
+                },
+                "path": {
+                    "description": "URL path to use when scraping Prometheus metrics",
+                    "type": "string"
+                },
+                "peerPath": {
+                    "description": "Default path to try for discovered peers (overrides path).",
+                    "type": "string"
+                },
+                "peerPort": {
+                    "description": "Default port to try for discovered peers (overrides port).",
+                    "type": "string"
+                },
+                "port": {
+                    "description": "Port to use when scraping Prometheus metrics.",
+                    "type": "string"
+                },
+                "protocol": {
+                    "description": "Protocol to use when scraping Prometheus metrics",
+                    "type": "string"
+                },
+                "scrapeInterval": {
+                    "description": "Time between scrapes of Prometheus endpoints.",
+                    "type": ["string", "number"]
+                },
+                "timeout": {
+                    "description": "Request timeout",
+                    "type": "number"
+                },
+                "userAgent": {
+                    "description": "User-agent header sent to metrics endpoint",
+                    "type": "string"
+                },
+                "validateCertificate": {
+                    "description": "If set to false, the HTTP client will ignore certificate errors (eg. when using self-signed certs)",
+                    "type": "boolean"
+                },
+                "validateContentType": {
+                    "description": "If set to false, the scraper will not check the content type of the response from the server",
+                    "type": "boolean"
+                }
+            },
+            "type": "object"
+        },
+        "PrometheusEndpointConfigSchema": {
+            "properties": {
+                "allowCompression": {
+                    "description": "If not disabled, this will allow the prometheus server to respond with compressed body (gzip or deflate)",
+                    "type": "boolean"
+                },
+                "path": {
+                    "description": "URL path to use when scraping Prometheus metrics",
+                    "type": "string"
+                },
+                "port": {
+                    "description": "Port to use when scraping Prometheus metrics.",
+                    "type": "string"
+                },
+                "protocol": {
+                    "description": "Protocol to use when scraping Prometheus metrics",
+                    "type": "string"
+                },
+                "scrapeInterval": {
+                    "description": "Time between scrapes of Prometheus endpoints.",
+                    "type": ["string", "number"]
+                },
+                "timeout": {
+                    "description": "Request timeout",
+                    "type": "number"
+                },
+                "url": {
+                    "description": "Full URL to scrape for Prometheus metrics",
+                    "type": "string"
+                },
+                "userAgent": {
+                    "description": "User-agent header sent to metrics endpoint",
+                    "type": "string"
+                },
+                "validateCertificate": {
+                    "description": "If set to false, the HTTP client will ignore certificate errors (eg. when using self-signed certs)",
+                    "type": "boolean"
+                },
+                "validateContentType": {
+                    "description": "If set to false, the scraper will not check the content type of the response from the server",
+                    "type": "boolean"
+                }
+            },
+            "type": "object"
+        },
+        "SourcetypesSchema": {
+            "description": "Configurable set of `sourcetype` field values emitted by fabriclogger",
+            "properties": {
+                "block": {
+                    "default": "fabric_logger:block",
+                    "type": "string"
+                },
+                "ccevent": {
+                    "default": "fabric_logger:ccevent",
+                    "type": "string"
+                },
+                "config": {
+                    "default": "fabric_logger:config",
+                    "type": "string"
+                },
+                "endorser_transaction": {
+                    "default": "fabric_logger:endorser_transaction",
+                    "type": "string"
+                },
+                "nodeMetrics": {
+                    "default": "fabric:node:metrics",
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        }
+    },
+    "properties": {
+        "checkpoint": {
+            "$ref": "#/definitions/CheckpointConfigSchema",
+            "description": "Checkpoint configuration - how fabriclogger keeps track of state between restarts"
+        },
+        "fabric": {
+            "$ref": "#/definitions/FabricConfigSchema",
+            "description": "Fabric configuration"
+        },
+        "hec": {
+            "$ref": "#/definitions/HecClientsConfigSchema",
+            "description": "HTTP event collector"
+        },
+        "output": {
+            "anyOf": [
+                {
+                    "$ref": "#/definitions/HecOutputConfig"
+                },
+                {
+                    "$ref": "#/definitions/ConsoleOutputConfig"
+                },
+                {
+                    "$ref": "#/definitions/FileOutputConfig"
+                },
+                {
+                    "$ref": "#/definitions/DevNullOutputConfig"
+                }
+            ],
+            "description": "In the output configuration you can specify where fabriclogger will send generated\nevents to. By default it will send all information to Splunk HEC,\nbut you can instead send it to console output or a file."
+        },
+        "prometheus": {
+            "$ref": "#/definitions/PrometheusConfigSchema",
+            "description": "Prometheus Scraper Configuration"
+        }
+    },
+    "type": "object"
+}
