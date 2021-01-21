@@ -1,3 +1,10 @@
+# [3.2.0](https://github.com/splunk/fabric-logger/compare/3.1.2...3.2.0) (2021-01-21)
+
+
+### Features
+
+* 🎸 Add documentation generator and metavar support ([9dddf35](https://github.com/splunk/fabric-logger/commit/9dddf354ee9801417d2826fe451a0ea2244149de))
+
 ## [3.1.2](https://github.com/splunk/fabric-logger/compare/3.1.1...3.1.2) (2021-01-20)
 
 
