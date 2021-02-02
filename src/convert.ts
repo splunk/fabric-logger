@@ -1,3 +1,5 @@
+import * as Long from 'long';
+
 const isPlainObject = (obj: any): obj is Object =>
     typeof obj === 'object' && Object.prototype.toString.call(obj) === '[object Object]';
 
@@ -12,6 +14,9 @@ export function convertBuffers(obj: Buffer | Object | any | undefined, path: str
         } else {
             return { hex: obj.toString('hex') };
         }
+    }
+    if (isLong(obj)) {
+        return new Long(obj.low, obj.high, obj.unsigned).toString(10);
     }
     if (Array.isArray(obj)) {
         return obj.map((v, i) => convertBuffers(v, [...path, String(i)]));
@@ -46,4 +51,8 @@ export function isLikelyText(buffer: Buffer): boolean {
 
 export function toText(buffer: Buffer): string {
     return buffer.toString('utf-8');
+}
+
+function isLong(obj: any): boolean {
+    return typeof obj.low === 'number' && typeof obj.high === 'number';
 }
