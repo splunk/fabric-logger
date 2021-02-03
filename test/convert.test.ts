@@ -52,6 +52,11 @@ describe('convertBuffers', () => {
             }
         `);
     });
+
+    it('should convert Longs to strings', () => {
+        expect(convertBuffers({ low: 4, high: 0, unsigned: false })).toMatchInlineSnapshot(`"4"`);
+        expect(convertBuffers({ low: 4, high: 32, unsigned: false })).toMatchInlineSnapshot(`"137438953476"`);
+    });
 });
 
 describe('isLikelyText', () => {
