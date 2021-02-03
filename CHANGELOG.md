@@ -1,3 +1,15 @@
+# [4.0.0](https://github.com/splunk/fabric-logger/compare/3.2.0...4.0.0) (2021-02-03)
+
+
+### Features
+
+* 🎸 Encode long numbers as strings ([7ea1d2f](https://github.com/splunk/fabric-logger/commit/7ea1d2fb57ac77b6c40d160d4e6a86c96ec57dbf))
+
+
+### BREAKING CHANGES
+
+* 🧨 This changes the structure of the data sent to Splunk.
+
 # [3.2.0](https://github.com/splunk/fabric-logger/compare/3.1.2...3.2.0) (2021-01-21)
 
 
