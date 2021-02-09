@@ -1,0 +1,47 @@
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+
+# NOTE: This is not the way a Kafka cluster would normally be deployed in production, as it is not secure
+# and is not fault tolerant. This example is a toy deployment that is only meant to exercise the Kafka code path
+# of the ordering service.
+
+version: '2'
+
+x-logging:
+  &default-logging
+  driver: "splunk"
+x-log-opts:
+  &log-opts
+  splunk-token: "12345678-ABCD-EFGH-IJKL-123456789012"
+  splunk-url: "https://localhost:8088"
+  splunk-insecureskipverify: "true"
+  splunk-verify-connection: "false"
+  splunk-format: "json"
+  tag: "{{.Name}}-{{.ID}}"
+
+networks:
+  byfn:
+
+services:
+  zookeeper.example.com:
+    logging:
+      <<: *default-logging
+      options:
+        <<: *log-opts
+        splunk-sourcetype: "docker:zookeeper"
+        splunk-source: zookeeper.example.com
+    depends_on:
+      - splunk.example.com
+
+  kafka.example.com:
+    logging:
+      <<: *default-logging
+      options:
+        <<: *log-opts
+        splunk-sourcetype: "docker:kafka"
+        splunk-source: kafka.example.com
+    depends_on:
+      - splunk.example.com
