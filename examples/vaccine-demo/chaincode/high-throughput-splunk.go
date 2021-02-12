@@ -27,11 +27,11 @@ package main
  * 2 specific Hyperledger Fabric specific libraries for Smart Contracts
  */
 import (
-	"fmt"
-	"strconv"
 	"encoding/json"
+	"fmt"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	sc "github.com/hyperledger/fabric/protos/peer"
+	"strconv"
 )
 
 //SmartContract is the data structure which represents this contract and on which  various contract lifecycle functions are attached
@@ -39,31 +39,31 @@ type SmartContract struct {
 }
 
 type item struct {
-	object_type string `json:"docType"`
-	item_uid string `json:"item_uid"`
-  item_name string `json:"item_name"`
-  item_type string `json:"item_type"`
-  location string `json:"location"`
-  date string `json:"date"`
-  batch string `json:"batch"`
-  ingredients []string `json:"ingredients"`
-  event string `json:"event"`
-	min_temp string `json:"min_temp"`
-	max_temp string `json:"max_temp"`
+	object_type string   `json:"docType"`
+	item_uid    string   `json:"item_uid"`
+	item_name   string   `json:"item_name"`
+	item_type   string   `json:"item_type"`
+	location    string   `json:"location"`
+	date        string   `json:"date"`
+	batch       string   `json:"batch"`
+	ingredients []string `json:"ingredients"`
+	event       string   `json:"event"`
+	min_temp    string   `json:"min_temp"`
+	max_temp    string   `json:"max_temp"`
 }
 
 type ingredient struct {
 	object_type string `json:"docType"`
-	ing_uid string `json:"ing_uid"`
-	ing_name string `json:"ing_name"`
-	ing_type string `json:"ing_type"`
-	item_uid string `json:"item_uid"`
-	location string `json:"location"`
-	date string `json:"date"`
-	batch string `json:"batch"`
-	event string `json:"event"`
-	min_temp string `json:"min_temp"`
-	max_temp string `json:"max_temp"`
+	ing_uid     string `json:"ing_uid"`
+	ing_name    string `json:"ing_name"`
+	ing_type    string `json:"ing_type"`
+	item_uid    string `json:"item_uid"`
+	location    string `json:"location"`
+	date        string `json:"date"`
+	batch       string `json:"batch"`
+	event       string `json:"event"`
+	min_temp    string `json:"min_temp"`
+	max_temp    string `json:"max_temp"`
 }
 
 // Define Status codes for the response
@@ -111,20 +111,20 @@ func (s *SmartContract) Invoke(APIstub shim.ChaincodeStubInterface) sc.Response 
 }
 
 func (s *SmartContract) item(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
-  // check number of args
-	if (len(args) != 10) {
-    return shim.Error("Incorrect number of arguments, expecting 10")
-  }
+	// check number of args
+	if len(args) != 10 {
+		return shim.Error("Incorrect number of arguments, expecting 10")
+	}
 
-  // extract the args
-  item_uid := args[0]
-  item_name := args[1]
-  item_type := args[2]
-  location := args[3]
-  date := args[4]
-  batch := args[5]
-  ingredients_str := args[6]
-  event := args[7]
+	// extract the args
+	item_uid := args[0]
+	item_name := args[1]
+	item_type := args[2]
+	location := args[3]
+	date := args[4]
+	batch := args[5]
+	ingredients_str := args[6]
+	event := args[7]
 	min_temp := args[8]
 	max_temp := args[9]
 
@@ -143,42 +143,42 @@ func (s *SmartContract) item(APIstub shim.ChaincodeStubInterface, args []string)
 		return shim.Error(fmt.Sprintf("Error saving item to state: %s", putStateErr))
 	}
 
-  txid := APIstub.GetTxID()
-  compositIndexName := "uid~date~event~txID"
+	txid := APIstub.GetTxID()
+	compositIndexName := "uid~date~event~txID"
 
-  compositeKey, compositeErr := APIstub.CreateCompositeKey(compositIndexName, []string{item_uid, date, event, txid})
-  if compositeErr != nil {
-    return shim.Error(fmt.Sprintf("Could not create a composite key for %s: %s", event, compositeErr.Error()))
-  }
+	compositeKey, compositeErr := APIstub.CreateCompositeKey(compositIndexName, []string{item_uid, date, event, txid})
+	if compositeErr != nil {
+		return shim.Error(fmt.Sprintf("Could not create a composite key for %s: %s", event, compositeErr.Error()))
+	}
 
-  compositePutErr := APIstub.PutState(compositeKey, []byte{0x00})
-  if compositePutErr != nil {
-    return shim.Error(fmt.Sprintf("Could not put operation for %s in the ledger: %s", event, compositePutErr.Error()))
-  }
+	compositePutErr := APIstub.PutState(compositeKey, []byte{0x00})
+	if compositePutErr != nil {
+		return shim.Error(fmt.Sprintf("Could not put operation for %s in the ledger: %s", event, compositePutErr.Error()))
+	}
 
-  eventErr := APIstub.SetEvent("item", []byte(fmt.Sprintf("Event: Successfully recorded item %s event", event)))
-  if eventErr != nil {
-    return shim.Error(fmt.Sprintf("Could not create event item, %s: %s", event, eventErr.Error()))
-  }
+	eventErr := APIstub.SetEvent("item", []byte(fmt.Sprintf("Event: Successfully recorded item %s event", event)))
+	if eventErr != nil {
+		return shim.Error(fmt.Sprintf("Could not create event item, %s: %s", event, eventErr.Error()))
+	}
 
-  return shim.Success([]byte(fmt.Sprintf("Event: Successfully recorded item %s event", event)))
+	return shim.Success([]byte(fmt.Sprintf("Event: Successfully recorded item %s event", event)))
 }
 
 func (s *SmartContract) ingredient(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
-  // check number of args
-  if (len(args) != 10) {
-    return shim.Error("Incorrect number of arguments, expecting 10")
-  }
+	// check number of args
+	if len(args) != 10 {
+		return shim.Error("Incorrect number of arguments, expecting 10")
+	}
 
-  // extract the args
-  ing_uid := args[0]
-  ing_name := args[1]
-  ing_type := args[2]
-  item_uid := args[3]
-  location := args[4]
-  date := args[5]
-  batch := args[6]
-  event := args[7]
+	// extract the args
+	ing_uid := args[0]
+	ing_name := args[1]
+	ing_type := args[2]
+	item_uid := args[3]
+	location := args[4]
+	date := args[5]
+	batch := args[6]
+	event := args[7]
 	min_temp := args[8]
 	max_temp := args[9]
 
@@ -194,25 +194,25 @@ func (s *SmartContract) ingredient(APIstub shim.ChaincodeStubInterface, args []s
 		return shim.Error(fmt.Sprintf("Error saving ingredient to state: %s", putStateErr))
 	}
 
-  txid := APIstub.GetTxID()
-  compositIndexName := "uid~date~event~txID"
+	txid := APIstub.GetTxID()
+	compositIndexName := "uid~date~event~txID"
 
-  compositeKey, compositeErr := APIstub.CreateCompositeKey(compositIndexName, []string{ing_uid, date, event, txid})
-  if compositeErr != nil {
-    return shim.Error(fmt.Sprintf("Could not create a composite key for %s: %s", event, compositeErr.Error()))
-  }
+	compositeKey, compositeErr := APIstub.CreateCompositeKey(compositIndexName, []string{ing_uid, date, event, txid})
+	if compositeErr != nil {
+		return shim.Error(fmt.Sprintf("Could not create a composite key for %s: %s", event, compositeErr.Error()))
+	}
 
-  compositePutErr := APIstub.PutState(compositeKey, []byte{0x00})
-  if compositePutErr != nil {
-    return shim.Error(fmt.Sprintf("Could not put operation for %s in the ledger: %s", event, compositePutErr.Error()))
-  }
+	compositePutErr := APIstub.PutState(compositeKey, []byte{0x00})
+	if compositePutErr != nil {
+		return shim.Error(fmt.Sprintf("Could not put operation for %s in the ledger: %s", event, compositePutErr.Error()))
+	}
 
-  eventErr := APIstub.SetEvent("ingredient", []byte(fmt.Sprintf("Event: Successfully recorded ingredient %s event", event)))
-  if eventErr != nil {
-    return shim.Error(fmt.Sprintf("Could not create event ingredient, %s: %s", event, eventErr.Error()))
-  }
+	eventErr := APIstub.SetEvent("ingredient", []byte(fmt.Sprintf("Event: Successfully recorded ingredient %s event", event)))
+	if eventErr != nil {
+		return shim.Error(fmt.Sprintf("Could not create event ingredient, %s: %s", event, eventErr.Error()))
+	}
 
-  return shim.Success([]byte(fmt.Sprintf("Event: Successfully recorded ingredient %s event", event)))
+	return shim.Success([]byte(fmt.Sprintf("Event: Successfully recorded ingredient %s event", event)))
 }
 
 /**
@@ -228,48 +228,48 @@ func (s *SmartContract) ingredient(APIstub shim.ChaincodeStubInterface, args []s
  *
  * @return A response structure indicating success or failure with a message
  */
- func (s *SmartContract) update(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
- 	// Check we have a valid number of args
- 	if len(args) != 3 {
- 		return shim.Error("Incorrect number of arguments, expecting 3")
- 	}
+func (s *SmartContract) update(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
+	// Check we have a valid number of args
+	if len(args) != 3 {
+		return shim.Error("Incorrect number of arguments, expecting 3")
+	}
 
- 	// Extract the args
- 	name := args[0]
- 	op := args[2]
- 	_, err := strconv.ParseFloat(args[1], 64)
- 	if err != nil {
- 		return shim.Error("Provided value was not a number")
- 	}
+	// Extract the args
+	name := args[0]
+	op := args[2]
+	_, err := strconv.ParseFloat(args[1], 64)
+	if err != nil {
+		return shim.Error("Provided value was not a number")
+	}
 
- 	// Make sure a valid operator is provided
- 	if op != "+" && op != "-" {
- 		return shim.Error(fmt.Sprintf("Operator %s is unrecognized", op))
- 	}
+	// Make sure a valid operator is provided
+	if op != "+" && op != "-" {
+		return shim.Error(fmt.Sprintf("Operator %s is unrecognized", op))
+	}
 
- 	// Retrieve info needed for the update procedure
- 	txid := APIstub.GetTxID()
- 	compositeIndexName := "varName~op~value~txID"
+	// Retrieve info needed for the update procedure
+	txid := APIstub.GetTxID()
+	compositeIndexName := "varName~op~value~txID"
 
- 	// Create the composite key that will allow us to query for all deltas on a particular variable
- 	compositeKey, compositeErr := APIstub.CreateCompositeKey(compositeIndexName, []string{name, op, args[1], txid})
- 	if compositeErr != nil {
- 		return shim.Error(fmt.Sprintf("Could not create a composite key for %s: %s", name, compositeErr.Error()))
- 	}
+	// Create the composite key that will allow us to query for all deltas on a particular variable
+	compositeKey, compositeErr := APIstub.CreateCompositeKey(compositeIndexName, []string{name, op, args[1], txid})
+	if compositeErr != nil {
+		return shim.Error(fmt.Sprintf("Could not create a composite key for %s: %s", name, compositeErr.Error()))
+	}
 
- 	// Save the composite key index
- 	compositePutErr := APIstub.PutState(compositeKey, []byte{0x00})
- 	if compositePutErr != nil {
- 		return shim.Error(fmt.Sprintf("Could not put operation for %s in the ledger: %s", name, compositePutErr.Error()))
- 	}
+	// Save the composite key index
+	compositePutErr := APIstub.PutState(compositeKey, []byte{0x00})
+	if compositePutErr != nil {
+		return shim.Error(fmt.Sprintf("Could not put operation for %s in the ledger: %s", name, compositePutErr.Error()))
+	}
 
- 	eventErr := APIstub.SetEvent("updateEvent", []byte(fmt.Sprintf("Event: Successfully added %s%s to %s", op, args[1], name)))
- 	if eventErr != nil {
- 		return shim.Error(fmt.Sprintf("Could create event Updating: %s", eventErr.Error()))
- 	}
+	eventErr := APIstub.SetEvent("updateEvent", []byte(fmt.Sprintf("Event: Successfully added %s%s to %s", op, args[1], name)))
+	if eventErr != nil {
+		return shim.Error(fmt.Sprintf("Could create event Updating: %s", eventErr.Error()))
+	}
 
- 	return shim.Success([]byte(fmt.Sprintf("Successfully added %s%s to %s", op, args[1], name)))
- }
+	return shim.Success([]byte(fmt.Sprintf("Successfully added %s%s to %s", op, args[1], name)))
+}
 
 /**
  * Retrieves the aggregate value of a variable in the ledger. Gets all delta rows for the variable
