@@ -162,3 +162,10 @@ You will also need to update the `network.yaml` with appropriate values for you 
 3.  Start the application:
 
         $ yarn start
+
+## Examples
+
+1. [Basic Minifab](./examples/minifab/README.md)
+2. [Prometheus Metrics](./examples/prometheus-metrics/README.md)
+3. [Prometheus Scraper](./examples/prometheus-scraper/README.md)
+4. [Vaccine Logistics Tracking Demo](./examples/vaccine-demo/README.md)

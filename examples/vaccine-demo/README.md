@@ -4,7 +4,7 @@ This is a demo environment to show what's possible with the integration between 
 
 https://docs.docker.com/get-docker/
 
-Next, download the Hyperledger Fabric samples, binaries, and Docker images.
+Next, download the Hyperledger Fabric samples, binaries, and Docker images by running the curl command below.
 ```
 curl -sSL http://bit.ly/2ysbOFE | bash -s -- 1.4.6 1.4.6 0.4.18
 ```
