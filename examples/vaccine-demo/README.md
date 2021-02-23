@@ -23,7 +23,9 @@ In order to shutdown the environment, run `./stop.sh`.
 
 Once logged into Splunk, you can view the Hyperledger Fabric dashboards inside the Hyperledger Splunk application.
 
-Note that it will take 10-20 minutes to post enough transactions to populate the map on the vaccine tracking dashboard.
+<img src="https://github.com/splunkdlt/splunk-hyperledger-fabric/raw/1b4cb150d5d01314b7c0bd11a0b754cf6d65f36b/appserver/static/tracking.png" alt="Vaccine Tracking Dashboard" width="100%" />
+
+The vaccine tracking dashboard visualizes logistics data being sent to the blockchain (via the `./start-txns.sh` command above). You can watch the dashboard update in front of you while transactions are being posted to the underlying Hyperledger Fabric network. Note that it will take 20-30 minutes to post enough transactions to populate the maps on the dashboard.
 
 <img src="https://www.splunk.com/content/dam/splunk-blogs/images/2019/02/hyperledger-network-architecture.png" alt="Network Architecture and Channels" width="100%" />
 
