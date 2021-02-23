@@ -1,0 +1,84 @@
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+version: '2'
+
+x-logging:
+  &default-logging
+  driver: "splunk"
+x-log-opts:
+  &log-opts
+  splunk-token: "12345678-ABCD-EFGH-IJKL-123456789012"
+  splunk-url: "https://localhost:8088"
+  splunk-insecureskipverify: "true"
+  splunk-verify-connection: "false"
+  splunk-format: "json"
+  tag: "{{.Name}}-{{.ID}}"
+x-environment:
+  &default-environment
+  FABRIC_LOGGING_FORMAT: json
+  CORE_METRICS_PROVIDER: statsd
+  CORE_METRICS_STATSD_NETWORK: udp
+  CORE_METRICS_STATSD_ADDRESS: splunk.example.com:8125
+  ORDERER_METRICS_PROVIDER: statsd
+  ORDERER_METRICS_STATSD_NETWORK: udp
+  ORDERER_METRICS_STATSD_ADDRESS: splunk.example.com:8125
+
+networks:
+  byfn:
+
+services:
+
+  orderer2.example.com:
+    environment:
+      <<: *default-environment
+      ORDERER_METRICS_STATSD_PREFIX: orderer2.example.com
+    logging:
+      <<: *default-logging
+      options:
+        <<: *log-opts
+        splunk-sourcetype: "docker:orderer"
+        splunk-source: orderer2.example.com
+    depends_on:
+      - splunk.example.com
+
+  orderer3.example.com:
+    environment:
+      <<: *default-environment
+      ORDERER_METRICS_STATSD_PREFIX: orderer3.example.com
+    logging:
+      <<: *default-logging
+      options:
+        <<: *log-opts
+        splunk-sourcetype: "docker:orderer"
+        splunk-source: orderer3.example.com
+    depends_on:
+      - splunk.example.com
+
+  orderer4.example.com:
+    environment:
+      <<: *default-environment
+      ORDERER_METRICS_STATSD_PREFIX: orderer4.example.com
+    logging:
+      <<: *default-logging
+      options:
+        <<: *log-opts
+        splunk-sourcetype: "docker:orderer"
+        splunk-source: orderer4.example.com
+    depends_on:
+      - splunk.example.com
+
+  orderer5.example.com:
+    environment:
+      <<: *default-environment
+      ORDERER_METRICS_STATSD_PREFIX: orderer5.example.com
+    logging:
+      <<: *default-logging
+      options:
+        <<: *log-opts
+        splunk-sourcetype: "docker:orderer"
+        splunk-source: orderer5.example.com
+    depends_on:
+      - splunk.example.com

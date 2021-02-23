@@ -1,0 +1,178 @@
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+version: '2'
+
+x-logging:
+  &default-logging
+  driver: "splunk"
+x-log-opts:
+  &log-opts
+  splunk-token: "12345678-ABCD-EFGH-IJKL-123456789012"
+  splunk-url: "https://localhost:8088"
+  splunk-insecureskipverify: "true"
+  splunk-verify-connection: "false"
+  splunk-format: "json"
+  tag: "{{.Name}}-{{.ID}}"
+  env: CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS
+x-environment:
+  &default-environment
+  FABRIC_LOGGING_FORMAT: json
+  CORE_METRICS_PROVIDER: statsd
+  CORE_METRICS_STATSD_NETWORK: udp
+  CORE_METRICS_STATSD_ADDRESS: splunk.example.com:8125
+  ORDERER_METRICS_PROVIDER: statsd
+  ORDERER_METRICS_STATSD_NETWORK: udp
+  ORDERER_METRICS_STATSD_ADDRESS: splunk.example.com:8125
+
+networks:
+  byfn:
+
+services:
+  splunk.example.com:
+    container_name: splunk.example.com
+    image: splunk/splunk:latest
+    environment:
+      - SPLUNK_START_ARGS=--accept-license
+      - SPLUNK_PASSWORD=changeme
+      - SPLUNK_HEC_TOKEN=00000000-0000-0000-0000-000000000000
+      - SPLUNK_APPS_URL=http://s3.amazonaws.com/splunk-hyperledger/status-indicator-custom-visualization_130.tgz,http://s3.amazonaws.com/splunk-hyperledger/splunk-metrics-workspace_101.tgz,http://s3.amazonaws.com/splunk-hyperledger/fabric/${BRANCH}/splunk-hyperledger-fabric.tgz,https://splunk-hyperledger.s3.amazonaws.com/maps-for-splunk_315.tgz
+    volumes:
+      - ./splunk/locations.csv:/opt/splunk/etc/apps/search/lookups/locations.csv
+    networks:
+      - byfn
+    ports:
+      - "8000:8000"
+      - "8088:8088"
+
+  cadivsor.example.com:
+    container_name: cadvisor.example.com
+    image: google/cadvisor:latest
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    command:
+      - --storage_driver=statsd
+      - --storage_driver_host=splunk.example.com:8125
+      - --docker_only=true
+    networks:
+      - byfn
+    user: root
+
+  fabric-logger.example.com:
+    container_name: fabric-logger.example.com
+    image: splunkdlt/fabric-logger:release-1.2.1
+    environment:
+      - FABRIC_KEYFILE=${BUTTERCUP_ADMIN_PK}
+      - FABRIC_CERTFILE=crypto/peerOrganizations/buttercup.example.com/users/Admin@buttercup.example.com/msp/signcerts/Admin@buttercup.example.com-cert.pem
+      - FABRIC_CLIENT_KEYFILE=${PEER_CLIENT_PK}
+      - FABRIC_CLIENT_CERTFILE=crypto/peerOrganizations/buttercup.example.com/peers/peer0.buttercup.example.com/tls/server.crt
+      - FABRIC_MSP=ButtercupMSP
+      - FABRIC_PEER=peer0.buttercup.example.com
+      - FABRIC_LOGGER_USERNAME=fabric-logger
+      - SPLUNK_HEC_TOKEN=12345678-ABCD-EFGH-IJKL-123456789012
+      - SPLUNK_HOST=splunk.example.com
+      - SPLUNK_PORT=8088
+      - SPLUNK_INDEX=hyperledger_logs
+      - LOGGING_LOCATION=splunk
+      - NETWORK_CONFIG=network.yaml
+    volumes:
+      - ./crypto:/usr/src/app/crypto/
+      - ./network.yaml:/usr/src/app/network.yaml
+    depends_on:
+      - orderer.example.com
+      - peer0.buttercup.example.com
+      - peer1.buttercup.example.com
+      - peer0.popstar.example.com
+      - peer1.popstar.example.com
+    logging:
+      <<: *default-logging
+      options:
+        <<: *log-opts
+        splunk-sourcetype: "docker:fabric-logger"
+        splunk-source: fabric-logger.example.com
+    networks:
+      - byfn
+
+  orderer.example.com:
+    environment:
+      <<: *default-environment
+      ORDERER_METRICS_STATSD_PREFIX: orderer.example.com
+    logging:
+      <<: *default-logging
+      options:
+        <<: *log-opts
+        splunk-sourcetype: "docker:orderer"
+        splunk-source: orderer.example.com
+    depends_on:
+      - splunk.example.com
+
+  peer0.buttercup.example.com:
+    environment:
+      <<: *default-environment
+      CORE_METRICS_STATSD_PREFIX: peer0.buttercup.example.com
+    logging:
+      <<: *default-logging
+      options:
+        <<: *log-opts
+        splunk-sourcetype: "docker:peer"
+        splunk-source: peer0.buttercup.example.com
+    depends_on:
+      - splunk.example.com
+
+  peer1.buttercup.example.com:
+    environment:
+      <<: *default-environment
+      CORE_METRICS_STATSD_PREFIX: peer1.buttercup.example.com
+    logging:
+      <<: *default-logging
+      options:
+        <<: *log-opts
+        splunk-sourcetype: "docker:peer"
+        splunk-source: peer1.buttercup.example.com
+    depends_on:
+      - splunk.example.com
+
+  peer0.popstar.example.com:
+    environment :
+      <<: *default-environment
+      CORE_METRICS_STATSD_PREFIX: peer0.popstar.example.com
+    logging:
+      <<: *default-logging
+      options:
+        <<: *log-opts
+        splunk-sourcetype: "docker:peer"
+        splunk-source: peer0.popstar.example.com
+    depends_on:
+      - splunk.example.com
+
+  peer1.popstar.example.com:
+    environment:
+      <<: *default-environment
+      CORE_METRICS_STATSD_PREFIX: peer1.popstar.example.com
+    logging:
+      <<: *default-logging
+      options:
+        <<: *log-opts
+        splunk-sourcetype: "docker:peer"
+        splunk-source: peer1.popstar.example.com
+    depends_on:
+      - splunk.example.com
+
+  cli:
+    environment:
+      <<: *default-environment
+      CORE_METRICS_STATSD_PREFIX: cli
+      CORE_PEER_TLS_CLIENTCERT_FILE: /opt/gopath/src/github.com/hyperledger/fabric/peer/crypto/peerOrganizations/buttercup.example.com/users/Admin@buttercup.example.com/msp/signcerts/Admin@buttercup.example.com-cert.pem
+    logging:
+      <<: *default-logging
+      options:
+        <<: *log-opts
+        splunk-sourcetype: "docker:cli"
+        splunk-source: cli
+    depends_on:
+      - splunk.example.com

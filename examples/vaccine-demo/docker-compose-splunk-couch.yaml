@@ -1,0 +1,62 @@
+# Copyright IBM Corp. All Rights Reserved.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+version: '2'
+
+x-logging:
+  &default-logging
+  driver: "splunk"
+x-log-opts:
+  &log-opts
+  splunk-token: "12345678-ABCD-EFGH-IJKL-123456789012"
+  splunk-url: "https://localhost:8088"
+  splunk-insecureskipverify: "true"
+  splunk-verify-connection: "false"
+  splunk-format: "json"
+  tag: "{{.Name}}-{{.ID}}"
+
+networks:
+  byfn:
+
+services:
+  couchdb0:
+    logging:
+      <<: *default-logging
+      options:
+        <<: *log-opts
+        splunk-sourcetype: "docker:couchdb"
+        splunk-source: couchdb0
+    depends_on:
+      - splunk.example.com
+
+  couchdb1:
+    logging:
+      <<: *default-logging
+      options:
+        <<: *log-opts
+        splunk-sourcetype: "docker:couchdb"
+        splunk-source: couchdb1
+    depends_on:
+      - splunk.example.com
+
+  couchdb2:
+    logging:
+      <<: *default-logging
+      options:
+        <<: *log-opts
+        splunk-sourcetype: "docker:couchdb"
+        splunk-source: couchdb2
+    depends_on:
+      - splunk.example.com
+
+  couchdb3:
+    logging:
+      <<: *default-logging
+      options:
+        <<: *log-opts
+        splunk-sourcetype: "docker:couchdb"
+        splunk-source: couchdb3
+    depends_on:
+      - splunk.example.com
