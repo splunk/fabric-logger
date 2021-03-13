@@ -44,7 +44,7 @@ Running the Fabric Logger in Docker is recommended. A sample docker-compose entr
     services:
         fabric-logger.example.com:
             container_name: fabric-logger.example.com
-            image: splunkdlt/fabric-logger:latest
+            image: ghcr.io/splunkdlt/fabric-logger:latest
             environment:
                 - FABRIC_KEYFILE=<path to private key file>
                 - FABRIC_CERTFILE=<path to signed certificate>

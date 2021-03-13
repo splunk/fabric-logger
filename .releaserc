@@ -5,18 +5,30 @@
         "@semantic-release/commit-analyzer",
         "@semantic-release/release-notes-generator",
         "@semantic-release/changelog",
-        ["@semantic-release/npm", {
-          "npmPublish": false,
-        }],
-        ["@semantic-release/exec", {
-            "prepareCmd": "yarn ts-node scripts/updateVersion.ts ${nextRelease.version} && mkdir -p build && echo ${nextRelease.version} > build/VERSION"
-        }],
+        [
+            "@semantic-release/npm",
+            {
+                "npmPublish": false
+            }
+        ],
+        [
+            "@semantic-release/exec",
+            {
+                "prepareCmd": "yarn ts-node scripts/updateVersion.ts ${nextRelease.version} && mkdir -p build && echo ${nextRelease.version} > build/VERSION"
+            }
+        ],
         "@semantic-release/github",
         [
             "@semantic-release/git",
             {
                 "message": "chore(release): ${nextRelease.version}\n\n${nextRelease.notes}",
-                "assets": ['CHANGELOG.md', 'package.json', 'package-lock.json', 'README.md', 'helm-chart/fabric-logger/*.yaml']
+                "assets": [
+                    "CHANGELOG.md",
+                    "package.json",
+                    "package-lock.json",
+                    "README.md",
+                    "helm-chart/fabric-logger/*.yaml"
+                ]
             }
         ]
     ]
