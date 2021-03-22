@@ -103,11 +103,11 @@ jobs:
                   yarn install --frozen-lockfile
                   yarn semantic-release
               env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  GITHUB_TOKEN: ${{ secrets.RELEASE_GH_TOKEN }}
             - name: Upload version
               uses: actions/upload-artifact@v2
               env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  GITHUB_TOKEN: ${{ secrets.RELEASE_GH_TOKEN }}
               with:
                   name: version
                   path: build/VERSION
