@@ -11,8 +11,8 @@ jobs:
               with:
                   publish-type: release
                   ghcr-org: splunkdlt
-                  ghcr-release-name: ethlogger
-                  ghcr-prerelease-name: ethlogger-pre
+                  ghcr-release-name: fabric-logger
+                  ghcr-prerelease-name: fabric-logger-pre
                   ghcr-user: ${{ secrets.GHCR_USER }}
                   ghcr-pat: ${{ secrets.GHCR_PAT }}
                   github-token: ${{ secrets.GITHUB_TOKEN }}
