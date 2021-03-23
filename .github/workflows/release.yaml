@@ -7,12 +7,12 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v2
-            - uses: splunkdlt/dlt-connect-libs/actions/build-publish-container@actions
+            - uses: splunkdlt/dlt-connect-libs/actions/build-publish-container@main
               with:
                   publish-type: release
                   ghcr-org: splunkdlt
                   ghcr-release-name: fabric-logger
-                  ghcr-prerelease-name: fabric-logger-pre
+                  ghcr-pre-release-name: fabric-logger-pre
                   ghcr-user: ${{ secrets.GHCR_USER }}
                   ghcr-pat: ${{ secrets.GHCR_PAT }}
                   github-token: ${{ secrets.GITHUB_TOKEN }}
