@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
         - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:release-{{ .Values.image.version }}"
+          image: "{{ .Values.image.repository }}:{{ .Values.image.version }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command: ["fabriclogger"]
           args: ["-c", "network/fabriclogger.yaml"]
@@ -84,7 +84,7 @@ spec:
           - name: SPLUNK_HEC_REJECT_INVALID_CERTS
             value: {{ .Values.splunk.hec.rejectInvalidCerts | quote }}
       volumes:
-      - name: network 
+      - name: network
         configMap:
           name: {{ include "fabric-logger.name" . }}-network-config
 
