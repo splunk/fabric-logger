@@ -15,17 +15,21 @@ jobs:
                   ghcr-pre-release-name: fabric-logger-pre
                   ghcr-user: ${{ secrets.GHCR_USER }}
                   ghcr-pat: ${{ secrets.GHCR_PAT }}
-                  github-token: ${{ secrets.GITHUB_TOKEN }}
+                  github-token: ${{ secrets.RELEASE_GH_TOKEN }}
     package-helm:
         runs-on: ubuntu-latest
         container:
             image: quay.io/helmpack/chart-testing:v3.1.1
         steps:
-            - name: Get release
-              id: get_release
+            - id: get_release
+              name: Get release
               uses: bruceadams/get-release@v1.2.2
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            - id: determine_version
+              run: echo ::set-output name=version::${TAG//v}
+              env:
+                  TAG: ${{steps.get_release.outputs.tag_name}}
             - name: Checkout
               uses: actions/checkout@v2
             - name: Package
@@ -39,6 +43,6 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               with:
                   upload_url: ${{ steps.get_release.outputs.upload_url }}
-                  asset_path: build/fabric-logger-${{ steps.get_release.outputs.tag_name }}.tgz
-                  asset_name: fabric-logger-${{ steps.get_release.outputs.tag_name }}.tgz
+                  asset_path: build/fabric-logger-${{ steps.determine_version.outputs.version }}.tgz
+                  asset_name: fabric-logger-${{ steps.determine_version.outputs.version }}.tgz
                   asset_content_type: application/zip
