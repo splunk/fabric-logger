@@ -1,8 +1,21 @@
-name: helm
+name: release
 on:
     release:
         types: [created]
 jobs:
+    publish-docker-image:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+            - uses: splunkdlt/dlt-connect-libs/actions/build-publish-container@main
+              with:
+                  publish-type: release
+                  ghcr-org: splunkdlt
+                  ghcr-release-name: fabric-logger
+                  ghcr-pre-release-name: fabric-logger-pre
+                  ghcr-user: ${{ secrets.GHCR_USER }}
+                  ghcr-pat: ${{ secrets.GHCR_PAT }}
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
     package-helm:
         runs-on: ubuntu-latest
         container:

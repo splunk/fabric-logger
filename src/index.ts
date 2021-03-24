@@ -22,6 +22,9 @@ class Fabriclogger extends Command {
     private resources: ManagedResource[] = [];
 
     async run(): Promise<void> {
+        if (process.env.FABRIC_LOGGER_GIT_COMMIT != null) {
+            this.config.userAgent = `${this.config.userAgent} git-sha=${process.env.FABRIC_LOGGER_GIT_COMMIT}`;
+        }
         const { flags } = this.parse(Fabriclogger);
         if (flags.debug) {
             debugModule.enable('fabriclogger:*');
@@ -42,6 +45,8 @@ class Fabriclogger extends Command {
             }
 
             const config = await loadFabricloggerConfig(flags);
+
+            info('Starting fabric logger version=%s', this.config.userAgent);
             await this.startFabriclogger(config);
 
             await Promise.race([waitForSignal('SIGINT'), waitForSignal('SIGTERM')]);

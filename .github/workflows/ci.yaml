@@ -15,20 +15,17 @@ jobs:
                   yarn build
     docker-image:
         runs-on: ubuntu-latest
-        container:
-            image: docker:stable
         steps:
             - uses: actions/checkout@v2
-            - name: Build docker image
-              run: docker build -t fabric-logger .
-            - name: Login to docker registry
-              run: docker login docker.pkg.github.com -u $GITHUB_ACTOR -p $GITHUB_TOKEN
-              env:
-                  GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-            - name: Publish docker image
-              run: |
-                  docker tag fabric-logger docker.pkg.github.com/$GITHUB_REPOSITORY/fabric-logger:$GITHUB_SHA
-                  docker push docker.pkg.github.com/$GITHUB_REPOSITORY/fabric-logger:$GITHUB_SHA
+            - uses: splunkdlt/dlt-connect-libs/actions/build-publish-container@main
+              with:
+                  publish-type: pre-release
+                  ghcr-org: splunkdlt
+                  ghcr-release-name: fabric-logger
+                  ghcr-pre-release-name: fabric-logger-pre
+                  ghcr-user: ${{ secrets.GHCR_USER }}
+                  ghcr-pat: ${{ secrets.GHCR_PAT }}
+                  github-token: ${{ secrets.GITHUB_TOKEN }}
     unit-tests:
         runs-on: ubuntu-latest
         container:
@@ -106,43 +103,11 @@ jobs:
                   yarn install --frozen-lockfile
                   yarn semantic-release
               env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  GITHUB_TOKEN: ${{ secrets.RELEASE_GH_TOKEN }}
             - name: Upload version
               uses: actions/upload-artifact@v2
               env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  GITHUB_TOKEN: ${{ secrets.RELEASE_GH_TOKEN }}
               with:
                   name: version
                   path: build/VERSION
-
-    package-helm-release:
-        runs-on: ubuntu-latest
-        needs:
-            - trigger-release
-        container:
-            image: quay.io/helmpack/chart-testing:v3.1.1
-        steps:
-            - name: Download version from trigger-release
-              uses: actions/download-artifact@v2
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  name: version
-            - name: Get version from file
-              id: cat_version
-              run: echo ::set-output name=version::$(cat VERSION)
-            - name: Checkout
-              uses: actions/checkout@v2
-              with:
-                  ref: ${{ steps.cat_version.outputs.version }}
-            - name: Package
-              run: |
-                  mkdir -p build
-                  helm package -d build helm-chart/fabric-logger
-            - name: Upload Release Asset
-              uses: svenstaro/upload-release-action@v2
-              with:
-                  repo_token: ${{ secrets.GITHUB_TOKEN }}
-                  file: build/fabric-logger-${{ steps.cat_version.outputs.version }}.tgz
-                  asset_name: fabric-logger-helm-${{ steps.cat_version.outputs.version }}.tgz
-                  tag: ${{ steps.cat_version.outputs.version }}

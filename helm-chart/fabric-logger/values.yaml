@@ -5,7 +5,7 @@
 replicaCount: 1
 
 image:
-  repository: splunkdlt/fabric-logger
+  repository: ghcr.io/splunkdlt/fabric-logger
   version: 4.0.0
   pullPolicy: IfNotPresent
 
