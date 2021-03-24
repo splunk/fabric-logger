@@ -1,3 +1,10 @@
+# [4.1.0](https://github.com/splunk/fabric-logger/compare/v4.0.0...v4.1.0) (2021-03-24)
+
+
+### Features
+
+* 🎸 Expose git commit SHA from fabric-logger output ([e357c13](https://github.com/splunk/fabric-logger/commit/e357c1370396aa2b6be12fcc491c1b06f822e44f))
+
 # [4.0.0](https://github.com/splunk/fabric-logger/compare/3.2.0...4.0.0) (2021-02-03)
 
 
