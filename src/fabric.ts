@@ -23,14 +23,18 @@ import {
     GatewayOptions,
     X509Identity,
 } from 'fabric-network';
-import { BlockData } from 'fabric-common';
+import { BlockData, Channel } from 'fabric-common';
 import { safeLoad } from 'js-yaml';
+import { Sequence, Integer, OctetString } from 'asn1js';
+import { createHash } from 'crypto';
+import { common } from 'fabric-protos';
 
 const { debug, info, warn } = createModuleDebug('fabric');
 
 export class FabricListener implements ManagedResource {
     private gateway: Gateway;
 
+    private integrity: { check: boolean; offset: number } = { check: true, offset: 3 };
     private listeners: { [channelName: string]: BlockListener } = {};
     private ccListeners: { [name: string]: ContractListener } = {};
     private checkpoint: Checkpoint;
@@ -231,6 +235,62 @@ export class FabricListener implements ManagedResource {
         return new Date(get(msg, 'payload.header.channel_header.timestamp'));
     }
 
+    private calculateBlockHash(header: common.IBlockHeader): string | null {
+        if (header.number == null || header.previous_hash == null || header.data_hash == null) {
+            warn('Invalid block header');
+            return null;
+        }
+        const seq = new Sequence();
+        seq.valueBlock.value.push(
+            new Integer({ value: Number(header.number) }),
+            new OctetString({ valueHex: header.previous_hash }),
+            new OctetString({ valueHex: header.data_hash })
+        );
+        return createHash('sha256')
+            .update(Buffer.from(seq.toBER(false)))
+            .digest('hex');
+    }
+
+    private async getHash(channel: Channel, blockNumber: number): Promise<void> {
+        const query = channel.newQuery('qscc');
+        if (!this.gateway.identityContext) {
+            warn('Gateway is missing identityContext.');
+            return Promise.resolve();
+        }
+
+        query.build(this.gateway.identityContext, {
+            fcn: 'GetBlockByNumber',
+            args: [channel.name, blockNumber.toString()],
+        });
+        query.sign(this.gateway.identityContext);
+
+        const response = await query.send({ targets: channel.getEndorsers() });
+        for (const [index, block_bytes] of response.queryResults.entries()) {
+            const block = common.Block.decode(block_bytes);
+            if (block.header == null) {
+                warn('Failed to calculate block hash: empty block header.');
+                return Promise.resolve();
+            }
+            const block_hash = this.calculateBlockHash(block.header);
+            if (block_hash == null) {
+                warn('Failed to calculate block hash.');
+                return Promise.resolve();
+            }
+
+            this.output.logEvent(
+                {
+                    type: 'blockIntegrity',
+                    block_number: Number(block.header.number),
+                    response_index: index,
+                    channel: channel.name,
+                    block_hash: block_hash,
+                    block_header: block.header,
+                },
+                new Date()
+            );
+        }
+    }
+
     private processBlock: BlockListener = async (event) => {
         debug('Got block number %d block data %s', event.blockNumber, JSON.stringify(event.blockData));
         const block = event.blockData as any;
@@ -238,10 +298,23 @@ export class FabricListener implements ManagedResource {
             const channelName = String(this.getChannelId(block.data.data[0]));
             const initCheckpoint = this.checkpoint.getChannelCheckpoint(channelName);
             const blockNumber = Number(event.blockNumber);
+            const network = await this.gateway.getNetwork(channelName);
+            const channel = network.getChannel();
             if (blockNumber <= initCheckpoint) {
                 info(`Ignoring block_number=%d on channel=%d since we already processed it`, blockNumber, channelName);
                 return Promise.resolve();
             }
+
+            if (this.integrity.check && blockNumber > this.integrity.offset) {
+                debug(
+                    `Performing integrity check on block_number=%d on channel=%s since we processed it %d blocks ago`,
+                    blockNumber,
+                    channelName,
+                    this.integrity.offset
+                );
+                this.getHash(channel, blockNumber - this.integrity.offset);
+            }
+
             info('Processing block_number=%d on channel=%s', blockNumber, channelName);
             const transactions = event.getTransactionEvents();
             for (const transaction of transactions) {
@@ -278,7 +351,12 @@ export class FabricListener implements ManagedResource {
             info('Processed all transactions for block_number=%d on channel=%s', blockNumber, channelName);
 
             this.output.logEvent(
-                { type: 'block', block_number: blockNumber, ...block },
+                {
+                    type: 'block',
+                    block_number: blockNumber,
+                    block_hash: this.calculateBlockHash(block.header),
+                    ...block,
+                },
                 this.getMessageTimestamp(block.data.data[0])
             );
             this.checkpoint.storeChannelCheckpoint(channelName, +blockNumber);

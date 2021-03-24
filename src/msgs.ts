@@ -6,6 +6,15 @@ export interface BlockMessage {
     type: 'block';
 }
 
+export interface BlockIntegrityMessage {
+    type: 'blockIntegrity';
+    response_index: number;
+    block_number: number;
+    channel: string;
+    block_header: any;
+    block_hash: string;
+}
+
 export interface ConfigMessage extends BlockData {
     type: 'config';
     block_number: number;

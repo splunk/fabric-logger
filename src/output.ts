@@ -7,6 +7,7 @@ import { ManagedResource } from '@splunkdlt/managed-resource';
 import { FabricloggerConfig, HecOutputConfig } from './config';
 import {
     BlockMessage,
+    BlockIntegrityMessage,
     ConfigMessage,
     ChaincodeEventMessage,
     TransactionEventMessage,
@@ -16,6 +17,7 @@ import {
 
 export type OutputMessage =
     | BlockMessage
+    | BlockIntegrityMessage
     | ConfigMessage
     | ChaincodeEventMessage
     | TransactionEventMessage
