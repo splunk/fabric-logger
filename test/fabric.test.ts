@@ -7,6 +7,7 @@ import { ContractListener, BlockListener, BlockEvent, TransactionEvent } from 'f
 import Long = require('long');
 import * as blockEvent from './fixtures/blockEvent.json';
 import * as blockTransaction from './fixtures/blockTransaction.json';
+import { Channel } from 'fabric-common';
 
 beforeAll(() => {
     debug.log = () => {
@@ -38,6 +39,7 @@ jest.mock('fabric-network', () => ({
                     Promise.resolve({
                         addContractListener: (cl: ContractListener) => Promise.resolve(cl),
                     }),
+                getChannel: () => ({} as Channel),
                 addBlockListener: async (bl: BlockListener) => {
                     const testBlockEvent = {
                         ...blockEvent,
@@ -55,6 +57,7 @@ jest.mock('fabric-network', () => ({
 }));
 
 test('fabric', async () => {
+    jest.setTimeout(30000);
     const checkpoint = new Checkpoint('.foo');
     await checkpoint.loadCheckpoints();
     const output = new TestOutput();

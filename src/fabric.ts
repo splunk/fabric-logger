@@ -125,6 +125,8 @@ export class FabricListener implements ManagedResource {
             for (const channel of this.config.channels) {
                 if (!this.hasListener(channel)) {
                     info('Registering listener for channel=%s', channel);
+                    const listenerx = this.registerListener(channel);
+
                     const listener = await retry(() => this.registerListener(channel), {
                         attempts: 30,
                         waitBetween: exponentialBackoff({ min: 10, max: 5000 }),
@@ -240,6 +242,9 @@ export class FabricListener implements ManagedResource {
             warn('Invalid block header');
             return null;
         }
+        console.log(header.number);
+        console.log(header.previous_hash);
+        console.log(header.data_hash);
         const seq = new Sequence();
         seq.valueBlock.value.push(
             new Integer({ value: Number(header.number) }),
@@ -252,11 +257,11 @@ export class FabricListener implements ManagedResource {
     }
 
     private async getHash(channel: Channel, blockNumber: number): Promise<void> {
-        const query = channel.newQuery('qscc');
         if (!this.gateway.identityContext) {
             warn('Gateway is missing identityContext.');
             return Promise.resolve();
         }
+        const query = channel.newQuery('qscc');
 
         query.build(this.gateway.identityContext, {
             fcn: 'GetBlockByNumber',
