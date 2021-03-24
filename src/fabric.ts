@@ -11,7 +11,7 @@ import { isLikelyText, toText } from './convert';
 import { get } from 'lodash';
 import { FabricConfigSchema } from './config';
 import { ManagedResource } from '@splunkdlt/managed-resource';
-import { retry, exponentialBackoff } from '@splunkdlt/async-tasks';
+import { retry, exponentialBackoff, RetryOptions } from '@splunkdlt/async-tasks';
 import { readFile } from 'fs-extra';
 import {
     Gateway,
@@ -94,14 +94,15 @@ export class FabricListener implements ManagedResource {
         info('Finished Connecting to gateway');
     }
 
-    public async listen(): Promise<void> {
+    public async listen(options?: { listenerRetryOptions?: RetryOptions }): Promise<void> {
         info('Starting to listen on channels');
+        const listenerRetryOptions = options?.listenerRetryOptions ?? {
+            attempts: 30,
+            waitBetween: exponentialBackoff({ min: 10, max: 5000 }),
+        };
         for (const channel of this.checkpoint.getAllChannelsWithCheckpoints()) {
             info('Resuming listener for channel=%s', channel);
-            const listener = await retry(() => this.registerListener(channel), {
-                attempts: 30,
-                waitBetween: exponentialBackoff({ min: 10, max: 5000 }),
-            });
+            const listener = await retry(() => this.registerListener(channel), listenerRetryOptions);
             this.listeners[channel] = listener;
         }
         for (const ccEvent of this.checkpoint.getAllChaincodeEventCheckpoints()) {
@@ -111,20 +112,14 @@ export class FabricListener implements ManagedResource {
                 ccEvent.channelName,
                 ccEvent.block
             );
-            const ccListener = await retry(() => this.registerChaincodeEvent(ccEvent), {
-                attempts: 30,
-                waitBetween: exponentialBackoff({ min: 10, max: 5000 }),
-            });
+            const ccListener = await retry(() => this.registerChaincodeEvent(ccEvent), listenerRetryOptions);
             this.ccListeners[`${ccEvent.channelName}_${ccEvent.chaincodeId}`] = ccListener;
         }
         if (this.config.channels) {
             for (const channel of this.config.channels) {
                 if (!this.hasListener(channel)) {
                     info('Registering listener for channel=%s', channel);
-                    const listener = await retry(() => this.registerListener(channel), {
-                        attempts: 30,
-                        waitBetween: exponentialBackoff({ min: 10, max: 5000 }),
-                    });
+                    const listener = await retry(() => this.registerListener(channel), listenerRetryOptions);
                     this.listeners[channel] = listener;
                 }
             }
@@ -137,10 +132,7 @@ export class FabricListener implements ManagedResource {
                         ccEvent.channelName,
                         ccEvent.chaincodeId
                     );
-                    const ccListener = await retry(() => this.registerChaincodeEvent(ccEvent), {
-                        attempts: 30,
-                        waitBetween: exponentialBackoff({ min: 10, max: 5000 }),
-                    });
+                    const ccListener = await retry(() => this.registerChaincodeEvent(ccEvent), listenerRetryOptions);
                     this.ccListeners[`${ccEvent.channelName}_${ccEvent.chaincodeId}`] = ccListener;
                 }
             }

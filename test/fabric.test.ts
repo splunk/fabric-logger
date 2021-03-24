@@ -63,8 +63,8 @@ test('fabric', async () => {
     } as CliFlags);
     const fabricListener = new FabricListener(checkpoint, config.fabric, output);
     await fabricListener.initClient();
-    await fabricListener.listen();
+    await fabricListener.listen({ listenerRetryOptions: { attempts: 1, waitBetween: 0 } });
     expect(fabricListener.hasListener('myChannel')).toBeTruthy();
     expect(fabricListener.hasCCListener('myChannel_myChaincodeId')).toBeTruthy();
     expect(output.messages).toMatchSnapshot();
-});
+}, 30_000);
