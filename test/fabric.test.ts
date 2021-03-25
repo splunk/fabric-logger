@@ -7,6 +7,7 @@ import { ContractListener, BlockListener, BlockEvent, TransactionEvent } from 'f
 import Long = require('long');
 import * as blockEvent from './fixtures/blockEvent.json';
 import * as blockTransaction from './fixtures/blockTransaction.json';
+import { Channel } from 'fabric-common';
 
 beforeAll(() => {
     debug.log = () => {
@@ -38,12 +39,19 @@ jest.mock('fabric-network', () => ({
                     Promise.resolve({
                         addContractListener: (cl: ContractListener) => Promise.resolve(cl),
                     }),
+                getChannel: () => ({} as Channel),
                 addBlockListener: async (bl: BlockListener) => {
                     const testBlockEvent = {
                         ...blockEvent,
                         blockNumber: Long.ONE.add(3),
                         getTransactionEvents: () => [(blockTransaction as unknown) as TransactionEvent],
                     };
+                    testBlockEvent.blockData.header.data_hash = Buffer.from(
+                        testBlockEvent.blockData.header.data_hash
+                    ) as any;
+                    testBlockEvent.blockData.header.previous_hash = Buffer.from(
+                        testBlockEvent.blockData.header.previous_hash
+                    ) as any;
                     await bl((testBlockEvent as unknown) as BlockEvent);
                     return Promise.resolve(bl);
                 },
@@ -63,7 +71,7 @@ test('fabric', async () => {
     } as CliFlags);
     const fabricListener = new FabricListener(checkpoint, config.fabric, output);
     await fabricListener.initClient();
-    await fabricListener.listen();
+    await fabricListener.listen({ listenerRetryOptions: { attempts: 1, waitBetween: 0 } });
     expect(fabricListener.hasListener('myChannel')).toBeTruthy();
     expect(fabricListener.hasCCListener('myChannel_myChaincodeId')).toBeTruthy();
     expect(output.messages).toMatchSnapshot();
