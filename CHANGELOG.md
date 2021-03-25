@@ -1,3 +1,10 @@
+# [4.2.0](https://github.com/splunk/fabric-logger/compare/v4.1.0...v4.2.0) (2021-03-25)
+
+
+### Features
+
+* 🎸 Add blockchain integrity messages ([c6c72b3](https://github.com/splunk/fabric-logger/commit/c6c72b34c38c2c34917a3660fb1cf9bd93c3e208))
+
 # [4.1.0](https://github.com/splunk/fabric-logger/compare/v4.0.0...v4.1.0) (2021-03-24)
 
 ### Features
