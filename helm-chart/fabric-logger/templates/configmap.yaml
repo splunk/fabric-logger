@@ -13,7 +13,7 @@ data:
       {{ $key }}:
         peers:
         {{- range .peers }}
-          {{ . }}:  
+          {{ . }}:
         {{- end }}
       {{- end }}
     organizations:
@@ -29,7 +29,7 @@ data:
       {{- range $key, $value:= .Values.peers }}
       {{ $key }}:
         url: {{ .url }}
-        grpcOption:
+        grpcOptions:
         {{- range $key,$value:= .grpcOptions }}
           {{ $key }}: {{ toYaml $value }}
         {{- end }}
