@@ -88,8 +88,17 @@ We also include a helm chart for Kubernetes deployments. First set your `values.
 
     secrets:
         peer:
-            cert: hlf-peer--peer0-cert
-            key: hlf-peer--peer0-key
+        cert: hlf--peer-admincert
+        # itemKey can be defined if there is a secret with multiple items stored inside.
+        certItem: cert.pem
+        key: hlf--peer-adminkey
+        keyItem: key.pem
+        tls: hlf--peer-tlscert
+        tlsItem: tlscacert.pem
+        clientCert: hlf--peer-clientcert
+        clientCertItem: clientCert.pem
+        clientKey: hlf--peer-clientkey
+        clientKeyItem: clientKey.pem
 
     fabric:
         msp: PeerMSP
