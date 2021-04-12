@@ -12,8 +12,11 @@ data:
       {{- range $key, $value:=.Values.channels }}
       {{ $key }}:
         peers:
-        {{- range .peers }}
-          {{ . }}:
+        {{- range $key, $peersValues:=.peers }}
+          {{ $key }}:
+            {{- range $key, $value:=$peersValues }}
+            {{ $key }}: {{ . }}
+            {{- end }}
         {{- end }}
       {{- end }}
     organizations:
