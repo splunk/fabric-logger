@@ -1,6 +1,6 @@
 {
   "name": "fabric-logger",
-  "version": "4.2.0",
+  "version": "4.2.1",
   "private": true,
   "description": "Hyperledger Fabric Splunk integration",
   "author": "splunk <blockchain@splunk.com>",
