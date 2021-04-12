@@ -88,8 +88,17 @@ We also include a helm chart for Kubernetes deployments. First set your `values.
 
     secrets:
         peer:
-            cert: hlf-peer--peer0-cert
-            key: hlf-peer--peer0-key
+          cert: hlf--peer-admincert
+          # itemKey can be defined if there is a secret with multiple items stored inside.
+          certItem: cert.pem
+          key: hlf--peer-adminkey
+          keyItem: key.pem
+          tls: hlf--peer-tlscert
+          tlsItem: tlscacert.pem
+          clientCert: hlf--peer-clientcert
+          clientCertItem: clientCert.pem
+          clientKey: hlf--peer-clientkey
+          clientKeyItem: clientKey.pem
 
     fabric:
         msp: PeerMSP
@@ -109,7 +118,7 @@ We also include a helm chart for Kubernetes deployments. First set your `values.
 
 Alternatively, if you are using `cryptogen` to generate identities, the helm chart can auto-populate secrets for you. You will need to download the helm file and untar it locally so you can copy your `crypto-config` into the director.
 
-    wget https://github.com/splunk/fabric-logger/releases/download/4.2.0/fabric-logger-helm-4.2.0.tgz
+    wget https://github.com/splunk/fabric-logger/releases/download/v4.2.0/fabric-logger-helm-4.2.0.tgz
     tar -xf fabric-logger-helm-4.2.0.tgz
     cp -R crypto-config fabric-logger/crypto-config
 
@@ -141,7 +150,7 @@ A `network.yaml` configmap will automatically be generated using the secrets and
 
     helm install -n fabric-logger-${PEER_NAME}-${NS} --namespace ${NS} \
                  -f values.yaml -f network.yaml \
-                 https://github.com/splunk/fabric-logger/releases/download/4.2.0/fabric-logger-helm-4.2.0.tgz
+                 https://github.com/splunk/fabric-logger/releases/download/v4.2.0/fabric-logger-helm-4.2.0.tgz
 
 ### Kubernetes: Deleting Helm Chart
 
