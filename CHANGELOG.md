@@ -1,3 +1,12 @@
+## [4.2.1](https://github.com/splunk/fabric-logger/compare/v4.2.0...v4.2.1) (2021-04-12)
+
+
+### Bug Fixes
+
+* 🐛 helm configmap network.yaml transformation ([fb551f6](https://github.com/splunk/fabric-logger/commit/fb551f65217dbfc28746092de92593e1f20a9301))
+* 🐛 typo: grpcOption -> grpcOptions ([3628b78](https://github.com/splunk/fabric-logger/commit/3628b78827d5d056a705ab439d2391cdc88f05e4))
+* 🐛 update version download link replacement in script ([bdcf901](https://github.com/splunk/fabric-logger/commit/bdcf9019d474eb4b24d866c253d6230c4ccca64e))
+
 # [4.2.0](https://github.com/splunk/fabric-logger/compare/v4.1.0...v4.2.0) (2021-03-25)
 
 
