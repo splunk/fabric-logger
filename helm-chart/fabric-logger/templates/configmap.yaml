@@ -55,6 +55,7 @@ data:
         - channelName: {{ .channelName }}
           chaincodeId: {{ .chaincodeId }}
         {{- end }}
+    {{- if .Values.output }}
     output:
       type: {{ .Values.output.type }}
       sourceTypePrefix: {{ .Values.output.sourceTypePrefix | quote }}
@@ -62,14 +63,20 @@ data:
         {{- range $key, $value:= .Values.output.sourcetypes }}
         {{ $key }}: {{ . | quote }}
         {{- end}}
+    {{- end }}
+    {{- if .Values.prometheus }}
     prometheus:
       discovery: {{ .Values.prometheus.discovery }}
       validateCertificate: {{ .Values.prometheus.validateCertificate }}
       port: {{ .Values.prometheus.port | quote }}
       path: {{ .Values.prometheus.path | quote }}
+    {{- end }}
+    {{- if .Values.checkpoint }}
     checkpoint:
       filename: {{ .Values.checkpoint.filename | quote }}
       saveInterval: {{ .Values.checkpoint.saveInterval }}
+    {{- end }}
+    {{- if .Values.hec }}
     hec:
       default:
         defaultMetadata:
@@ -101,3 +108,4 @@ data:
           {{- range $key, $value:= .Values.hec.internal.defaultFields }}
           {{ $key }}: {{ . }}
           {{- end}}
+    {{- end }}
