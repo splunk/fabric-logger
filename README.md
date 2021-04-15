@@ -149,6 +149,7 @@ Make sure that the peer credentials are stored in the appropriately named secret
 A `network.yaml` configmap will automatically be generated using the secrets and channel details set above. You can deploy via helm:
 
     helm install -n fabric-logger-${PEER_NAME}-${NS} --namespace ${NS} \
+                 -f https://raw.githubusercontent.com/splunk/fabric-logger/master/defaults.fabriclogger.yaml \
                  -f values.yaml -f network.yaml \
                  https://github.com/splunk/fabric-logger/releases/download/v4.2.1/fabric-logger-helm-4.2.1.tgz
 

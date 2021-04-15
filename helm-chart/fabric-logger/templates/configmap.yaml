@@ -55,3 +55,57 @@ data:
         - channelName: {{ .channelName }}
           chaincodeId: {{ .chaincodeId }}
         {{- end }}
+    {{- if .Values.output }}
+    output:
+      type: {{ .Values.output.type }}
+      sourceTypePrefix: {{ .Values.output.sourceTypePrefix | quote }}
+      sourcetypes:
+        {{- range $key, $value:= .Values.output.sourcetypes }}
+        {{ $key }}: {{ . | quote }}
+        {{- end}}
+    {{- end }}
+    {{- if .Values.prometheus }}
+    prometheus:
+      discovery: {{ .Values.prometheus.discovery }}
+      validateCertificate: {{ .Values.prometheus.validateCertificate }}
+      port: {{ .Values.prometheus.port | quote }}
+      path: {{ .Values.prometheus.path | quote }}
+    {{- end }}
+    {{- if .Values.checkpoint }}
+    checkpoint:
+      filename: {{ .Values.checkpoint.filename | quote }}
+      saveInterval: {{ .Values.checkpoint.saveInterval }}
+    {{- end }}
+    {{- if .Values.hec }}
+    hec:
+      default:
+        defaultMetadata:
+          {{- range $key, $value:= .Values.hec.default.defaultMetadata }}
+          {{ $key }}: {{ . }}
+          {{- end}}
+        flushTime: {{ .Values.hec.default.flushTime }}
+        maxQueueEntries: {{ .Values.hec.default.maxQueueEntries }}
+        maxQueueSize: {{ .Values.hec.default.maxQueueSize }}
+        gzip: {{ .Values.hec.default.gzip }}
+        timeout: {{ .Values.hec.default.timeout }}
+        requestKeepAlive: {{ .Values.hec.default.requestKeepAlive }}
+        validateCertificate: {{ .Values.hec.default.validateCertificate }}
+        maxSockets: {{ .Values.hec.default.maxSockets }}
+        userAgent: {{ .Values.hec.default.userAgent }}
+        multipleMetricFormatEnabled: {{ .Values.hec.default.multipleMetricFormatEnabled }}
+        waitForAvailability: {{ .Values.hec.default.waitForAvailability }}
+        retryWaitTime:
+          {{- range $key, $value:= .Values.hec.default.retryWaitTime }}
+          {{ $key }}: {{ . }}
+          {{- end}}
+      internal:
+        flushTime: {{ .Values.hec.internal.flushTime }}
+        defaultMetadata:
+          {{- range $key, $value:= .Values.hec.internal.defaultMetadata }}
+          {{ $key }}: {{ . }}
+          {{- end}}
+        defaultFields:
+          {{- range $key, $value:= .Values.hec.internal.defaultFields }}
+          {{ $key }}: {{ . }}
+          {{- end}}
+    {{- end }}
