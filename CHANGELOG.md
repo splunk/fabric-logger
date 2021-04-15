@@ -1,3 +1,11 @@
+## [4.2.2](https://github.com/splunk/fabric-logger/compare/v4.2.1...v4.2.2) (2021-04-15)
+
+
+### Bug Fixes
+
+* 🐛 check for top level values before accessing ([daf2e2b](https://github.com/splunk/fabric-logger/commit/daf2e2b85dd4e02d2fe2056e8054a08ec8c2ae57))
+* 🐛 pull fabric logger defaults into helm template ([c3cc7a4](https://github.com/splunk/fabric-logger/commit/c3cc7a46b7b779fcc5abaa690dcad27e3d655b86))
+
 ## [4.2.1](https://github.com/splunk/fabric-logger/compare/v4.2.0...v4.2.1) (2021-04-12)
 
 

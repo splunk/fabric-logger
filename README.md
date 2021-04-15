@@ -118,8 +118,8 @@ We also include a helm chart for Kubernetes deployments. First set your `values.
 
 Alternatively, if you are using `cryptogen` to generate identities, the helm chart can auto-populate secrets for you. You will need to download the helm file and untar it locally so you can copy your `crypto-config` into the director.
 
-    wget https://github.com/splunk/fabric-logger/releases/download/v4.2.1/fabric-logger-helm-4.2.1.tgz
-    tar -xf fabric-logger-helm-4.2.1.tgz
+    wget https://github.com/splunk/fabric-logger/releases/download/v4.2.2/fabric-logger-helm-4.2.2.tgz
+    tar -xf fabric-logger-helm-4.2.2.tgz
     cp -R crypto-config fabric-logger/crypto-config
 
 Set the secrets section of `values.yaml` to:
@@ -151,7 +151,7 @@ A `network.yaml` configmap will automatically be generated using the secrets and
     helm install -n fabric-logger-${PEER_NAME}-${NS} --namespace ${NS} \
                  -f https://raw.githubusercontent.com/splunk/fabric-logger/master/defaults.fabriclogger.yaml \
                  -f values.yaml -f network.yaml \
-                 https://github.com/splunk/fabric-logger/releases/download/v4.2.1/fabric-logger-helm-4.2.1.tgz
+                 https://github.com/splunk/fabric-logger/releases/download/v4.2.2/fabric-logger-helm-4.2.2.tgz
 
 ### Kubernetes: Deleting Helm Chart
 
