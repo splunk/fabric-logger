@@ -176,6 +176,7 @@ You will also need to update the `network.yaml` with appropriate values for you 
 ## Examples
 
 1. [Basic Minifab](./examples/minifab/README.md)
-2. [Prometheus Metrics](./examples/prometheus-metrics/README.md)
-3. [Prometheus Scraper](./examples/prometheus-scraper/README.md)
-4. [Vaccine Logistics Tracking Demo](./examples/vaccine-demo/README.md)
+2. [Prometheus Metrics (scraped by fabric-logger)](./examples/prometheus-scraper/README.md)
+3. [Prometheus Metrics (scraped by Splunk OpenTelemetry Connector)](./examples/otel-prometheus/README.md)
+4. [Prometheus Federated Metrics (scraped by Splunk OpenTelemetry Connector)](./examples/otel-prometheus-federation/README.md)
+5. [Vaccine Logistics Tracking Demo](./examples/vaccine-demo/README.md)
