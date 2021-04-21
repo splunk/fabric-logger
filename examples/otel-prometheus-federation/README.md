@@ -1,4 +1,4 @@
-# Prometheus metrics example
+# Prometheus federation metrics example
 
 This example uses [minifab](https://github.com/hyperledger-labs/minifabric).
 
@@ -6,7 +6,7 @@ This example targets Hyperledger 2.2.
 
 NOTE: Docker for Mac requires to run with the legacy osxfs file sharing mechanism. Please see [this issue](https://github.com/hyperledger-labs/minifabric/issues/141) for more information.
 
-This example builds on the [minifab](../minifab) example, adding Prometheus metrics collection with the OpenTelemetry collector.
+This example builds on the [minifab](../minifab) example, adding metrics collection from a Prometheus federate endpoint with the OpenTelemetry collector.
 
 ## Start the example
 
