@@ -62,7 +62,7 @@ services:
 
     fabric-logger.example.com:
         container_name: fabric-logger.example.com
-        image: ghcr.io/splunkdlt/fabric-logger:release-1.2.1
+        image: ghcr.io/splunkdlt/fabric-logger:1.2.1
         environment:
             - FABRIC_KEYFILE=${BUTTERCUP_ADMIN_PK}
             - FABRIC_CERTFILE=crypto/peerOrganizations/buttercup.example.com/users/Admin@buttercup.example.com/msp/signcerts/Admin@buttercup.example.com-cert.pem
