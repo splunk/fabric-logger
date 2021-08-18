@@ -53,9 +53,9 @@ export class HecOutput implements Output, ManagedResource {
         const event = convertBuffers(message);
         switch (message.type) {
             case 'block':
+            case 'block_integrity':
             case 'endorser_transaction':
             case 'config':
-            case 'ccevent':
                 this.eventsHec.pushEvent({
                     time: timeField ? timeField : new Date(),
                     body: {

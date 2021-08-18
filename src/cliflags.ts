@@ -167,4 +167,12 @@ export const CLI_FLAGS = {
         description:
             'Default path to try for discovered orderers when scraping Prometheus metrics (overrides PROMETHEUS_PATH).',
     }),
+    'integrity-check-enabled': flags.boolean({
+        env: 'INTEGRITY_CHECK_ENABLED',
+        description: 'Whether to perform blockchain integrity checks.',
+    }),
+    'integrity-check-interval': flags.integer({
+        env: 'INTEGRITY_CHECK_INTERVAL',
+        description: 'Number of blocks between integrity checks.',
+    }),
 };

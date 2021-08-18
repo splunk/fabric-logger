@@ -24,6 +24,8 @@ export interface FabricloggerConfigSchema {
     hec: HecClientsConfigSchema;
     /** Prometheus Scraper Configuration */
     prometheus: PrometheusConfigSchema;
+    /** Blockchain Integrity Check Config */
+    integrity: IntegrityConfigSchema;
     /**
      * In the output configuration you can specify where fabriclogger will send generated
      * events to. By default it will send all information to Splunk HEC,
@@ -37,6 +39,7 @@ export interface FabricloggerConfig {
     fabric: FabricConfigSchema;
     checkpoint: CheckpointConfigSchema;
     prometheus: PrometheusConfig;
+    integrity: IntegrityConfig;
     hec: {
         default: HecConfig;
         events?: OptionalHecConfig;
@@ -154,6 +157,8 @@ export interface HecOutputConfig {
 export interface SourcetypesSchema {
     /** @default "fabric_logger:block" */
     block?: string;
+    /** @default "fabric_logger:block_integrity" */
+    block_integrity?: string;
     /** @default "fabric_logger:endorser_transaction" */
     endorser_transaction?: string;
     /** @default "fabric_logger:ccevent" */
@@ -161,7 +166,7 @@ export interface SourcetypesSchema {
     /** @default "fabric_logger:config" */
     config?: string;
     /** @default "fabric:node:metrics" */
-    nodeMetrics?: string;
+    node_metrics?: string;
 }
 
 /** Chaincode event to listen to */
@@ -268,6 +273,22 @@ export type OptionalHecConfigSchema = Partial<HecConfigSchema>;
 export type OptionalHecConfig = Partial<HecConfig>;
 
 export type OptionalScraperConfigDefaults = Partial<ScraperConfigDefaults>;
+
+/**
+ * Fabriclogger can optionally query hashes of historical blocks from the provided MSP's endorsers
+ * to confirm that the block hashes have not changed over a set period of blocks.
+ */
+export interface IntegrityConfigSchema {
+    /** Whether to perform blockchain integrity checks. */
+    enabled: boolean;
+    /** Number of blocks between integrity checks. */
+    interval: number;
+}
+
+export interface IntegrityConfig extends IntegrityConfigSchema {
+    enabled: boolean;
+    interval: number;
+}
 
 /**
  * The checkpoint is where fabriclogger keeps track of its state, which blocks have already been processed.
@@ -399,6 +420,20 @@ const parseBooleanEnvVar = (envVar?: string): boolean | undefined => {
                     throw new ConfigError(
                         `Unexpected value for environment variable ${envVar} - boolean value (true or false) expected`
                     );
+            }
+        }
+    }
+};
+
+const parseIntEnvVar = (envVar?: string): number | undefined => {
+    if (envVar != null) {
+        const val = process.env[envVar];
+        if (val == undefined) {
+            return undefined;
+        } else {
+            const parsedVal = parseInt(val);
+            if (Number.isNaN(parsedVal)) {
+                throw new ConfigError(`Unexpected value for environment variable ${envVar} - integer expected`);
             }
         }
     }
@@ -593,6 +628,18 @@ export async function loadFabricloggerConfig(flags: CliFlags, dryRun: boolean = 
         checkpoint: {
             filename: defaults.checkpoint?.filename ?? '.checkpoints',
             saveInterval: parseDuration(defaults.checkpoint?.saveInterval) ?? 100,
+        },
+        integrity: {
+            enabled:
+                flags['integrity-check-enabled'] ??
+                parseBooleanEnvVar(CLI_FLAGS['integrity-check-enabled'].env) ??
+                defaults.integrity?.enabled ??
+                false,
+            interval:
+                flags['integrity-check-interval'] ??
+                parseIntEnvVar(CLI_FLAGS['integrity-check-interval'].env) ??
+                defaults.integrity?.interval ??
+                5,
         },
         fabric: {
             msp: required('msp', defaults.fabric?.msp),

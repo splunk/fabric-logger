@@ -9,7 +9,7 @@ import {
 } from './protobuf';
 import { isLikelyText, toText } from './convert';
 import { get } from 'lodash';
-import { FabricConfigSchema } from './config';
+import { FabricConfigSchema, IntegrityConfigSchema } from './config';
 import { ManagedResource } from '@splunkdlt/managed-resource';
 import { retry, exponentialBackoff, RetryOptions } from '@splunkdlt/async-tasks';
 import { readFile } from 'fs-extra';
@@ -27,22 +27,22 @@ import { BlockData, Channel } from 'fabric-common';
 import { safeLoad } from 'js-yaml';
 import { Sequence, Integer, OctetString } from 'asn1js';
 import { createHash } from 'crypto';
-import { common } from 'fabric-protos';
+import { common, msp } from 'fabric-protos';
 
 const { debug, info, warn } = createModuleDebug('fabric');
 
 export class FabricListener implements ManagedResource {
     private gateway: Gateway;
-
-    private integrity: { check: boolean; offset: number } = { check: true, offset: 3 };
+    private integrity: IntegrityConfigSchema;
     private listeners: { [channelName: string]: BlockListener } = {};
     private ccListeners: { [name: string]: ContractListener } = {};
     private checkpoint: Checkpoint;
     private config: FabricConfigSchema;
     private output: Output;
 
-    constructor(checkpoint: Checkpoint, config: FabricConfigSchema, output: Output) {
+    constructor(checkpoint: Checkpoint, config: FabricConfigSchema, integrity: IntegrityConfigSchema, output: Output) {
         this.gateway = new Gateway();
+        this.integrity = integrity;
         this.checkpoint = checkpoint;
         this.config = config;
         this.output = output;
@@ -249,14 +249,23 @@ export class FabricListener implements ManagedResource {
             return Promise.resolve();
         }
         const query = channel.newQuery('qscc');
-
         query.build(this.gateway.identityContext, {
             fcn: 'GetBlockByNumber',
             args: [channel.name, blockNumber.toString()],
         });
         query.sign(this.gateway.identityContext);
+        const mspId = this.gateway.getIdentity().mspId;
+        const targets = channel.getEndorsers(mspId);
+        const response = await query.send({ targets: targets });
+        if (response.responses.length != response.queryResults.length) {
+            warn(
+                'ProposalResponse contained an unequal number of responses (%d) and queryResults (%d).',
+                response.responses.length,
+                response.queryResults.length
+            );
+            return Promise.resolve();
+        }
 
-        const response = await query.send({ targets: channel.getEndorsers() });
         for (const [index, block_bytes] of response.queryResults.entries()) {
             const block = common.Block.decode(block_bytes);
             if (block.header == null) {
@@ -270,14 +279,22 @@ export class FabricListener implements ManagedResource {
                 return Promise.resolve();
             }
 
+            const response_endorsement = response.responses[index].endorsement;
+            const decoded_endorsement = {
+                endorsement: {
+                    signature: response_endorsement.signature,
+                    endorser: msp.SerializedIdentity.decode(response_endorsement.endorser),
+                },
+            };
             this.output.logEvent(
                 {
-                    type: 'blockIntegrity',
+                    type: 'block_integrity',
                     channel: channel.name,
                     block_number: Number(block.header.number),
                     response_index: index,
                     block_hash: block_hash,
                     block_header: block.header,
+                    ...decoded_endorsement,
                 },
                 new Date()
             );
@@ -298,14 +315,14 @@ export class FabricListener implements ManagedResource {
                 return Promise.resolve();
             }
 
-            if (this.integrity.check && blockNumber > this.integrity.offset) {
+            if (this.integrity.enabled && blockNumber > this.integrity.interval) {
                 debug(
                     `Performing integrity check on block_number=%d on channel=%s since we processed it %d blocks ago`,
                     blockNumber,
                     channelName,
-                    this.integrity.offset
+                    this.integrity.interval
                 );
-                this.performBlockIntegrityCheck(channel, blockNumber - this.integrity.offset);
+                this.performBlockIntegrityCheck(channel, blockNumber - this.integrity.interval);
             }
 
             info('Processing block_number=%d on channel=%s', blockNumber, channelName);

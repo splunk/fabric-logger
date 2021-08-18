@@ -246,7 +246,7 @@ export class PrometheusEndpointScraper {
             if (this.active) {
                 for (const hecMetrics of convertedMetrics) {
                     this.output.logMultiMetrics({
-                        type: 'nodeMetrics',
+                        type: 'node_metrics',
                         ...hecMetrics,
                     });
                 }
