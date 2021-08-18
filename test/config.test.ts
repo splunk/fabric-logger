@@ -68,14 +68,19 @@ Object {
     },
     "metrics": undefined,
   },
+  "integrity": Object {
+    "enabled": false,
+    "interval": 5,
+  },
   "output": Object {
     "sourceTypePrefix": "fabric_logger",
     "sourcetypes": Object {
       "block": "fabric_logger:block",
+      "block_integrity": "fabric_logger:block_integrity",
       "ccevent": "fabric_logger:ccevent",
       "config": "fabric_logger:config",
       "endorser_transaction": "fabric_logger:endorser_transaction",
-      "nodeMetrics": "fabric:node:metrics",
+      "node_metrics": "fabric:node:metrics",
     },
     "type": "hec",
   },

@@ -76,7 +76,7 @@ class Fabriclogger extends Command {
         const output = await createOutput(config, hecClient);
         this.resources.push(output);
 
-        const fabricListener = new FabricListener(checkpoint, config.fabric, output);
+        const fabricListener = new FabricListener(checkpoint, config.fabric, config.integrity, output);
         this.resources.push(fabricListener);
         await fabricListener.initClient();
         await fabricListener.listen();

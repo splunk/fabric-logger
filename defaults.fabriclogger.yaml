@@ -9,10 +9,11 @@ output:
     sourceTypePrefix: 'fabric_logger'
     sourcetypes:
         block: 'fabric_logger:block'
+        block_integrity: 'fabric_logger:block_integrity'
         endorser_transaction: 'fabric_logger:endorser_transaction'
         config: 'fabric_logger:config'
         ccevent: 'fabric_logger:ccevent'
-        nodeMetrics: 'fabric:node:metrics'
+        node_metrics: 'fabric:node:metrics'
 prometheus:
     discovery: false
     validateCertificate: false

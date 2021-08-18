@@ -7,7 +7,7 @@ export interface BlockMessage {
 }
 
 export interface BlockIntegrityMessage {
-    type: 'blockIntegrity';
+    type: 'block_integrity';
     response_index: number;
     block_number: number;
     channel: string;
@@ -28,7 +28,7 @@ export interface ChaincodeEventMessage extends ContractEvent {
 }
 
 export interface NodeMetricsMessage extends MultiMetrics {
-    type: 'nodeMetrics';
+    type: 'node_metrics';
 }
 export interface UnKnownMessage extends BlockData {
     type: string;
