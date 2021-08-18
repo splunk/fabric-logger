@@ -12,8 +12,7 @@ home: https://github.com/splunk/fabric-logger
 sources:
   - https://github.com/splunk/fabric-logger
 maintainers:
-  - name: jeffywu
-    email: jeffreywu@splunk.com
-  - name: rmoore
-    email: rmoore@splunk.com
+  - name: Splunk
+    email: blockchain@splunk.com
+    url: https://splunkdlt.com
 icon: https://www.hyperledger.org/wp-content/uploads/2018/04/fabric-logo.png
