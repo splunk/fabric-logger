@@ -1,3 +1,10 @@
+## [4.2.4](https://github.com/splunk/fabric-logger/compare/v4.2.3...v4.2.4) (2021-08-19)
+
+
+### Bug Fixes
+
+* 🐛 block integrity defaults and refactor logs ([fa639bf](https://github.com/splunk/fabric-logger/commit/fa639bff6c9e39d0f076b5faff3ed4817d27545e))
+
 ## [4.2.3](https://github.com/splunk/fabric-logger/compare/v4.2.2...v4.2.3) (2021-08-19)
 
 
