@@ -1,3 +1,10 @@
+## [4.2.3](https://github.com/splunk/fabric-logger/compare/v4.2.2...v4.2.3) (2021-08-19)
+
+
+### Bug Fixes
+
+* 🐛 update fabric sdk to v2.2.8 ([5e90aa4](https://github.com/splunk/fabric-logger/commit/5e90aa436c1f549537ce78ad035a76ab39ad41d5))
+
 ## [4.2.2](https://github.com/splunk/fabric-logger/compare/v4.2.1...v4.2.2) (2021-04-15)
 
 
