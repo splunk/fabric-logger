@@ -7,7 +7,7 @@ services:
             - SPLUNK_START_ARGS=--accept-license
             - SPLUNK_PASSWORD=changeme
             - SPLUNK_HEC_TOKEN=00000000-0000-0000-0000-000000000000
-            - SPLUNK_APPS_URL=http://s3.amazonaws.com/splunk-hyperledger/status-indicator-custom-visualization_130.tgz,http://s3.amazonaws.com/splunk-hyperledger/fabric/${BRANCH}/splunk-hyperledger-fabric.tgz
+            - SPLUNK_APPS_URL=http://s3.amazonaws.com/splunk-hyperledger/status-indicator-custom-visualization_130.tgz,https://github.com/splunkdlt/splunk-hyperledger-fabric/releases/download/2.0.2/splunk-hyperledger-fabric-v2.0.2.tgz
         ports:
             - '8000:8000'
         volumes:
