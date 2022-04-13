@@ -4,6 +4,10 @@ The Splunk Connect for Hyperledger Fabric sends blocks and transactions from a H
 
 Currently the fabric-logger supports connecting to 1 peer at a time, so you will have to deploy multiple instances of the fabric-logger for each peer that you want to connect to. Each fabric-logger instance can monitor multiple channels for the peer it is connected to.
 
+## Supported Versions
+Currently Fabric-logger supports fabric 2.2 lts.
+For older versions of Fabric please use release https://github.com/splunk/fabric-logger/releases/tag/2.0.2
+
 ## Fabric ACLs Required for Splunk Connect for Hyperledger Fabric
 
 User authentication in Hyperledger Fabric depends on a private key and a signed certificate. If using the `cryptogen` tool, these files will be found in the following directories (see also `helm-chart/fabric-logger/templates/secret.yaml`):
@@ -12,6 +16,15 @@ User authentication in Hyperledger Fabric depends on a private key and a signed 
 -   Private Key: `crypto-config/peerOrganizations/<org-domain>/users/<username>@<org-domain>/msp/keystore/*_sk`
 
 Additionally, Hyperledger Fabric users depend on ACLs defined in the `configtx.yaml` file in order to listen for events on peers. You can see all the ACLs documented [here](https://github.com/hyperledger/fabric/blob/309194182870aebc1e5faf153ea9e4aabda25b8e/sampleconfig/configtx.yaml#L144). The only required ACL policy for using this app is `event/Block`, by default this is mapped to the policy `/Channel/Application/Readers`. Any user defined under this policy in the organization can be used for the fabric-logger. User membership into policies are defined at the organization level, an example can be seen [here](https://github.com/hyperledger/fabric/blob/309194182870aebc1e5faf153ea9e4aabda25b8e/sampleconfig/configtx.yaml#L38).
+
+## TLS
+
+Connections to nodes in production environments often have TLS client authentication enabled which requires an additional cert and key pair to be supplied to fabric-logger.  The location of the cert and key are set with the following environment variables.
+
+``
+FABRIC_CLIENT_CERTFILE=<path to client certificate>
+FABRIC_CLIENT_KEYFILE=<path to client private>
+``
 
 ## Configuration
 
@@ -180,3 +193,13 @@ You will also need to update the `network.yaml` with appropriate values for you 
 3. [Prometheus Metrics (scraped by Splunk OpenTelemetry Connector)](./examples/otel-prometheus/README.md)
 4. [Prometheus Federated Metrics (scraped by Splunk OpenTelemetry Connector)](./examples/otel-prometheus-federation/README.md)
 5. [Vaccine Logistics Tracking Demo](./examples/vaccine-demo/README.md)
+
+
+## Troubleshooting
+
+Many connection issues often arise from either network connectivity or misconfigured certificates.
+The following commands can help diagnose issue from inside the fabric-logger container.
+```
+docker exec -it fabric_logger_container_id /bin/bash
+openssl s_client -connect peer_node_address -cert path_to_cert -key path_to_key -state -debug
+```
